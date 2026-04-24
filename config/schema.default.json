@@ -2063,16 +2063,6 @@
           },
           "type": "array"
         },
-        "base_network": {
-          "default": "osm",
-          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
-          "enum": [
-            "entsoegridkit",
-            "osm",
-            "tyndp"
-          ],
-          "type": "string"
-        },
         "gaslimit_enable": {
           "default": false,
           "description": "Add an overall absolute gas limit configured in `electricity: gaslimit`.",
@@ -2337,10 +2327,71 @@
               "type": "boolean"
             }
           }
+        }
+      }
+    },
+    "ElectricityProjectsConfig": {
+      "description": "Configuration for `electricity.projects` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Whether to integrate this transmission projects or not.",
+          "type": "boolean"
         },
-        "transmission_limit": {
-          "default": "vopt",
-          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
+        "include": {
+          "description": "Configuration for `electricity.projects.include` settings.",
+          "properties": {
+            "tyndp2020": {
+              "default": true,
+              "description": "Whether to integrate the TYNDP 2020 dataset.",
+              "type": "boolean"
+            },
+            "nep": {
+              "default": true,
+              "description": "Whether to integrate the German network development plan dataset.",
+              "type": "boolean"
+            },
+            "manual": {
+              "default": true,
+              "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
+              "type": "boolean"
+            }
+          }
+        },
+        "skip": {
+          "description": "Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            }
+          ],
+          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+        },
+        "new_link_capacity": {
+          "default": "zero",
+          "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
+          "enum": [
+            "zero",
+            "keep"
+          ],
           "type": "string"
         }
       }
@@ -4698,16 +4749,6 @@
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
           "type": "boolean"
         },
-        "co2_network": {
-          "default": true,
-          "description": "Add option for planning a new carbon dioxide transmission network.",
-          "type": "boolean"
-        },
-        "co2_network_cost_factor": {
-          "default": 1,
-          "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
-          "type": "number"
-        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
@@ -4829,11 +4870,6 @@
           "description": "Add option for using waste heat of electrolysis in district heating networks.",
           "type": "number"
         },
-        "electricity_transmission_grid": {
-          "default": true,
-          "description": "Switch for enabling/disabling the electricity transmission grid.",
-          "type": "boolean"
-        },
         "electricity_distribution_grid": {
           "default": true,
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
@@ -4888,17 +4924,6 @@
               "type": "object"
             }
           }
-        },
-        "H2_network": {
-          "default": true,
-          "description": "Add option for new hydrogen pipelines.",
-          "type": "boolean"
-        },
-        "gas_network": {
-          "default": true,
-          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-          "type": "boolean"
         },
         "H2_retrofit": {
           "default": false,
@@ -5603,69 +5628,361 @@
         }
       }
     },
-    "TransmissionProjectsConfig": {
-      "description": "Configuration for `transmission_projects` settings.",
+    "TransmissionConfig": {
+      "description": "Configuration for `transmission` settings.",
       "properties": {
-        "enable": {
-          "default": true,
-          "description": "Whether to integrate this transmission projects or not.",
-          "type": "boolean"
-        },
-        "include": {
-          "description": "Configuration for `transmission_projects.include` settings.",
+        "electricity": {
+          "description": "Configuration for electricity transmission grid.",
           "properties": {
-            "tyndp2020": {
+            "enable": {
               "default": true,
-              "description": "Whether to integrate the TYNDP 2020 dataset.",
+              "description": "Switch for enabling/disabling the electricity transmission grid.",
               "type": "boolean"
             },
-            "nep": {
-              "default": true,
-              "description": "Whether to integrate the German network development plan dataset.",
-              "type": "boolean"
+            "base_network": {
+              "default": "osm",
+              "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
+              "enum": [
+                "entsoegridkit",
+                "osm",
+                "tyndp"
+              ],
+              "type": "string"
             },
-            "manual": {
-              "default": true,
-              "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
-              "type": "boolean"
+            "transmission_limit": {
+              "default": "vopt",
+              "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
+              "type": "string"
+            },
+            "lines": {
+              "description": "Configuration for `lines` settings.",
+              "properties": {
+                "types": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV.",
+                  "type": "object"
+                },
+                "s_max_pu": {
+                  "default": 0.7,
+                  "description": "Correction factor for line capacities (`s_nom`) to approximate N-1 security and reserve capacity for reactive power flows.",
+                  "type": "number"
+                },
+                "s_nom_max": {
+                  "default": null,
+                  "description": "Global upper limit for the maximum capacity of each extendable line (MW).",
+                  "type": "number"
+                },
+                "max_extension": {
+                  "default": 20000,
+                  "description": "Upper limit for the extended capacity of each extendable line (MW).",
+                  "type": "number"
+                },
+                "length_factor": {
+                  "default": 1.25,
+                  "description": "Correction factor to account for the fact that buses are *not* connected by lines through air-line distance.",
+                  "type": "number"
+                },
+                "reconnect_crimea": {
+                  "default": true,
+                  "description": "Whether to reconnect Crimea to the Ukrainian grid.",
+                  "type": "boolean"
+                },
+                "under_construction": {
+                  "default": "keep",
+                  "description": "Specifies how to handle lines which are currently under construction.",
+                  "enum": [
+                    "zero",
+                    "remove",
+                    "keep"
+                  ],
+                  "type": "string"
+                },
+                "dynamic_line_rating": {
+                  "description": "Configuration for `lines.dynamic_line_rating` settings.",
+                  "properties": {
+                    "activate": {
+                      "default": false,
+                      "description": "Whether to take dynamic line rating into account.",
+                      "type": "boolean"
+                    },
+                    "cutout": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ],
+                      "default": "default",
+                      "description": "Specifies the weather data cutout file(s) to use."
+                    },
+                    "correction_factor": {
+                      "default": 0.95,
+                      "description": "Factor to compensate for overestimation of wind speeds in hourly averaged wind data.",
+                      "type": "number"
+                    },
+                    "max_voltage_difference": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "const": false,
+                          "type": "boolean"
+                        }
+                      ],
+                      "default": false,
+                      "description": "Maximum voltage angle difference in degrees or 'false' to disable."
+                    },
+                    "max_line_rating": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "const": false,
+                          "type": "boolean"
+                        }
+                      ],
+                      "default": false,
+                      "description": "Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable."
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "description": "Configuration for `links` settings.",
+              "properties": {
+                "p_max_pu": {
+                  "default": 1.0,
+                  "description": "Correction factor for link capacities `p_nom`.",
+                  "type": "number"
+                },
+                "p_min_pu": {
+                  "default": -1.0,
+                  "description": "Correction factor for link capacities `p_nom`.",
+                  "type": "number"
+                },
+                "p_nom_max": {
+                  "default": null,
+                  "description": "Global upper limit for the maximum capacity of each extendable DC link (MW).",
+                  "type": "number"
+                },
+                "max_extension": {
+                  "default": 30000,
+                  "description": "Upper limit for the extended capacity of each extendable DC link (MW).",
+                  "type": "number"
+                },
+                "length_factor": {
+                  "default": 1.25,
+                  "description": "Correction factor to account for the fact that buses are *not* connected by links through air-line distance.",
+                  "type": "number"
+                },
+                "under_construction": {
+                  "default": "keep",
+                  "description": "Specifies how to handle lines which are currently under construction.",
+                  "enum": [
+                    "zero",
+                    "remove",
+                    "keep"
+                  ],
+                  "type": "string"
+                }
+              }
+            },
+            "transformers": {
+              "description": "Configuration for `transformers` settings.",
+              "properties": {
+                "x": {
+                  "default": 0.1,
+                  "description": "Series reactance in per unit (p.u.), using `s_nom` as base power of the transformer. Overwritten if `type` is specified.",
+                  "type": "number"
+                },
+                "s_nom": {
+                  "default": 2000.0,
+                  "description": "Limit of apparent power which can pass through branch (MVA). Overwritten if `type` is specified.",
+                  "type": "number"
+                },
+                "type": {
+                  "default": "",
+                  "description": "Specifies transformer types to assume for the transformers of the ENTSO-E grid extraction.",
+                  "type": "string"
+                }
+              }
+            },
+            "projects": {
+              "description": "Configuration for `electricity.projects` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Whether to integrate this transmission projects or not.",
+                  "type": "boolean"
+                },
+                "include": {
+                  "description": "Configuration for `electricity.projects.include` settings.",
+                  "properties": {
+                    "tyndp2020": {
+                      "default": true,
+                      "description": "Whether to integrate the TYNDP 2020 dataset.",
+                      "type": "boolean"
+                    },
+                    "nep": {
+                      "default": true,
+                      "description": "Whether to integrate the German network development plan dataset.",
+                      "type": "boolean"
+                    },
+                    "manual": {
+                      "default": true,
+                      "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "skip": {
+                  "description": "Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "status": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "additionalProperties": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+                },
+                "new_link_capacity": {
+                  "default": "zero",
+                  "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
+                  "enum": [
+                    "zero",
+                    "keep"
+                  ],
+                  "type": "string"
+                }
+              }
             }
           }
         },
-        "skip": {
-          "description": "Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "status": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+        "hydrogen": {
+          "description": "Configuration for a single transmission carrier.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable transmission candidate generation for this carrier.",
+              "type": "boolean"
             },
-            {
-              "additionalProperties": {
-                "items": {
-                  "type": "string"
+            "gabriel_filter": {
+              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+                  "type": "boolean"
                 },
-                "type": "array"
-              },
-              "type": "object"
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum node degree target applied after Gabriel filtering.",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "length_factor": {
+              "default": 1.25,
+              "description": "Multiplier applied to geometric corridor lengths.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+              "exclusiveMinimum": 0,
+              "type": "number"
             }
-          ],
-          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+          }
         },
-        "new_link_capacity": {
-          "default": "zero",
-          "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
-          "enum": [
-            "zero",
-            "keep"
-          ],
-          "type": "string"
+        "carbon_dioxide": {
+          "description": "Configuration for a single transmission carrier.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable transmission candidate generation for this carrier.",
+              "type": "boolean"
+            },
+            "gabriel_filter": {
+              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+                  "type": "boolean"
+                },
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum node degree target applied after Gabriel filtering.",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "length_factor": {
+              "default": 1.25,
+              "description": "Multiplier applied to geometric corridor lengths.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "gas": {
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "type": "boolean"
+            }
+          },
+          "description": "Configuration for methane gas transmission candidates."
         }
       }
     },
@@ -6611,6 +6928,22 @@
         }
       }
     },
+    "_GabrielFilterConfig": {
+      "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+          "type": "boolean"
+        },
+        "min_degree": {
+          "default": 1,
+          "description": "Minimum node degree target applied after Gabriel filtering.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      }
+    },
     "_HydroConfig": {
       "description": "Configuration for hydropower.",
       "properties": {
@@ -6722,7 +7055,7 @@
       }
     },
     "_IncludeConfig": {
-      "description": "Configuration for `transmission_projects.include` settings.",
+      "description": "Configuration for `electricity.projects.include` settings.",
       "properties": {
         "tyndp2020": {
           "default": true,
@@ -8066,6 +8399,314 @@
         }
       }
     },
+    "_TransmissionCarrierConfigElectricity": {
+      "description": "Configuration for electricity transmission grid.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Switch for enabling/disabling the electricity transmission grid.",
+          "type": "boolean"
+        },
+        "base_network": {
+          "default": "osm",
+          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
+          "enum": [
+            "entsoegridkit",
+            "osm",
+            "tyndp"
+          ],
+          "type": "string"
+        },
+        "transmission_limit": {
+          "default": "vopt",
+          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
+          "type": "string"
+        },
+        "lines": {
+          "description": "Configuration for `lines` settings.",
+          "properties": {
+            "types": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV.",
+              "type": "object"
+            },
+            "s_max_pu": {
+              "default": 0.7,
+              "description": "Correction factor for line capacities (`s_nom`) to approximate N-1 security and reserve capacity for reactive power flows.",
+              "type": "number"
+            },
+            "s_nom_max": {
+              "default": null,
+              "description": "Global upper limit for the maximum capacity of each extendable line (MW).",
+              "type": "number"
+            },
+            "max_extension": {
+              "default": 20000,
+              "description": "Upper limit for the extended capacity of each extendable line (MW).",
+              "type": "number"
+            },
+            "length_factor": {
+              "default": 1.25,
+              "description": "Correction factor to account for the fact that buses are *not* connected by lines through air-line distance.",
+              "type": "number"
+            },
+            "reconnect_crimea": {
+              "default": true,
+              "description": "Whether to reconnect Crimea to the Ukrainian grid.",
+              "type": "boolean"
+            },
+            "under_construction": {
+              "default": "keep",
+              "description": "Specifies how to handle lines which are currently under construction.",
+              "enum": [
+                "zero",
+                "remove",
+                "keep"
+              ],
+              "type": "string"
+            },
+            "dynamic_line_rating": {
+              "description": "Configuration for `lines.dynamic_line_rating` settings.",
+              "properties": {
+                "activate": {
+                  "default": false,
+                  "description": "Whether to take dynamic line rating into account.",
+                  "type": "boolean"
+                },
+                "cutout": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ],
+                  "default": "default",
+                  "description": "Specifies the weather data cutout file(s) to use."
+                },
+                "correction_factor": {
+                  "default": 0.95,
+                  "description": "Factor to compensate for overestimation of wind speeds in hourly averaged wind data.",
+                  "type": "number"
+                },
+                "max_voltage_difference": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": false,
+                      "type": "boolean"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Maximum voltage angle difference in degrees or 'false' to disable."
+                },
+                "max_line_rating": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "const": false,
+                      "type": "boolean"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable."
+                }
+              }
+            }
+          }
+        },
+        "links": {
+          "description": "Configuration for `links` settings.",
+          "properties": {
+            "p_max_pu": {
+              "default": 1.0,
+              "description": "Correction factor for link capacities `p_nom`.",
+              "type": "number"
+            },
+            "p_min_pu": {
+              "default": -1.0,
+              "description": "Correction factor for link capacities `p_nom`.",
+              "type": "number"
+            },
+            "p_nom_max": {
+              "default": null,
+              "description": "Global upper limit for the maximum capacity of each extendable DC link (MW).",
+              "type": "number"
+            },
+            "max_extension": {
+              "default": 30000,
+              "description": "Upper limit for the extended capacity of each extendable DC link (MW).",
+              "type": "number"
+            },
+            "length_factor": {
+              "default": 1.25,
+              "description": "Correction factor to account for the fact that buses are *not* connected by links through air-line distance.",
+              "type": "number"
+            },
+            "under_construction": {
+              "default": "keep",
+              "description": "Specifies how to handle lines which are currently under construction.",
+              "enum": [
+                "zero",
+                "remove",
+                "keep"
+              ],
+              "type": "string"
+            }
+          }
+        },
+        "transformers": {
+          "description": "Configuration for `transformers` settings.",
+          "properties": {
+            "x": {
+              "default": 0.1,
+              "description": "Series reactance in per unit (p.u.), using `s_nom` as base power of the transformer. Overwritten if `type` is specified.",
+              "type": "number"
+            },
+            "s_nom": {
+              "default": 2000.0,
+              "description": "Limit of apparent power which can pass through branch (MVA). Overwritten if `type` is specified.",
+              "type": "number"
+            },
+            "type": {
+              "default": "",
+              "description": "Specifies transformer types to assume for the transformers of the ENTSO-E grid extraction.",
+              "type": "string"
+            }
+          }
+        },
+        "projects": {
+          "description": "Configuration for `electricity.projects` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Whether to integrate this transmission projects or not.",
+              "type": "boolean"
+            },
+            "include": {
+              "description": "Configuration for `electricity.projects.include` settings.",
+              "properties": {
+                "tyndp2020": {
+                  "default": true,
+                  "description": "Whether to integrate the TYNDP 2020 dataset.",
+                  "type": "boolean"
+                },
+                "nep": {
+                  "default": true,
+                  "description": "Whether to integrate the German network development plan dataset.",
+                  "type": "boolean"
+                },
+                "manual": {
+                  "default": true,
+                  "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
+                  "type": "boolean"
+                }
+              }
+            },
+            "skip": {
+              "description": "Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object"
+                }
+              ],
+              "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+            },
+            "new_link_capacity": {
+              "default": "zero",
+              "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
+              "enum": [
+                "zero",
+                "keep"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "_TransmissionCarrierConfigGas": {
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+          "type": "boolean"
+        }
+      }
+    },
+    "_TransmissionCarrierConfigGeneral": {
+      "description": "Configuration for a single transmission carrier.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Enable transmission candidate generation for this carrier.",
+          "type": "boolean"
+        },
+        "gabriel_filter": {
+          "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+              "type": "boolean"
+            },
+            "min_degree": {
+              "default": 1,
+              "description": "Minimum node degree target applied after Gabriel filtering.",
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        },
+        "max_offshore_haversine_distance": {
+          "default": null,
+          "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "length_factor": {
+          "default": 1.25,
+          "description": "Multiplier applied to geometric corridor lengths.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "cost_factor": {
+          "default": 1,
+          "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      }
+    },
     "_TransmissionEfficiencyConfig": {
       "description": "Configuration for `sector.transmission_efficiency` settings.",
       "properties": {
@@ -8486,16 +9127,6 @@
           },
           "type": "array"
         },
-        "base_network": {
-          "default": "osm",
-          "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
-          "enum": [
-            "entsoegridkit",
-            "osm",
-            "tyndp"
-          ],
-          "type": "string"
-        },
         "gaslimit_enable": {
           "default": false,
           "description": "Add an overall absolute gas limit configured in `electricity: gaslimit`.",
@@ -8760,11 +9391,364 @@
               "type": "boolean"
             }
           }
+        }
+      }
+    },
+    "transmission": {
+      "description": "Configuration for `transmission` settings.",
+      "properties": {
+        "electricity": {
+          "description": "Configuration for electricity transmission grid.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Switch for enabling/disabling the electricity transmission grid.",
+              "type": "boolean"
+            },
+            "base_network": {
+              "default": "osm",
+              "description": "Specify the underlying base network, i.e. GridKit (based on ENTSO-E web map extract), OpenStreetMap (OSM), or TYNDP.",
+              "enum": [
+                "entsoegridkit",
+                "osm",
+                "tyndp"
+              ],
+              "type": "string"
+            },
+            "transmission_limit": {
+              "default": "vopt",
+              "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
+              "type": "string"
+            },
+            "lines": {
+              "description": "Configuration for `lines` settings.",
+              "properties": {
+                "types": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV.",
+                  "type": "object"
+                },
+                "s_max_pu": {
+                  "default": 0.7,
+                  "description": "Correction factor for line capacities (`s_nom`) to approximate N-1 security and reserve capacity for reactive power flows.",
+                  "type": "number"
+                },
+                "s_nom_max": {
+                  "default": null,
+                  "description": "Global upper limit for the maximum capacity of each extendable line (MW).",
+                  "type": "number"
+                },
+                "max_extension": {
+                  "default": 20000,
+                  "description": "Upper limit for the extended capacity of each extendable line (MW).",
+                  "type": "number"
+                },
+                "length_factor": {
+                  "default": 1.25,
+                  "description": "Correction factor to account for the fact that buses are *not* connected by lines through air-line distance.",
+                  "type": "number"
+                },
+                "reconnect_crimea": {
+                  "default": true,
+                  "description": "Whether to reconnect Crimea to the Ukrainian grid.",
+                  "type": "boolean"
+                },
+                "under_construction": {
+                  "default": "keep",
+                  "description": "Specifies how to handle lines which are currently under construction.",
+                  "enum": [
+                    "zero",
+                    "remove",
+                    "keep"
+                  ],
+                  "type": "string"
+                },
+                "dynamic_line_rating": {
+                  "description": "Configuration for `lines.dynamic_line_rating` settings.",
+                  "properties": {
+                    "activate": {
+                      "default": false,
+                      "description": "Whether to take dynamic line rating into account.",
+                      "type": "boolean"
+                    },
+                    "cutout": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ],
+                      "default": "default",
+                      "description": "Specifies the weather data cutout file(s) to use."
+                    },
+                    "correction_factor": {
+                      "default": 0.95,
+                      "description": "Factor to compensate for overestimation of wind speeds in hourly averaged wind data.",
+                      "type": "number"
+                    },
+                    "max_voltage_difference": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "const": false,
+                          "type": "boolean"
+                        }
+                      ],
+                      "default": false,
+                      "description": "Maximum voltage angle difference in degrees or 'false' to disable."
+                    },
+                    "max_line_rating": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "const": false,
+                          "type": "boolean"
+                        }
+                      ],
+                      "default": false,
+                      "description": "Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable."
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "description": "Configuration for `links` settings.",
+              "properties": {
+                "p_max_pu": {
+                  "default": 1.0,
+                  "description": "Correction factor for link capacities `p_nom`.",
+                  "type": "number"
+                },
+                "p_min_pu": {
+                  "default": -1.0,
+                  "description": "Correction factor for link capacities `p_nom`.",
+                  "type": "number"
+                },
+                "p_nom_max": {
+                  "default": null,
+                  "description": "Global upper limit for the maximum capacity of each extendable DC link (MW).",
+                  "type": "number"
+                },
+                "max_extension": {
+                  "default": 30000,
+                  "description": "Upper limit for the extended capacity of each extendable DC link (MW).",
+                  "type": "number"
+                },
+                "length_factor": {
+                  "default": 1.25,
+                  "description": "Correction factor to account for the fact that buses are *not* connected by links through air-line distance.",
+                  "type": "number"
+                },
+                "under_construction": {
+                  "default": "keep",
+                  "description": "Specifies how to handle lines which are currently under construction.",
+                  "enum": [
+                    "zero",
+                    "remove",
+                    "keep"
+                  ],
+                  "type": "string"
+                }
+              }
+            },
+            "transformers": {
+              "description": "Configuration for `transformers` settings.",
+              "properties": {
+                "x": {
+                  "default": 0.1,
+                  "description": "Series reactance in per unit (p.u.), using `s_nom` as base power of the transformer. Overwritten if `type` is specified.",
+                  "type": "number"
+                },
+                "s_nom": {
+                  "default": 2000.0,
+                  "description": "Limit of apparent power which can pass through branch (MVA). Overwritten if `type` is specified.",
+                  "type": "number"
+                },
+                "type": {
+                  "default": "",
+                  "description": "Specifies transformer types to assume for the transformers of the ENTSO-E grid extraction.",
+                  "type": "string"
+                }
+              }
+            },
+            "projects": {
+              "description": "Configuration for `electricity.projects` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Whether to integrate this transmission projects or not.",
+                  "type": "boolean"
+                },
+                "include": {
+                  "description": "Configuration for `electricity.projects.include` settings.",
+                  "properties": {
+                    "tyndp2020": {
+                      "default": true,
+                      "description": "Whether to integrate the TYNDP 2020 dataset.",
+                      "type": "boolean"
+                    },
+                    "nep": {
+                      "default": true,
+                      "description": "Whether to integrate the German network development plan dataset.",
+                      "type": "boolean"
+                    },
+                    "manual": {
+                      "default": true,
+                      "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "skip": {
+                  "description": "Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "status": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "additionalProperties": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
+                },
+                "new_link_capacity": {
+                  "default": "zero",
+                  "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
+                  "enum": [
+                    "zero",
+                    "keep"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          }
         },
-        "transmission_limit": {
-          "default": "vopt",
-          "description": "Limit on transmission expansion. The first part can be `v` (for setting a limit on line volume) or `c` (for setting a limit on line cost). The second part can be `opt` or a float bigger than one (e.g. 1.25). If `opt` is chosen line expansion is optimised according to its capital cost (where the choice `v` only considers overhead costs for HVDC transmission lines, while `c` uses more accurate costs distinguishing between overhead and underwater sections and including inverter pairs). The setting `v1.25` will limit the total volume of line expansion to 25% of currently installed capacities weighted by individual line lengths. The setting `c1.25` will allow to build a transmission network that costs no more than 25 % more than the current system.",
-          "type": "string"
+        "hydrogen": {
+          "description": "Configuration for a single transmission carrier.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable transmission candidate generation for this carrier.",
+              "type": "boolean"
+            },
+            "gabriel_filter": {
+              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+                  "type": "boolean"
+                },
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum node degree target applied after Gabriel filtering.",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "length_factor": {
+              "default": 1.25,
+              "description": "Multiplier applied to geometric corridor lengths.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "carbon_dioxide": {
+          "description": "Configuration for a single transmission carrier.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable transmission candidate generation for this carrier.",
+              "type": "boolean"
+            },
+            "gabriel_filter": {
+              "description": "Configuration for `transmission.<carrier>.gabriel_filter` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Whether to filter Delaunay edges to Gabriel edges before min-degree backfilling.",
+                  "type": "boolean"
+                },
+                "min_degree": {
+                  "default": 1,
+                  "description": "Minimum node degree target applied after Gabriel filtering.",
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            },
+            "max_offshore_haversine_distance": {
+              "default": null,
+              "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "length_factor": {
+              "default": 1.25,
+              "description": "Multiplier applied to geometric corridor lengths.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "cost_factor": {
+              "default": 1,
+              "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          }
+        },
+        "gas": {
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+              "type": "boolean"
+            }
+          },
+          "description": "Configuration for methane gas transmission candidates."
         }
       }
     },
@@ -10054,235 +11038,6 @@
         }
       }
     },
-    "lines": {
-      "description": "Configuration for `lines` settings.",
-      "properties": {
-        "types": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Specifies line types to assume for the different voltage levels of the ENTSO-E grid extraction. Should normally handle voltage levels 220, 300, and 380 kV.",
-          "type": "object"
-        },
-        "s_max_pu": {
-          "default": 0.7,
-          "description": "Correction factor for line capacities (`s_nom`) to approximate N-1 security and reserve capacity for reactive power flows.",
-          "type": "number"
-        },
-        "s_nom_max": {
-          "default": null,
-          "description": "Global upper limit for the maximum capacity of each extendable line (MW).",
-          "type": "number"
-        },
-        "max_extension": {
-          "default": 20000,
-          "description": "Upper limit for the extended capacity of each extendable line (MW).",
-          "type": "number"
-        },
-        "length_factor": {
-          "default": 1.25,
-          "description": "Correction factor to account for the fact that buses are *not* connected by lines through air-line distance.",
-          "type": "number"
-        },
-        "reconnect_crimea": {
-          "default": true,
-          "description": "Whether to reconnect Crimea to the Ukrainian grid.",
-          "type": "boolean"
-        },
-        "under_construction": {
-          "default": "keep",
-          "description": "Specifies how to handle lines which are currently under construction.",
-          "enum": [
-            "zero",
-            "remove",
-            "keep"
-          ],
-          "type": "string"
-        },
-        "dynamic_line_rating": {
-          "description": "Configuration for `lines.dynamic_line_rating` settings.",
-          "properties": {
-            "activate": {
-              "default": false,
-              "description": "Whether to take dynamic line rating into account.",
-              "type": "boolean"
-            },
-            "cutout": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              ],
-              "default": "default",
-              "description": "Specifies the weather data cutout file(s) to use."
-            },
-            "correction_factor": {
-              "default": 0.95,
-              "description": "Factor to compensate for overestimation of wind speeds in hourly averaged wind data.",
-              "type": "number"
-            },
-            "max_voltage_difference": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "const": false,
-                  "type": "boolean"
-                }
-              ],
-              "default": false,
-              "description": "Maximum voltage angle difference in degrees or 'false' to disable."
-            },
-            "max_line_rating": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "const": false,
-                  "type": "boolean"
-                }
-              ],
-              "default": false,
-              "description": "Maximum line rating relative to nominal capacity without DLR, e.g. 1.3 or 'false' to disable."
-            }
-          }
-        }
-      }
-    },
-    "links": {
-      "description": "Configuration for `links` settings.",
-      "properties": {
-        "p_max_pu": {
-          "default": 1.0,
-          "description": "Correction factor for link capacities `p_nom`.",
-          "type": "number"
-        },
-        "p_min_pu": {
-          "default": -1.0,
-          "description": "Correction factor for link capacities `p_nom`.",
-          "type": "number"
-        },
-        "p_nom_max": {
-          "default": null,
-          "description": "Global upper limit for the maximum capacity of each extendable DC link (MW).",
-          "type": "number"
-        },
-        "max_extension": {
-          "default": 30000,
-          "description": "Upper limit for the extended capacity of each extendable DC link (MW).",
-          "type": "number"
-        },
-        "length_factor": {
-          "default": 1.25,
-          "description": "Correction factor to account for the fact that buses are *not* connected by links through air-line distance.",
-          "type": "number"
-        },
-        "under_construction": {
-          "default": "keep",
-          "description": "Specifies how to handle lines which are currently under construction.",
-          "enum": [
-            "zero",
-            "remove",
-            "keep"
-          ],
-          "type": "string"
-        }
-      }
-    },
-    "transmission_projects": {
-      "description": "Configuration for `transmission_projects` settings.",
-      "properties": {
-        "enable": {
-          "default": true,
-          "description": "Whether to integrate this transmission projects or not.",
-          "type": "boolean"
-        },
-        "include": {
-          "description": "Configuration for `transmission_projects.include` settings.",
-          "properties": {
-            "tyndp2020": {
-              "default": true,
-              "description": "Whether to integrate the TYNDP 2020 dataset.",
-              "type": "boolean"
-            },
-            "nep": {
-              "default": true,
-              "description": "Whether to integrate the German network development plan dataset.",
-              "type": "boolean"
-            },
-            "manual": {
-              "default": true,
-              "description": "Whether to integrate the manually added transmission projects. They are taken from the previously existing links_tyndp.csv file.",
-              "type": "boolean"
-            }
-          }
-        },
-        "skip": {
-          "description": "Type of lines to skip from all transmission projects. Possible values are: `upgraded_lines`, `upgraded_links`, `new_lines`, `new_links`.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "status": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "type": "object"
-            }
-          ],
-          "description": "Status to include into the model as list or as dict with name of project and status to include. Possible values for status are `under_construction`, `in_permitting`, `confirmed`, `planned_not_yet_permitted`, `under_consideration`."
-        },
-        "new_link_capacity": {
-          "default": "zero",
-          "description": "Whether to set the new link capacity to the provided capacity or set it to zero.",
-          "enum": [
-            "zero",
-            "keep"
-          ],
-          "type": "string"
-        }
-      }
-    },
-    "transformers": {
-      "description": "Configuration for `transformers` settings.",
-      "properties": {
-        "x": {
-          "default": 0.1,
-          "description": "Series reactance in per unit (p.u.), using `s_nom` as base power of the transformer. Overwritten if `type` is specified.",
-          "type": "number"
-        },
-        "s_nom": {
-          "default": 2000.0,
-          "description": "Limit of apparent power which can pass through branch (MVA). Overwritten if `type` is specified.",
-          "type": "number"
-        },
-        "type": {
-          "default": "",
-          "description": "Specifies transformer types to assume for the transformers of the ENTSO-E grid extraction.",
-          "type": "string"
-        }
-      }
-    },
     "load": {
       "description": "Configuration for `load` settings.",
       "properties": {
@@ -11142,16 +11897,6 @@
           "description": "Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
           "type": "boolean"
         },
-        "co2_network": {
-          "default": true,
-          "description": "Add option for planning a new carbon dioxide transmission network.",
-          "type": "boolean"
-        },
-        "co2_network_cost_factor": {
-          "default": 1,
-          "description": "The cost factor for the capital cost of the carbon dioxide transmission network.",
-          "type": "number"
-        },
         "cc_fraction": {
           "default": 0.9,
           "description": "The default fraction of CO2 captured with post-combustion capture.",
@@ -11273,11 +12018,6 @@
           "description": "Add option for using waste heat of electrolysis in district heating networks.",
           "type": "number"
         },
-        "electricity_transmission_grid": {
-          "default": true,
-          "description": "Switch for enabling/disabling the electricity transmission grid.",
-          "type": "boolean"
-        },
         "electricity_distribution_grid": {
           "default": true,
           "description": "Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
@@ -11332,17 +12072,6 @@
               "type": "object"
             }
           }
-        },
-        "H2_network": {
-          "default": true,
-          "description": "Add option for new hydrogen pipelines.",
-          "type": "boolean"
-        },
-        "gas_network": {
-          "default": true,
-          "description": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-          "markdownDescription": "Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted [k-edge augmentation algorithm ](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation) can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-          "type": "boolean"
         },
         "H2_retrofit": {
           "default": false,

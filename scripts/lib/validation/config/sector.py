@@ -740,14 +740,6 @@ class SectorConfig(BaseModel):
         True,
         description="Add option to spatially resolve carrier representing stored carbon dioxide. This allows for more detailed modelling of CCUTS, e.g. regarding the capturing of industrial process emissions, usage as feedstock for electrofuels, transport of carbon dioxide, and geological sequestration sites.",
     )
-    co2_network: bool = Field(
-        True,
-        description="Add option for planning a new carbon dioxide transmission network.",
-    )
-    co2_network_cost_factor: float = Field(
-        1,
-        description="The cost factor for the capital cost of the carbon dioxide transmission network.",
-    )
     cc_fraction: float = Field(
         0.9,
         description="The default fraction of CO2 captured with post-combustion capture.",
@@ -807,10 +799,6 @@ class SectorConfig(BaseModel):
         description="Add option for using waste heat of electrolysis in district heating networks.",
     )
 
-    electricity_transmission_grid: bool = Field(
-        True,
-        description="Switch for enabling/disabling the electricity transmission grid.",
-    )
     electricity_distribution_grid: bool = Field(
         True,
         description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
@@ -829,11 +817,6 @@ class SectorConfig(BaseModel):
         description="Transmission efficiency configuration.",
     )
 
-    H2_network: bool = Field(True, description="Add option for new hydrogen pipelines.")
-    gas_network: bool = Field(
-        True,
-        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
-    )
     H2_retrofit: bool = Field(
         False,
         description="Add option for retrofiting existing pipelines to transport hydrogen.",

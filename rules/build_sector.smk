@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+import math
+
 
 rule build_population_layouts:
     input:
@@ -144,6 +146,63 @@ rule cluster_gas_network:
         "Clustering gas network for {wildcards.clusters} clusters"
     script:
         scripts("cluster_gas_network.py")
+
+
+def transmission_candidate_specs() -> list[tuple[int, str]]:
+    specs = set()
+
+    for carrier_config in config.get("transmission", {}).values():
+        if not isinstance(carrier_config, dict):
+            continue
+        if not carrier_config.get("enable", False):
+            continue
+        gabriel_filter = carrier_config.get("gabriel_filter", {})
+        if not isinstance(gabriel_filter, dict):
+            continue
+        if not gabriel_filter.get("enable", False):
+            continue
+        if "min_degree" not in gabriel_filter:
+            continue
+
+        min_degree = int(gabriel_filter["min_degree"])
+        max_offdist = f"{float(carrier_config.get('max_offshore_haversine_distance', float('inf'))):g}"
+        specs.add((min_degree, max_offdist))
+
+    return sorted(specs, key=lambda spec: (spec[0], float(spec[1])))
+
+
+rule build_transmission_topology:
+    input:
+        network=resources("networks/base_s_{clusters}.nc"),
+        offshore_shapes=resources("offshore_shapes.geojson"),
+    output:
+        all_edges=resources("transmission/all_edges_{clusters}.geojson"),
+        candidates=[
+            resources(
+                "transmission/candidates_{clusters}_min_"
+                + f"{int(min_degree)}_maxoffdist_{max_offdist}_km.geojson"
+            )
+            for min_degree, max_offdist in transmission_candidate_specs()
+        ],
+    log:
+        logs("build_transmission_topology_{clusters}.log"),
+    benchmark:
+        benchmarks("build_transmission_topology/{clusters}")
+    resources:
+        mem_mb=4000,
+    params:
+        transmission=config_provider("transmission"),
+        candidate_specs=[
+            {
+                "min_degree": int(min_degree),
+                "max_offshore_haversine_distance_km": float(max_offdist),
+            }
+            for min_degree, max_offdist in transmission_candidate_specs()
+        ],
+    message:
+        "Building transmission candidates for {wildcards.clusters} clusters"
+    script:
+        scripts("build_transmission_topology.py")
 
 
 rule build_daily_heat_demand:
@@ -1562,10 +1621,32 @@ def input_heat_source_power(w):
     }
 
 
+def input_transmission_candidates(w):
+    """Generate transmission candidate file inputs for enabled transmission carriers."""
+    candidates = {}
+    for carrier, carrier_cfg in config.get("transmission", {}).items():
+        if not isinstance(carrier_cfg, dict) or not carrier_cfg.get("enable", False):
+            continue
+        gabriel_cfg = carrier_cfg.get("gabriel_filter")
+        if not isinstance(gabriel_cfg, dict):
+            continue
+        key = f"{carrier}_transmission_candidates"
+        if gabriel_cfg.get("enable", False) and "min_degree" in gabriel_cfg:
+            min_degree = int(gabriel_cfg["min_degree"])
+            max_offdist = f"{float(carrier_cfg.get('max_offshore_haversine_distance', float('inf'))):g}"
+            candidates[key] = resources(
+                f"transmission/candidates_{{clusters}}_min_{min_degree}_maxoffdist_{max_offdist}_km.geojson"
+            )
+        else:
+            candidates[key] = resources("transmission/all_edges_{clusters}.geojson")
+    return candidates
+
+
 rule prepare_sector_network:
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
+        unpack(input_transmission_candidates),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
@@ -1714,9 +1795,11 @@ rule prepare_sector_network:
         sector=config_provider("sector"),
         industry=config_provider("industry"),
         renewable=config_provider("renewable"),
-        lines=config_provider("lines"),
+        lines=config_provider("transmission", "electricity", "lines"),
         pypsa_eur=config_provider("pypsa_eur"),
-        length_factor=config_provider("lines", "length_factor"),
+        length_factor=config_provider(
+            "transmission", "electricity", "lines", "length_factor"
+        ),
         planning_horizons=config_provider("scenario", "planning_horizons"),
         countries=config_provider("countries"),
         adjustments=config_provider("adjustments", "sector"),
@@ -1737,6 +1820,7 @@ rule prepare_sector_network:
         temperature_limited_stores=config_provider(
             "sector", "district_heating", "temperature_limited_stores"
         ),
+        transmission=config_provider("transmission"),
     message:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
