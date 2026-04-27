@@ -63,6 +63,32 @@ electricity:
   - "offwind-dc"
   - hydro
 
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission
+transmission:
+  hydrogen:
+    enable: true
+    gabriel_filter:
+      enable: false
+      min_degree: 1
+    max_offshore_haversine_distance: 100
+    length_factor: 1.25
+    cost_factor: 1
+    retrofit:
+      enable: false
+      capacity_per_ch4: 0.6
+    efficiency:
+      enable: true
+      efficiency_per_1000km: 1.0
+      compression_per_1000km: 0.018
+  carbon_dioxide:
+    enable: true
+    gabriel_filter:
+      enable: false
+      min_degree: 1
+    max_offshore_haversine_distance: 100
+    length_factor: 1.25
+    cost_factor: 1
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
   transport: true
