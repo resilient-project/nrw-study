@@ -94,6 +94,22 @@ class LinesConfig(BaseModel):
 class LinksConfig(ConfigModel):
     """Configuration for `links` settings."""
 
+    class _DCEfficiencyConfig(BaseModel):
+        """Configuration for `transmission.electricity.links.efficiency` settings."""
+
+        enable: bool = Field(
+            True,
+            description="Apply transmission efficiency for DC links.",
+        )
+        efficiency_static: float = Field(
+            0.98,
+            description="Static DC transmission efficiency.",
+        )
+        efficiency_per_1000km: float = Field(
+            0.977,
+            description="Distance-dependent DC efficiency factor per 1000 km.",
+        )
+
     p_max_pu: float = Field(
         1.0,
         description="Correction factor for link capacities `p_nom`.",
@@ -117,6 +133,10 @@ class LinksConfig(ConfigModel):
     under_construction: Literal["zero", "remove", "keep"] = Field(
         "keep",
         description="Specifies how to handle lines which are currently under construction.",
+    )
+    efficiency: _DCEfficiencyConfig = Field(
+        default_factory=_DCEfficiencyConfig,
+        description="DC transmission efficiency configuration.",
     )
 
 
@@ -221,6 +241,36 @@ class _TransmissionCarrierConfigGeneral(BaseModel):
     )
 
 
+class _TransmissionEfficiencyConfig(BaseModel):
+    """Configuration for `transmission.<carrier>.efficiency` settings."""
+
+    enable: bool = Field(
+        True,
+        description="Apply transmission efficiency for this carrier.",
+    )
+    efficiency_per_1000km: float = Field(
+        1,
+        description="Distance-dependent efficiency factor per 1000 km.",
+    )
+    compression_per_1000km: float = Field(
+        0,
+        description="Additional electricity consumption for compression per 1000 km.",
+    )
+
+
+class _HydrogenRetrofitConfig(BaseModel):
+    """Configuration for `transmission.hydrogen.retrofit` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Add option for retrofitting existing pipelines to transport hydrogen.",
+    )
+    capacity_per_ch4: float = Field(
+        0.6,
+        description="The ratio for H2 capacity per original CH4 capacity of retrofitted pipelines. The `European Hydrogen Backbone (April, 2020) p.15 <https://gasforclimate2050.eu/wp-content/uploads/2020/07/2020_European-Hydrogen-Backbone_Report.pdf>`_ 60% of original natural gas capacity could be used in cost-optimal case as H2 capacity.",
+    )
+
+
 class _TransmissionCarrierConfigElectricity(BaseModel):
     """Configuration for electricity transmission grid."""
 
@@ -257,7 +307,59 @@ class _TransmissionCarrierConfigElectricity(BaseModel):
 class _TransmissionCarrierConfigGas(BaseModel):
     enable: bool = Field(
         True,
-        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. The existing gas network is added with a lossless transport model. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+        description="Add existing natural gas infrastructure, incl. LNG terminals, production and entry-points. A length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ can be run to add new candidate gas pipelines such that all regions of the model can be connected to the gas network. When activated, all the gas demands are regionally disaggregated as well.",
+    )
+    connectivity_upgrade: float = Field(
+        1,
+        description="The number of desired edge connectivity (k) in the length-weighted `k-edge augmentation algorithm <https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation.html#networkx.algorithms.connectivity.edge_augmentation.k_edge_augmentation>`_ used for the gas network.",
+    )
+    efficiency: _TransmissionEfficiencyConfig = Field(
+        default_factory=lambda: _TransmissionEfficiencyConfig(
+            efficiency_per_1000km=1,
+            compression_per_1000km=0.01,
+        ),
+        description="Methane gas pipeline transmission efficiency.",
+    )
+
+
+class _TransmissionCarrierConfigElectricityDistribution(BaseModel):
+    class _ElectricityDistributionEfficiencyConfig(BaseModel):
+        """Configuration for `transmission.electricity_distribution.efficiency` settings."""
+
+        enable: bool = Field(
+            True,
+            description="Apply electricity distribution efficiency.",
+        )
+        efficiency_static: float = Field(
+            0.97,
+            description="Static electricity distribution efficiency.",
+        )
+
+    enable: bool = Field(
+        True,
+        description="Add a simplified representation of the exchange capacity between transmission and distribution grid level through a link.",
+    )
+    cost_factor: float = Field(
+        1.0,
+        description="Multiplies the investment cost of the electricity distribution grid.",
+    )
+    efficiency: _ElectricityDistributionEfficiencyConfig = Field(
+        default_factory=_ElectricityDistributionEfficiencyConfig,
+        description="Electricity distribution efficiency configuration.",
+    )
+
+
+class _TransmissionCarrierConfigHydrogen(_TransmissionCarrierConfigGeneral):
+    retrofit: _HydrogenRetrofitConfig = Field(
+        default_factory=_HydrogenRetrofitConfig,
+        description="Hydrogen pipeline retrofit configuration.",
+    )
+    efficiency: _TransmissionEfficiencyConfig = Field(
+        default_factory=lambda: _TransmissionEfficiencyConfig(
+            efficiency_per_1000km=1,
+            compression_per_1000km=0.018,
+        ),
+        description="Hydrogen pipeline transmission efficiency.",
     )
 
 
@@ -268,8 +370,12 @@ class TransmissionConfig(BaseModel):
         default_factory=_TransmissionCarrierConfigElectricity,
         description="Configuration for electricity transmission grid.",
     )
-    hydrogen: _TransmissionCarrierConfigGeneral = Field(
-        default_factory=_TransmissionCarrierConfigGeneral,
+    electricity_distribution: _TransmissionCarrierConfigElectricityDistribution = Field(
+        default_factory=_TransmissionCarrierConfigElectricityDistribution,
+        description="Configuration for simplified electricity distribution grid.",
+    )
+    hydrogen: _TransmissionCarrierConfigHydrogen = Field(
+        default_factory=_TransmissionCarrierConfigHydrogen,
         description="Configuration for hydrogen transmission candidates.",
     )
     carbon_dioxide: _TransmissionCarrierConfigGeneral = Field(

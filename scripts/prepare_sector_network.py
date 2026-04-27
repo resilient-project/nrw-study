@@ -1525,7 +1525,7 @@ def add_ammonia(
 def insert_electricity_distribution_grid(
     n: pypsa.Network,
     costs: pd.DataFrame,
-    options: dict,
+    cf_transmission: dict,
     pop_layout: pd.DataFrame,
     solar_rooftop_potentials_fn: str,
 ) -> None:
@@ -1544,10 +1544,9 @@ def insert_electricity_distribution_grid(
         Technology cost assumptions with technologies as index and cost parameters
         as columns, including 'fixed' costs, 'lifetime', and component-specific
         parameters like 'efficiency'
-    options : dict
-        Configuration options containing at least:
-        - transmission_efficiency: dict with distribution grid parameters
-        - marginal_cost_storage: float for storage operation costs
+    cf_transmission : dict
+        Transmission configuration containing at least:
+        - electricity_distribution.efficiency: distribution grid loss parameters
     pop_layout : pd.DataFrame
         Population data per node with at least:
         - 'total' column containing population in thousands
@@ -1598,13 +1597,10 @@ def insert_electricity_distribution_grid(
 
     # deduct distribution losses from electricity demand as these are included in total load
     # https://nbviewer.org/github/Open-Power-System-Data/datapackage_timeseries/blob/2020-10-06/main.ipynb
-    if (
-        efficiency := options["transmission_efficiency"]
-        .get("electricity distribution grid", {})
-        .get("efficiency_static")
-    ) and "electricity distribution grid" in options["transmission_efficiency"][
-        "enable"
-    ]:
+    distribution_efficiency = cf_transmission["electricity_distribution"]["efficiency"]
+    if distribution_efficiency["enable"] and (
+        efficiency := distribution_efficiency["efficiency_static"]
+    ):
         logger.info(
             f"Deducting distribution losses from electricity demand: {np.around(100 * (1 - efficiency), decimals=2)}%"
         )
@@ -1701,7 +1697,7 @@ def insert_electricity_distribution_grid(
     )
 
 
-def insert_gas_distribution_costs(
+def insert_gas_distribution_cost(
     n: pypsa.Network,
     costs: pd.DataFrame,
     options: dict,
@@ -1760,7 +1756,7 @@ def insert_gas_distribution_costs(
     n.links.loc[mchp, "capital_cost"] += capital_cost
 
 
-def add_electricity_grid_connection(n, costs):
+def add_electricity_grid_connection_cost(n, costs):
     carriers = ["onwind", "solar", "solar-hsat"]
 
     gens = n.generators.index[n.generators.carrier.isin(carriers)]
@@ -1812,8 +1808,6 @@ def add_h2_gas_infrastructure(
         - hydrogen_fuel_cell : bool
         - hydrogen_turbine : bool
         - hydrogen_underground_storage : bool
-        - gas_network : bool
-        - H2_retrofit : bool
         - methanation : bool
         - coal_cc : bool
         - SMR_cc : bool
@@ -1838,6 +1832,8 @@ def add_h2_gas_infrastructure(
     """
     # Set defaults
     options = options or {}
+    hydrogen_retrofit = cf_transmission["hydrogen"]["retrofit"]
+    gas_connectivity_upgrade = cf_transmission["gas"]["connectivity_upgrade"]
 
     logger.info("Add hydrogen storage")
 
@@ -1945,7 +1941,7 @@ def add_h2_gas_infrastructure(
         lifetime=costs.at[tech, "lifetime"],
     )
 
-    if options["H2_retrofit"]:
+    if hydrogen_retrofit["enable"]:
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
     if cf_transmission["gas"]["enable"]:
@@ -1964,7 +1960,7 @@ def add_h2_gas_infrastructure(
 
         gas_pipes = pd.read_csv(clustered_gas_network_file, index_col=0)
 
-        if options["H2_retrofit"]:
+        if hydrogen_retrofit["enable"]:
             gas_pipes["p_nom_max"] = gas_pipes.p_nom
             gas_pipes["p_nom_min"] = 0.0
             # 0.1 EUR/MWkm/a to prefer decommissioning to address degeneracy
@@ -2045,7 +2041,7 @@ def add_h2_gas_infrastructure(
             )
 
             # apply k_edge_augmentation weighted by length of complement edges
-            k_edge = options["gas_network_connectivity_upgrade"]
+            k_edge = gas_connectivity_upgrade
             if augmentation := list(
                 k_edge_augmentation(G, k_edge, avail=complement_edges.values)
             ):
@@ -2072,7 +2068,7 @@ def add_h2_gas_infrastructure(
                     lifetime=costs.at["CH4 (g) pipeline", "lifetime"],
                 )
 
-    if options["H2_retrofit"]:
+    if hydrogen_retrofit["enable"]:
         logger.info("Add retrofitting options of existing CH4 pipes to H2 pipes.")
 
         fr = "gas pipeline"
@@ -2085,7 +2081,7 @@ def add_h2_gas_infrastructure(
             bus0=h2_pipes["bus0"] + " H2",
             bus1=h2_pipes["bus1"] + " H2",
             p_min_pu=-1.0,  # allow that all H2 retrofit pipelines can be used in both directions
-            p_nom_max=h2_pipes["p_nom"] * options["H2_retrofit_capacity_per_CH4"],
+            p_nom_max=h2_pipes["p_nom"] * hydrogen_retrofit["capacity_per_ch4"],
             p_nom_extendable=True,
             length=h2_pipes["length"],
             capital_cost=costs.at["H2 (g) pipeline repurposed", "capital_cost"]
@@ -4522,7 +4518,6 @@ def add_industry(
     cf_industry: dict,
     cf_transmission: dict,
     investment_year: int,
-    co2_transmission_enable: bool,
 ):
     """
     Add industry and their corresponding carrier buses to the network.
@@ -5064,7 +5059,7 @@ def add_industry(
         unit="t_co2",
     )
 
-    if options["co2_spatial"] or co2_transmission_enable:
+    if options["co2_spatial"] or cf_transmission["carbon_dioxide"]["enable"]:
         p_set = (
             -industrial_demand.loc[nodes, "process emission"].rename(
                 index=lambda x: x + " process emissions"
@@ -6288,10 +6283,9 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "prepare_sector_network",
             opts="",
-            clusters="200",
+            clusters="50",
             sector_opts="",
             planning_horizons="2050",
-            configfiles=["config/config.200.yaml"],
         )
 
     configure_logging(snakemake)  # pylint: disable=E0606
@@ -6507,7 +6501,6 @@ if __name__ == "__main__":
             cf_industry=cf_industry,
             cf_transmission=cf_transmission,
             investment_year=investment_year,
-            co2_transmission_enable=cf_transmission["carbon_dioxide"]["enable"],
         )
 
     if options["shipping"]:
@@ -6552,7 +6545,7 @@ if __name__ == "__main__":
     if not cf_transmission["electricity"]["enable"]:
         decentral(n)
 
-    if not snakemake.config["transmission"]["hydrogen"]["enable"]:
+    if not cf_transmission["hydrogen"]["enable"]:
         remove_h2_network(n)
 
     if cf_transmission["carbon_dioxide"]["enable"]:
@@ -6604,13 +6597,17 @@ if __name__ == "__main__":
         limit,
     )
 
-    maxext = snakemake.params["lines"]["max_extension"]
+    maxext = cf_transmission["electricity"]["lines"]["max_extension"]
     if maxext is not None:
         limit_individual_line_extension(n, maxext)
 
-    if options["electricity_distribution_grid"]:
+    if cf_transmission["electricity_distribution"]["enable"]:
         insert_electricity_distribution_grid(
-            n, costs, options, pop_layout, snakemake.input.solar_rooftop_potentials
+            n,
+            costs,
+            cf_transmission,
+            pop_layout,
+            snakemake.input.solar_rooftop_potentials,
         )
 
     if options["enhanced_geothermal"].get("enable", False):
@@ -6628,15 +6625,25 @@ if __name__ == "__main__":
     if options["imports"]["enable"]:
         add_import_options(n, costs, options, gas_input_nodes)
 
-    if options["gas_distribution_grid"]:
-        insert_gas_distribution_costs(n, costs, options=options)
+    if options["gas_distribution_grid_cost"]:
+        insert_gas_distribution_cost(n, costs, options=options)
 
-    if options["electricity_grid_connection"]:
-        add_electricity_grid_connection(n, costs)
+    if options["electricity_grid_connection_cost"]:
+        add_electricity_grid_connection_cost(n, costs)
 
-    for k, v in options["transmission_efficiency"].items():
-        if k in options["transmission_efficiency"]["enable"]:
-            lossy_bidirectional_links(n, k, v)
+    transmission_efficiency_map = {
+        "DC": cf_transmission["electricity"]["links"]["efficiency"],
+        "H2 pipeline": cf_transmission["hydrogen"]["efficiency"],
+        "gas pipeline": cf_transmission["gas"]["efficiency"],
+        "electricity distribution grid": cf_transmission["electricity_distribution"][
+            "efficiency"
+        ],
+    }
+
+    for carrier, efficiency_config in transmission_efficiency_map.items():
+        if efficiency_config["enable"]:
+            losses = {k: v for k, v in efficiency_config.items() if k != "enable"}
+            lossy_bidirectional_links(n, carrier, losses)
 
     # Workaround: Remove lines with conflicting (and unrealistic) properties
     # cf. https://github.com/PyPSA/pypsa-eur/issues/444
