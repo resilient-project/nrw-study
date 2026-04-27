@@ -1,0 +1,91 @@
+%YAML 1.1
+---
+# yaml-language-server: $schema=./schema.default.json
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#version
+version: v2026.02.0
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
+run:
+  prefix: "nrw"
+  name:
+  - test
+  scenarios:
+    enable: true
+    file: config/scenarios.nrw.yaml
+  disable_progressbar: false
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
+foresight: myopic
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
+scenario:
+  clusters:
+  - adm
+  opts:
+  - ""
+  sector_opts:
+  - ""
+  planning_horizons:
+  - 2035
+  - 2040
+  - 2045
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+countries:
+- AT
+- BE
+- CH
+- CZ
+- DE
+- DK
+- FR
+- GB
+- LU
+- NL
+- "NO"
+- PL
+- SE
+- ES
+- IT
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
+electricity:
+  renewable_carriers:
+  - solar
+  - onwind
+  - "offwind-ac"
+  - "offwind-dc"
+  - hydro
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
+sector:
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  shipping: true
+  aviation: true
+  agriculture: true
+  fossil_fuels: true
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
+clustering:
+  mode: administrative
+  administrative:
+    level: 0
+    countries: 
+      BE: 1
+      DE: 1
+      NL: 1
+      DEA: 3
+  focus_weights: false
+  copperplate_regions: []
+  temporal:
+    resolution_elec: false
+    resolution_sector: 337h
