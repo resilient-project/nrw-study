@@ -84,8 +84,3 @@ clustering:
       DE: 1
       NL: 1
       DEA: 3
-  focus_weights: false
-  copperplate_regions: []
-  temporal:
-    resolution_elec: false
-    resolution_sector: 337h

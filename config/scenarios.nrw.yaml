@@ -11,4 +11,8 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
-test: {}
+test:
+  clustering:
+    temporal:
+      resolution_elec: false
+      resolution_sector: 337h
