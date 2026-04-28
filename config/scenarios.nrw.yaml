@@ -16,3 +16,24 @@ test:
     temporal:
       resolution_elec: false
       resolution_sector: 337h
+
+test-offshore-only:
+  sector:
+    regional_co2_sequestration_potential:
+      enable: true
+      include_onshore: false
+  clustering:
+    temporal:
+      resolution_elec: false
+      resolution_sector: 168h
+
+
+test-offshore-onshore:
+  sector:
+    regional_co2_sequestration_potential:
+      enable: true
+      include_onshore: true
+  clustering:
+    temporal:
+      resolution_elec: false
+      resolution_sector: 168h

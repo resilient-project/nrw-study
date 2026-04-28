@@ -76,9 +76,9 @@ if __name__ == "__main__":
     # for plotting change bus to location
     n.buses["location"] = n.buses["location"].replace("", "EU").fillna("EU")
 
-    # set location of buses to EU if location is empty and set x and y coordinates to bus location
-    n.buses["x"] = n.buses.location.map(n.buses.x)
-    n.buses["y"] = n.buses.location.map(n.buses.y)
+    # set location of buses to location coordinates, but keep original coords if location lookup fails (e.g., offshore)
+    n.buses["x"] = n.buses.location.map(n.buses.x).fillna(n.buses["x"])
+    n.buses["y"] = n.buses.location.map(n.buses.y).fillna(n.buses["y"])
 
     # bus_size according to energy balance of bus carrier
     eb = n.statistics.energy_balance(bus_carrier=carrier, groupby=["bus", "carrier"])
