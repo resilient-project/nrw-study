@@ -1166,6 +1166,11 @@ solving:
     overlap: 0
     post_discretization:
       enable: false
+      carriers:
+      - AC
+      - DC
+      - H2 pipeline
+      - gas pipeline
       line_unit_size: 1700
       line_threshold: 0.3
       link_unit_size:

@@ -132,12 +132,15 @@ clustering:
 
 solving:
   options:
-    skip_iterations: true # set to true skips iterations and disables post_discretization
+    skip_iterations: false # set to true skips iterations and disables post_discretization
     min_iterations: 1
     max_iterations: 1
     post_discretization:
-      enable: false # optionally disable
+      enable: true
+      carriers:
+      - CO2 pipeline
       link_unit_size:
-        CO2 pipeline: 1430
+        CO2 pipeline: 1328
       link_threshold:
-        CO2 pipeline: 0.1
+        CO2 pipeline: 0.3
+      fractional_last_unit_size: false

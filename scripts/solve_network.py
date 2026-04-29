@@ -1469,17 +1469,59 @@ def create_optimization_model(
     extra_functionality(n, n.snapshots, planning_horizons)
 
 
+def _clean_post_discretization_kwargs(kwargs):
+    kwargs = kwargs.copy()
+    carriers = kwargs.pop("carriers", None)
+
+    if carriers is None:
+        return kwargs
+
+    if not carriers:
+        kwargs["line_unit_size"] = None
+        kwargs["line_threshold"] = None
+        kwargs["link_unit_size"] = None
+        kwargs["link_threshold"] = None
+
+        return kwargs
+
+    line_unit_size = kwargs.get("line_unit_size")
+    line_threshold = kwargs.get("line_threshold")
+    link_unit_size = kwargs.get("link_unit_size") or {}
+    link_threshold = kwargs.get("link_threshold") or {}
+
+    if "AC" not in carriers:
+        line_unit_size = None
+        line_threshold = None
+
+    updated_link_unit_size = {}
+    updated_link_threshold = {}
+
+    for carrier in carriers:
+        if carrier in link_unit_size:
+            updated_link_unit_size[carrier] = link_unit_size[carrier]
+        if carrier in link_threshold:
+            updated_link_threshold[carrier] = link_threshold[carrier]
+
+    kwargs["line_unit_size"] = line_unit_size
+    kwargs["line_threshold"] = line_threshold
+    kwargs["link_unit_size"] = updated_link_unit_size or None
+    kwargs["link_threshold"] = updated_link_threshold or None
+
+    return kwargs
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
+            "solve_sector_network_myopic",
             opts="",
-            clusters="5",
-            configfiles="config/test/config.overnight.yaml",
+            clusters="adm",
+            configfiles="config/config.nrw.yaml",
             sector_opts="",
-            planning_horizons="2030",
+            planning_horizons="2035",
+            run="test-offshore-only",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1570,6 +1612,9 @@ if __name__ == "__main__":
                 log_fn=snakemake.log.solver,
                 mode="iterative",
             )
+
+            # Note nrw-study: Allow custom post-discretisation
+            all_kwargs = _clean_post_discretization_kwargs(all_kwargs)
 
             n.config = snakemake.config
             n.params = snakemake.params

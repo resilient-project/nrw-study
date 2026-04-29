@@ -25,7 +25,7 @@ test-offshore-only:
   clustering:
     temporal:
       resolution_elec: false
-      resolution_sector: 168h
+      resolution_sector: 337h
 
 
 test-offshore-onshore:
@@ -36,4 +36,4 @@ test-offshore-onshore:
   clustering:
     temporal:
       resolution_elec: false
-      resolution_sector: 168h
+      resolution_sector: 337h

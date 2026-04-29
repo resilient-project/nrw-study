@@ -367,6 +367,21 @@ plotting:
       map_style: road
       tooltip: true
 
+  carbon_dioxide_network:
+    unit: Mtpa
+    unit_conversion: 1_000_000
+    bus_factor: 0.015
+    bus_sizes:
+    - 50
+    - 10
+    branch_factor: 0.4
+    branch_sizes:
+    - 1328
+    - 5312
+    branch_unit_conversion: 1328
+    branch_unit: "x ⌀70cm"
+
+
   nice_names:
     OCGT: "Open-Cycle Gas"
     CCGT: "Combined-Cycle Gas"

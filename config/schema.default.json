@@ -5335,26 +5335,74 @@
                   "description": "Switch to enable post-discretization of the network. Disabled by default.",
                   "type": "boolean"
                 },
+                "carriers": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": [
+                    "AC",
+                    "DC",
+                    "H2 pipeline",
+                    "gas pipeline"
+                  ],
+                  "description": "List of link carriers to which post-discretization should be applied."
+                },
                 "line_unit_size": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 1700,
-                  "description": "Discrete unit size of lines in MW.",
-                  "type": "number"
+                  "description": "Discrete unit size of lines in MW."
                 },
                 "line_threshold": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 0.3,
-                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-                  "type": "number"
+                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
                 },
                 "link_unit_size": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
                   "type": "object"
                 },
                 "link_threshold": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
                   "type": "object"
@@ -7750,26 +7798,74 @@
           "description": "Switch to enable post-discretization of the network. Disabled by default.",
           "type": "boolean"
         },
+        "carriers": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            "AC",
+            "DC",
+            "H2 pipeline",
+            "gas pipeline"
+          ],
+          "description": "List of link carriers to which post-discretization should be applied."
+        },
         "line_unit_size": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 1700,
-          "description": "Discrete unit size of lines in MW.",
-          "type": "number"
+          "description": "Discrete unit size of lines in MW."
         },
         "line_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 0.3,
-          "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-          "type": "number"
+          "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
         },
         "link_unit_size": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
           "type": "object"
         },
         "link_threshold": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
           "type": "object"
@@ -8377,26 +8473,74 @@
               "description": "Switch to enable post-discretization of the network. Disabled by default.",
               "type": "boolean"
             },
+            "carriers": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [
+                "AC",
+                "DC",
+                "H2 pipeline",
+                "gas pipeline"
+              ],
+              "description": "List of link carriers to which post-discretization should be applied."
+            },
             "line_unit_size": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "default": 1700,
-              "description": "Discrete unit size of lines in MW.",
-              "type": "number"
+              "description": "Discrete unit size of lines in MW."
             },
             "line_threshold": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "default": 0.3,
-              "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-              "type": "number"
+              "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
             },
             "link_unit_size": {
               "additionalProperties": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
               "type": "object"
             },
             "link_threshold": {
               "additionalProperties": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
               "type": "object"
@@ -13350,26 +13494,74 @@
                   "description": "Switch to enable post-discretization of the network. Disabled by default.",
                   "type": "boolean"
                 },
+                "carriers": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": [
+                    "AC",
+                    "DC",
+                    "H2 pipeline",
+                    "gas pipeline"
+                  ],
+                  "description": "List of link carriers to which post-discretization should be applied."
+                },
                 "line_unit_size": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 1700,
-                  "description": "Discrete unit size of lines in MW.",
-                  "type": "number"
+                  "description": "Discrete unit size of lines in MW."
                 },
                 "line_threshold": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 0.3,
-                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-                  "type": "number"
+                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
                 },
                 "link_unit_size": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
                   "type": "object"
                 },
                 "link_threshold": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
                   "type": "object"
