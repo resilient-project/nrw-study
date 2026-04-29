@@ -1808,3 +1808,35 @@ rule prepare_sector_network:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
         scripts("prepare_sector_network.py")
+
+
+rule build_european_co2_pipelines:
+    input:
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"), 
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
+        scope=resources("europe_shape.geojson"),
+        kml="data/nrw/oge-grid/CCUCCS Projektsammlung.kml",
+        transport_volume="data/nrw/oge-grid/transport_volume.csv",
+        co2_sequestration_potential="data/nrw/oge-grid/co2_sequestration_potential.csv"
+    output:
+        buses_offshore=resources(
+            "european_co2_pipelines/buses_offshore_s_{clusters}_{opts}.csv"
+        ),
+        links_co2_pipeline=resources(
+            "european_co2_pipelines/links_co2_pipeline_s_{clusters}_{opts}.csv"
+        ),
+        stores_co2=resources(
+            "european_co2_pipelines/stores_co2_s_{clusters}_{opts}.csv"
+        ),
+    log:
+        logs("build_european_co2_pipelines_{clusters}_{opts}.log"),
+    benchmark:
+        benchmarks("build_european_co2_pipelines_{clusters}_{opts}"),
+    threads: 1
+    resources:
+        mem_mb=2000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_european_co2_pipelines.py"
