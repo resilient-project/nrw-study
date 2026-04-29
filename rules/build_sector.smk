@@ -1812,13 +1812,13 @@ rule prepare_sector_network:
 
 rule build_european_co2_pipelines:
     input:
-        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"), 
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
         regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
         regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
         scope=resources("europe_shape.geojson"),
         kml="data/nrw/oge-grid/CCUCCS Projektsammlung.kml",
         transport_volume="data/nrw/oge-grid/transport_volume.csv",
-        co2_sequestration_potential="data/nrw/oge-grid/co2_sequestration_potential.csv"
+        co2_sequestration_potential="data/nrw/oge-grid/co2_sequestration_potential.csv",
     output:
         buses_offshore=resources(
             "european_co2_pipelines/buses_offshore_s_{clusters}_{opts}.csv"
@@ -1832,11 +1832,11 @@ rule build_european_co2_pipelines:
     log:
         logs("build_european_co2_pipelines_{clusters}_{opts}.log"),
     benchmark:
-        benchmarks("build_european_co2_pipelines_{clusters}_{opts}"),
+        benchmarks("build_european_co2_pipelines_{clusters}_{opts}")
+    conda:
+        "../envs/environment.yaml"
     threads: 1
     resources:
         mem_mb=2000,
-    conda:
-        "../envs/environment.yaml"
     script:
         "../scripts/build_european_co2_pipelines.py"

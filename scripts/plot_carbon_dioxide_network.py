@@ -18,10 +18,14 @@ from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
+
 def load_projection(plotting_params):
-    proj_kwargs = dict(plotting_params.get("projection", {"name": "EqualEarth"}))  # shallow copy
+    proj_kwargs = dict(
+        plotting_params.get("projection", {"name": "EqualEarth"})
+    )  # shallow copy
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
+
 
 @retry
 def plot_co2_map(n):
@@ -37,11 +41,13 @@ def plot_co2_map(n):
     linewidth_factor = 2e3
 
     bus_carrier = "co2 stored"
-    transmission_carriers = get_transmission_carriers(plot_network, bus_carrier=bus_carrier).rename(
-        {"name": "carrier"}
-    )
+    transmission_carriers = get_transmission_carriers(
+        plot_network, bus_carrier=bus_carrier
+    ).rename({"name": "carrier"})
 
-    eb = plot_network.statistics.energy_balance(bus_carrier=bus_carrier, groupby=["bus", "carrier"])
+    eb = plot_network.statistics.energy_balance(
+        bus_carrier=bus_carrier, groupby=["bus", "carrier"]
+    )
 
     components = transmission_carriers.unique("component")
     carriers = transmission_carriers.unique("carrier")
@@ -55,16 +61,23 @@ def plot_co2_map(n):
     carrier_colors = n.carriers.color.copy().replace("", "grey")
 
     colors = (
-        bus_size.index.get_level_values("carrier").unique().to_series().map(carrier_colors)
+        bus_size.index.get_level_values("carrier")
+        .unique()
+        .to_series()
+        .map(carrier_colors)
     )
 
     co2_bus_carriers = ["co2 stored", "co2 sequestered"]
-    plot_buses = plot_network.buses.loc[plot_network.buses.carrier.isin(co2_bus_carriers)].copy()
+    plot_buses = plot_network.buses.loc[
+        plot_network.buses.carrier.isin(co2_bus_carriers)
+    ].copy()
 
     link_colors = {
-        "CO2 pipeline":    tech_colors["CO2 pipeline"],
+        "CO2 pipeline": tech_colors["CO2 pipeline"],
     }
-    plot_links = plot_network.links.loc[plot_network.links.carrier.isin(link_colors)].copy()
+    plot_links = plot_network.links.loc[
+        plot_network.links.carrier.isin(link_colors)
+    ].copy()
 
     plot_network.buses = plot_buses
     plot_network.links = plot_links
@@ -148,7 +161,10 @@ def plot_co2_map(n):
     if legend_bus_size is not None:
         add_legend_semicircles(
             ax,
-            [s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR for s in legend_bus_size],
+            [
+                s * bus_size_factor * SEMICIRCLE_CORRECTION_FACTOR
+                for s in legend_bus_size
+            ],
             [f"{s} {carrier_unit}" for s in legend_bus_size],
             patch_kw={"color": "#666"},
             legend_kw={
@@ -162,7 +178,10 @@ def plot_co2_map(n):
         add_legend_lines(
             ax,
             [s / linewidth_factor for s in legend_branch_sizes],
-            [f"{s/branch_unit_conversion} {branch_unit}" for s in legend_branch_sizes],
+            [
+                f"{s / branch_unit_conversion} {branch_unit}"
+                for s in legend_branch_sizes
+            ],
             patch_kw=dict(color="lightgrey", solid_capstyle="round"),
             legend_kw={"bbox_to_anchor": (0.25, 1), **legend_kw},
         )

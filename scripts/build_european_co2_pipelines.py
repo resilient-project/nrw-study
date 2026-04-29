@@ -20,21 +20,20 @@ from pypsa.geo import haversine_pts
 from shapely import segmentize, unary_union
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, MultiPoint, Point
-from shapely.ops import nearest_points, linemerge
+from shapely.ops import linemerge, nearest_points
 
 from scripts._helpers import (
     configure_logging,
     set_scenario_config,
 )
 
-
 logger = logging.getLogger(__name__)
 
-CLUSTER_TOL = 25000 # in meters
+CLUSTER_TOL = 25000  # in meters
 DISTANCE_CRS = "EPSG:3035"
 GEO_CRS = "EPSG:4326"
-OFFSHORE_BUS_RADIUS = 10000 # in meters
-COASTAL_DISTANCE = 50000 # in meters
+OFFSHORE_BUS_RADIUS = 10000  # in meters
+COASTAL_DISTANCE = 50000  # in meters
 PIPELINE_LABEL = "Infrastruktur"
 REGIONS_ONSHORE_BUFFER = 30000
 PIPELINE_LABELS = {
@@ -58,7 +57,7 @@ PIPELINE_LABELS = {
 PIPELINE_COLS = ["Name", "description", "geometry"]
 STORE_LABEL = "Speicherstätten"
 STORE_LABELS = {
-    "Acorn - East May Storage Site": "East Mey",
+    "Acorn - East May Storage Site": "East Mey",  # codespell:ignore
     "Acorn - South Storage Site": "Acorn",
     "Aramis Projekt": "Aramis",
     "CarbonConnect - PCI Liste": "CarbonConnect",
@@ -68,7 +67,7 @@ STORE_LABELS = {
     "N-LiTES - Aquifer Aurora - PMI Liste": "N-Lites",
 }
 STORE_COLS = ["Name", "description", "geometry"]
-MAX_STORE_DISTANCE = 10000 # in meters
+MAX_STORE_DISTANCE = 10000  # in meters
 
 
 def clean_text(s):
@@ -98,11 +97,9 @@ def create_new_buses(
     offset: int = 0,
 ):
     source_crs = gdf.crs
-    
+
     buffered_regions = (
-        regions_onshore
-        .buffer(regions_onshore_buffer)
-        .union_all()  # Coastal buffer
+        regions_onshore.buffer(regions_onshore_buffer).union_all()  # Coastal buffer
     )
 
     # filter all rows in gdf where at least one of the geometry linestring endings is outside unary_union(regions_onshore)
@@ -118,7 +115,7 @@ def create_new_buses(
 
     gdf_points = gpd.GeoDataFrame(
         geometry=[geom for geom in list_points.geoms],
-        crs = source_crs,
+        crs=source_crs,
     )
 
     gdf_points["geometry"] = gdf_points.buffer(tol)
@@ -128,19 +125,20 @@ def create_new_buses(
     # split into separate polygons
     gdf_points = gdf_points.explode().reset_index(drop=True)
 
-    gdf_points["poi"] = (
-        gdf_points["geometry"]
-        .apply(lambda polygon: polylabel(polygon, tolerance=tol / 2))
+    gdf_points["poi"] = gdf_points["geometry"].apply(
+        lambda polygon: polylabel(polygon, tolerance=tol / 2)
     )
 
     # Extract x and y coordinates into separate columns
     gdf_points_geo = gdf_points[["poi"]].copy()
-    gdf_points_geo = gpd.GeoDataFrame(gdf_points_geo, geometry="poi", crs=gdf_points.crs)
+    gdf_points_geo = gpd.GeoDataFrame(
+        gdf_points_geo, geometry="poi", crs=gdf_points.crs
+    )
     gdf_points_geo.to_crs(GEO_CRS, inplace=True)
     gdf_points["x"] = gdf_points_geo["poi"].x
     gdf_points["y"] = gdf_points_geo["poi"].y
     gdf_points["name"] = gdf_points.apply(
-        lambda x: f"OFFSHORE {int(x.name)+1+offset}", axis=1
+        lambda x: f"OFFSHORE {int(x.name) + 1 + offset}", axis=1
     )
     gdf_points.set_index("name", inplace=True)
     gdf_points["carrier"] = carrier
@@ -169,7 +167,11 @@ def explode_linestrings_to_segments(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         for line in lines:
             coords = list(line.coords)
             for a, b in zip(coords[:-1], coords[1:]):
-                rec = {**row._asdict(), "geometry": LineString([a, b]), "group_id": group_id}
+                rec = {
+                    **row._asdict(),
+                    "geometry": LineString([a, b]),
+                    "group_id": group_id,
+                }
                 seg_records.append(rec)
     return gpd.GeoDataFrame(seg_records, crs=gdf.crs)
 
@@ -181,10 +183,12 @@ def split_multilinestring(row):
     attributes from the original row. Non-MultiLineString rows are returned as-
     is.
 
-    Parameters:
+    Parameters
+    ----------
         row (pd.Series): A pandas Series containing a 'geometry' column with a MultiLineString or LineString.
 
-    Returns:
+    Returns
+    -------
         row (pd.Series): A row containing a LineString geometry including their original attributes.
     """
     geom = row["geometry"]
@@ -208,7 +212,8 @@ def split_multilinestring(row):
 
 
 def find_points_on_line_overpassing_region(
-    link, regions,
+    link,
+    regions,
 ):
 
     overlap = gpd.overlay(link, regions)
@@ -239,7 +244,7 @@ def split_to_overpassing_segments(
     distance_crs: str = DISTANCE_CRS,
 ):
     logger.info("Splitting linestrings into segments that connect overpassing regions.")
-    buffer_radius = 1 # m
+    buffer_radius = 1  # m
 
     ## Delete later
     gdf_split = gdf.copy().to_crs(distance_crs)
@@ -252,10 +257,17 @@ def split_to_overpassing_segments(
     )
 
     # Do the following splitting operation only for lines that overpass multiple regions
-    crosses_multiple = gdf_split.geometry.apply(lambda line: count_intersections(line, regions_dist.geometry)) > 2
+    crosses_multiple = (
+        gdf_split.geometry.apply(
+            lambda line: count_intersections(line, regions_dist.geometry)
+        )
+        > 2
+    )
 
     if crosses_multiple.any():
-        gdf_points = find_points_on_line_overpassing_region(gdf_split.loc[crosses_multiple], regions_dist)
+        gdf_points = find_points_on_line_overpassing_region(
+            gdf_split.loc[crosses_multiple], regions_dist
+        )
         gdf_points = gpd.GeoDataFrame(gdf_points, crs=distance_crs)
 
         gdf_points["buffer"] = gdf_points["geometry"].buffer(buffer_radius)
@@ -296,7 +308,7 @@ def map_endpoints_to_closest_region(
 ):
     """
     Maps endpoints in a GeoDataFrame to their closest regions within a specified maximum distance.
-    
+
     Parameters
     ----------
     gdf : GeoDataFrame
@@ -304,14 +316,14 @@ def map_endpoints_to_closest_region(
     regions : GeoDataFrame
         GeoDataFrame containing region geometries with a 'name' column.
     max_distance : float, optional
-        Maximum allowed distance between points and regions. Points farther than this 
+        Maximum allowed distance between points and regions. Points farther than this
         will have their region set to None. Default is OFFSHORE_BUS_RADIUS.
     coords : int, optional
         Index of the coordinate to extract from line geometries when lines=True. Default is 0.
     lines : bool, optional
         Whether gdf contains line geometries. If True, points are extracted from line
         geometries using coords. If False, gdf geometries are treated as points. Default is True.
-    
+
     Returns
     -------
     pandas.Series
@@ -396,10 +408,12 @@ def create_unique_ids(df):
     two-digit numerical suffix "-01", "-02", etc. only if there are multiple
     geometries for the same project.
 
-    Parameters:
+    Parameters
+    ----------
         df (pd.DataFrame): The input DataFrame.
 
-    Returns:
+    Returns
+    -------
         df (pd.DataFrame): An indexed DataFrame with unique IDs for each project.
     """
     df = df.copy().reset_index()
@@ -412,15 +426,11 @@ def create_unique_ids(df):
 
     # Add a two-digit suffix if the id appears more than once
     df["suffix"] = df.apply(
-        lambda row: (
-            f"-{str(row['count']).zfill(2)}"
-            if counts[row["id"]] > 1
-            else ""
-        ),
+        lambda row: f"-{str(row['count']).zfill(2)}" if counts[row["id"]] > 1 else "",
         axis=1,
     )
 
-    # Create the 'id' 
+    # Create the 'id'
     df["id"] = df["id"] + df["suffix"]
 
     # Clean up by dropping the helper columns
@@ -441,9 +451,12 @@ def make_unidirectional_offshore_links(pipelines, buses_co2_offshore):
     idx = (
         pipelines.loc[
             pipelines.apply(
-                lambda row: (row["bus0"] in offshore_bus_names)
-                ^ (row["bus1"] in offshore_bus_names), axis=1,
-            ), 
+                lambda row: (
+                    (row["bus0"] in offshore_bus_names)
+                    ^ (row["bus1"] in offshore_bus_names)
+                ),
+                axis=1,
+            ),
         ]
     ).index
 
@@ -453,7 +466,7 @@ def make_unidirectional_offshore_links(pipelines, buses_co2_offshore):
             return pd.Series({"bus0": row["bus1"], "bus1": row["bus0"]})
         else:
             return pd.Series({"bus0": row["bus0"], "bus1": row["bus1"]})
-    
+
     pipelines.loc[idx, ["bus0", "bus1"]] = pipelines.loc[idx].apply(swap_buses, axis=1)
 
     # Set p_min_pu to 0 for these links
@@ -466,16 +479,22 @@ def aggregate_links(gdf):
 
     crs = gdf.crs
 
-    gdf['bus0'], gdf['bus1'] = zip(*gdf[['bus0', 'bus1']].apply(lambda x: sorted(x), axis=1))
+    gdf["bus0"], gdf["bus1"] = zip(
+        *gdf[["bus0", "bus1"]].apply(lambda x: sorted(x), axis=1)
+    )
 
-    gdf = gdf.groupby(["label", "bus0", "bus1"]).agg(
-        {
-            "length": "max",
-            "p_nom": "sum",
-            "underwater_fraction": "mean",
-            "geometry": "first",
-        }
-    ).reset_index()
+    gdf = (
+        gdf.groupby(["label", "bus0", "bus1"])
+        .agg(
+            {
+                "length": "max",
+                "p_nom": "sum",
+                "underwater_fraction": "mean",
+                "geometry": "first",
+            }
+        )
+        .reset_index()
+    )
 
     gdf = gpd.GeoDataFrame(gdf, geometry="geometry", crs=crs)
 
@@ -500,7 +519,7 @@ if __name__ == "__main__":
             clusters="adm",
             opts="",
             run="test-offshore-only",
-            configfiles=["config/config.nrw.yaml"],        
+            configfiles=["config/config.nrw.yaml"],
         )
 
     configure_logging(snakemake)
@@ -518,9 +537,17 @@ if __name__ == "__main__":
 
     # Import PyPSA-Eur regular data
     n = pypsa.Network(snakemake.input.network)
-    buses_coords = n.buses.loc[n.buses.carrier=="AC", ["x", "y"]].copy()
-    regions_onshore = gpd.read_file(snakemake.input.regions_onshore).set_index("name").to_crs(DISTANCE_CRS)
-    regions_offshore = gpd.read_file(snakemake.input.regions_offshore).set_index("name").to_crs(DISTANCE_CRS)
+    buses_coords = n.buses.loc[n.buses.carrier == "AC", ["x", "y"]].copy()
+    regions_onshore = (
+        gpd.read_file(snakemake.input.regions_onshore)
+        .set_index("name")
+        .to_crs(DISTANCE_CRS)
+    )
+    regions_offshore = (
+        gpd.read_file(snakemake.input.regions_offshore)
+        .set_index("name")
+        .to_crs(DISTANCE_CRS)
+    )
     scope = gpd.read_file(snakemake.input.scope).to_crs(DISTANCE_CRS)
 
     # Import KML file by layers
@@ -541,7 +568,7 @@ if __name__ == "__main__":
     scope_union = scope.union_all()
     gdf = gdf[gdf.geometry.apply(lambda x: x.intersects(scope_union))]
 
-    # Pipeline processing 
+    # Pipeline processing
     pipelines = gdf[
         (gdf["layer"] == PIPELINE_LABEL)
         & (gdf.geometry.type.isin(["LineString", "MultiLineString"]))
@@ -563,11 +590,17 @@ if __name__ == "__main__":
     pipelines = pipelines.drop_duplicates(subset=["Name", "geometry"])
 
     # Create a gdf of all endpoints of pipelines
-    offshore_endpoints = pipelines.geometry.apply(lambda x: MultiPoint([Point(x.coords[0]), Point(x.coords[-1])]))
-    offshore_endpoints = gpd.GeoDataFrame(geometry=offshore_endpoints.explode().reset_index(drop=True), crs=pipelines.crs)
-    
+    offshore_endpoints = pipelines.geometry.apply(
+        lambda x: MultiPoint([Point(x.coords[0]), Point(x.coords[-1])])
+    )
+    offshore_endpoints = gpd.GeoDataFrame(
+        geometry=offshore_endpoints.explode().reset_index(drop=True), crs=pipelines.crs
+    )
+
     # Keep only endpoints that are outside onshore regions
-    regions_onshore_union_buffer = regions_onshore.union_all().buffer(5000) # buffer to 5000 m to avoid precision issues
+    regions_onshore_union_buffer = regions_onshore.union_all().buffer(
+        5000
+    )  # buffer to 5000 m to avoid precision issues
 
     offshore_endpoints = offshore_endpoints[
         offshore_endpoints.geometry.apply(
@@ -587,17 +620,16 @@ if __name__ == "__main__":
     ]
     # Remove duplicate geometries and reset index
     offshore_endpoints = offshore_endpoints.drop_duplicates().reset_index(drop=True)
-    
-    # add column "intersects_offshore_endpoints" that containts the index of offshore_endpoints that each pipeline intersects
+
+    # add column "intersects_offshore_endpoints" that contains the index of offshore_endpoints that each pipeline intersects
     pipelines["intersects_offshore_endpoints"] = pipelines.geometry.apply(
         lambda line: offshore_endpoints.index[
             offshore_endpoints.geometry.apply(lambda pt: line.intersects(pt))
         ].tolist()
     )
-    pipelines["intersects_offshore_endpoints"] = (
-        pipelines["intersects_offshore_endpoints"]
-        .apply(lambda x: int(x[0]) if len(x) > 0 else None)
-    )
+    pipelines["intersects_offshore_endpoints"] = pipelines[
+        "intersects_offshore_endpoints"
+    ].apply(lambda x: int(x[0]) if len(x) > 0 else None)
 
     b_merge_candidates = pipelines["intersects_offshore_endpoints"].notna()
     merge_candidates = pipelines.loc[b_merge_candidates].copy()
@@ -606,11 +638,17 @@ if __name__ == "__main__":
     pipelines = pipelines.loc[~b_merge_candidates]
 
     # Group by group_id, intersects_offshore_endpoints and merge linestrings in geometry columns. Rest of columns take the first value
-    merged = merge_candidates.groupby(["group_id", "intersects_offshore_endpoints", "Name"]).agg({
-        "description": "first",
-        "length": "sum",
-        "geometry": safe_linemerge,
-    }).reset_index()
+    merged = (
+        merge_candidates.groupby(["group_id", "intersects_offshore_endpoints", "Name"])
+        .agg(
+            {
+                "description": "first",
+                "length": "sum",
+                "geometry": safe_linemerge,
+            }
+        )
+        .reset_index()
+    )
     merged = gpd.GeoDataFrame(merged, geometry="geometry", crs=pipelines.crs)
 
     # Append merged back to pipelines
@@ -624,21 +662,40 @@ if __name__ == "__main__":
     )
 
     # Manually add CarbonConnect offshore bus to avoid pipeline to be connected to GB offshore bus
-    buses_co2_offshore.loc["OFFSHORE CARBONCONNECT"] = pd.Series({
-        "x": 1.5712774000000052,
-        "y": 52.86248229754098,
-        "carrier": "AC",
-    })
-    g_cc = gpd.GeoSeries([Point(buses_co2_offshore.loc["OFFSHORE CARBONCONNECT", ["x", "y"]].values)], crs=GEO_CRS).to_crs(DISTANCE_CRS).buffer(5000)
+    buses_co2_offshore.loc["OFFSHORE CARBONCONNECT"] = pd.Series(
+        {
+            "x": 1.5712774000000052,
+            "y": 52.86248229754098,
+            "carrier": "AC",
+        }
+    )
+    g_cc = (
+        gpd.GeoSeries(
+            [
+                Point(
+                    buses_co2_offshore.loc["OFFSHORE CARBONCONNECT", ["x", "y"]].values
+                )
+            ],
+            crs=GEO_CRS,
+        )
+        .to_crs(DISTANCE_CRS)
+        .buffer(5000)
+    )
 
     buses_co2_offshore.loc["OFFSHORE CARBONCONNECT", "geometry"] = g_cc.iloc[0]
-    buses_co2_offshore = gpd.GeoDataFrame(buses_co2_offshore, geometry="geometry", crs=DISTANCE_CRS)
+    buses_co2_offshore = gpd.GeoDataFrame(
+        buses_co2_offshore, geometry="geometry", crs=DISTANCE_CRS
+    )
 
     # Append to existing buses
     buses_coords = pd.concat([buses_coords, buses_co2_offshore[["x", "y"]]])
 
-    pipelines = map_to_closest_region(pipelines, buses_co2_offshore, max_distance=OFFSHORE_BUS_RADIUS)
-    pipelines = map_to_closest_region(pipelines, regions_onshore, max_distance=COASTAL_DISTANCE)
+    pipelines = map_to_closest_region(
+        pipelines, buses_co2_offshore, max_distance=OFFSHORE_BUS_RADIUS
+    )
+    pipelines = map_to_closest_region(
+        pipelines, regions_onshore, max_distance=COASTAL_DISTANCE
+    )
 
     # Calculate haversine distances
     pipelines = calculate_haversine_distance(buses_coords, pipelines, length_factor)
@@ -648,7 +705,7 @@ if __name__ == "__main__":
         pipelines,
         regions_offshore,
     )
-    
+
     ### Clean up
     # Drop rows that are na in bus0 or bus1
     pipelines = pipelines.dropna(subset=["bus0", "bus1"])
@@ -680,7 +737,6 @@ if __name__ == "__main__":
     pipelines["carrier"] = "CO2 pipeline"
     pipelines["underground"] = "t"
 
-
     ### STORES
     # Store processing
     stores = gdf[
@@ -696,11 +752,17 @@ if __name__ == "__main__":
 
     # Map model names
     stores["label"] = stores["Name"].map(STORE_LABELS)
-    
+
     # Group by label
-    stores = stores.groupby("label").agg({
-        "geometry": "first",
-    }).reset_index()
+    stores = (
+        stores.groupby("label")
+        .agg(
+            {
+                "geometry": "first",
+            }
+        )
+        .reset_index()
+    )
     stores = gpd.GeoDataFrame(stores, geometry="geometry", crs=gdf.crs)
 
     # Map to closest offshore region
@@ -718,7 +780,7 @@ if __name__ == "__main__":
 
     # Add missing columns
     stores["carrier"] = "co2 sequestered"
-    
+
     # index, rename to id
     stores = stores.rename(columns={"label": "id"})
     stores.set_index("id", inplace=True)
@@ -727,7 +789,6 @@ if __name__ == "__main__":
     buses_co2_offshore.to_csv(snakemake.output.buses_offshore, index=True)
     pipelines.to_csv(snakemake.output.links_co2_pipeline, index=True)
     stores.to_csv(snakemake.output.stores_co2, index=True)
-
 
     # # Debugging
     # map = regions_onshore.explore()
@@ -745,7 +806,7 @@ if __name__ == "__main__":
     # missing_bus0 = pipelines_ptp["point0"].isna()
     # pipelines_ptp.loc[missing_bus0, "point0"] = pipelines_ptp.loc[missing_bus0].bus0.map(buses_co2_offshore.apply(lambda row: Point(row["x"], row["y"]), axis=1))
     # missing_bus1 = pipelines_ptp["point1"].isna()
-    # pipelines_ptp.loc[missing_bus1, "point1"] = pipelines_ptp.loc[missing_bus1].bus1.map(buses_co2_offshore.apply(lambda row: Point(row["x"], row["y"]), axis=1))   
+    # pipelines_ptp.loc[missing_bus1, "point1"] = pipelines_ptp.loc[missing_bus1].bus1.map(buses_co2_offshore.apply(lambda row: Point(row["x"], row["y"]), axis=1))
     # pipelines_ptp["geometry"] = pipelines_ptp.apply(
     #     lambda row: LineString([row["point0"], row["point1"]]), axis=1
     # )
