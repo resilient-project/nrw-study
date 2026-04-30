@@ -46,11 +46,13 @@ def allocate_sequestration_potential(
     )
 
     regions_indexed = regions.set_index(["name", "offshore"])
-    coordinates = regions_indexed.apply(
+    coordinates = regions_indexed.to_crs(3035).apply(
         lambda x: polylabel(x.geometry, tolerance=10), axis=1
     )
-    result["x"] = coordinates.apply(lambda p: p.x)
-    result["y"] = coordinates.apply(lambda p: p.y)
+    coords_gdf = gpd.GeoSeries(coordinates, crs=3035).to_crs(4326)
+    result["x"] = coords_gdf.apply(lambda p: p.x)
+    result["y"] = coords_gdf.apply(lambda p: p.y)
+
     return result
 
 
@@ -62,7 +64,7 @@ if __name__ == "__main__":
             "build_clustered_co2_sequestration_potentials",
             clusters="adm",
             configfiles=["config/config.nrw.yaml"],
-            run="test",
+            run="test-offshore-only",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -89,3 +91,9 @@ if __name__ == "__main__":
 
     s = s[s["potential"] > cf["min_size"]]
     s.to_csv(snakemake.output.sequestration_potential)
+
+    # gdf of s
+    gdf = gpd.GeoDataFrame(s, geometry=gpd.points_from_xy(s.x, s.y), crs="EPSG:4326")
+
+    map = regions.explore()
+    map = gdf.explore(m=map, color="red")

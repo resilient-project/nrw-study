@@ -269,6 +269,9 @@ transmission:
     max_offshore_haversine_distance: .inf
     length_factor: 1.25
     cost_factor: 1
+    projects:
+      enable: false
+      extendable: false
   gas:
     enable: true
     connectivity_upgrade: 1

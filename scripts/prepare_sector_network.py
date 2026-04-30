@@ -1042,6 +1042,7 @@ def add_co2_network(
         p_nom_extendable=True,
         length=scaled_length.values,
         capital_cost=capital_cost.values,
+        marginal_cost=0.1,  # to avoid looping
         carrier="CO2 pipeline",
         lifetime=costs.at["CO2 pipeline", "lifetime"],
     )
@@ -6365,6 +6366,147 @@ def add_import_options(
         )
 
 
+def add_co2_projects(
+    n,
+    costs,
+    buses_offshore,
+    pipelines,
+    stores,
+    options,
+    build_year,
+    co2_network_cost_factor=1.0,
+    extendable=False,
+):
+    """Add planned European CO2 pipeline projects to the network."""
+
+    ### Add offshore buses
+    buses_offshore = pd.read_csv(buses_offshore, index_col=0, dtype={"bus": str})
+    pipelines = pd.read_csv(pipelines, index_col=0, dtype={"bus0": str, "bus1": str})
+    stores = pd.read_csv(stores, index_col=0, dtype={"bus": str})
+
+    logger.info("Adding CO2 stored and sequestered offshore buses.")
+    if "CO2" not in n.carriers.index:
+        n.add("Carrier", "CO2")
+
+    if "co2 sequestered" not in n.carriers.index:
+        n.add("Carrier", "co2 sequestered")
+
+    n.add(
+        "Bus",
+        buses_offshore.index + " co2 sequestered",
+        location=buses_offshore.index + " co2 sequestered",
+        carrier="co2 sequestered",
+        unit="t_co2",
+        x=buses_offshore["x"].rename(lambda x: x + " co2 sequestered"),
+        y=buses_offshore["y"].rename(lambda x: x + " co2 sequestered"),
+    )
+
+    if "co2 stored" not in n.carriers.index:
+        n.add("Carrier", "co2 stored")
+    n.add(
+        "Bus",
+        buses_offshore.index + " co2 stored",
+        location=buses_offshore.index + " co2 stored",
+        carrier="co2 stored",
+        unit="t_co2",
+        x=buses_offshore["x"].rename(lambda x: x + " co2 stored"),
+        y=buses_offshore["y"].rename(lambda x: x + " co2 stored"),
+    )
+
+    # Connecting links
+    n.add(
+        "Link",
+        buses_offshore.index + " co2 sequestered",
+        bus0=buses_offshore.index + " co2 stored",
+        bus1=buses_offshore.index + " co2 sequestered",
+        marginal_cost=options["co2_sequestration_cost"],
+        capital_cost=0.1,
+        carrier="co2 sequestered",
+        efficiency=1,
+        p_nom_extendable=True,  # TODO, set to false? and p_nom to infinity?
+    )
+
+    ### Add pipelines
+    logger.info("Adding planned European CO2 pipelines.")
+
+    cost_onshore = (
+        (1 - pipelines.underwater_fraction)
+        * costs.at["CO2 pipeline", "capital_cost"]
+        * pipelines.length
+    )
+    cost_submarine = (
+        pipelines.underwater_fraction
+        * costs.at["CO2 submarine pipeline", "capital_cost"]
+        * pipelines.length
+    )
+    capital_cost = cost_onshore + cost_submarine
+    capital_cost *= co2_network_cost_factor
+
+    # Deduplicate: Remove greenfield CO2 links if they exist already
+
+    existing = n.links.loc[n.links.carrier == "CO2 pipeline", ["bus0", "bus1"]].copy()
+    # Strip co2 stored suffix
+    existing_pairs = existing.apply(
+        lambda r: frozenset(
+            [r.bus0.replace(" co2 stored", ""), r.bus1.replace(" co2 stored", "")]
+        ),
+        axis=1,
+    )
+    new_pairs = pipelines.apply(lambda r: frozenset([r.bus0, r.bus1]), axis=1)
+    existing_dupes = existing.index[existing_pairs.isin(new_pairs.values)]
+
+    # Drop existing_dupes from links
+    logger.info(
+        f"Replacing {len(existing_dupes)} existing CO2 pipeline links with planned pipelines."
+    )
+    n.remove(
+        "Link",
+        existing_dupes,
+    )
+
+    if extendable:
+        logger.info("Adding planned CO2 pipelines as extendable.")
+        params = {
+            "p_nom_min": pipelines.p_nom,
+            "p_nom_extendable": True,
+        }
+    else:
+        logger.info("Adding planned CO2 pipelines as fixed investments.")
+        params = {
+            "p_nom_extendable": False,
+            "p_nom": pipelines.p_nom,
+        }
+
+    n.add(
+        "Link",
+        pipelines.index,
+        bus0=pipelines.bus0 + " co2 stored",
+        bus1=pipelines.bus1 + " co2 stored",
+        p_min_pu=pipelines.p_min_pu,
+        length=pipelines.length,
+        capital_cost=capital_cost,
+        marginal_cost=0.1,
+        carrier="CO2 pipeline",
+        lifetime=costs.at["CO2 pipeline", "lifetime"],
+        build_year=build_year,
+        **params,
+    )
+
+    ### Add stores
+    logger.info("Adding planned European CO2 stores.")
+    n.add(
+        "Store",
+        stores.index,
+        bus=stores.bus + " co2 sequestered",
+        e_nom=stores.e_nom,
+        e_nom_extendable=False,
+        marginal_cost=-0.1,
+        lifetime=options["co2_sequestration_lifetime"],
+        carrier="co2 sequestered",
+        build_year=build_year,
+    )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -6375,7 +6517,7 @@ if __name__ == "__main__":
             clusters="adm",
             sector_opts="",
             planning_horizons="2035",
-            run="test",
+            run="test-offshore-only",
             configfiles=["config/config.nrw.yaml"],
         )
 
@@ -6654,6 +6796,20 @@ if __name__ == "__main__":
             ],
         )
 
+    # NRW study: European CO2 projects
+    if cf_transmission["carbon_dioxide"]["projects"]["enable"]:
+        add_co2_projects(
+            n,
+            costs,
+            buses_offshore=snakemake.input.co2_buses_offshore,
+            pipelines=snakemake.input.co2_links,
+            stores=snakemake.input.co2_stores,
+            options=options,
+            build_year=investment_year,
+            co2_network_cost_factor=cf_transmission["carbon_dioxide"]["cost_factor"],
+            extendable=cf_transmission["carbon_dioxide"]["projects"]["extendable"],
+        )
+
     if options["allam_cycle_gas"]:
         add_allam_gas(n, costs, pop_layout=pop_layout, spatial=spatial)
 
@@ -6766,12 +6922,17 @@ if __name__ == "__main__":
     n.export_to_netcdf(snakemake.output[0])
 
     # map link_width=1 to carrier CO2 pipeline, else 0 using map
-    # lwidth = pd.Series(
-    #     data=np.where(n.links.carrier == "CO2 pipeline", 3, 0), index=n.links.index
-    # )
-    # # only CO2 stored buses
-    # buswidth = pd.Series(
-    #     data=np.where(n.buses.carrier=="co2 sequestered", 1, 0), index=n.buses.index
-    # )
+    lwidth = pd.Series(
+        data=np.where(n.links.carrier == "CO2 pipeline", 3, 0), index=n.links.index
+    )
+    # only CO2 stored buses
+    buswidth = pd.Series(
+        data=np.where(n.buses.carrier == "co2 sequestered", 1, 0), index=n.buses.index
+    )
 
-    # n.explore(branch_components=["Link"], link_width=lwidth, bus_size=buswidth*700)
+    n.explore(
+        branch_components=["Link"],
+        link_width=lwidth,
+        bus_size=buswidth * 700,
+        link_columns=["p_nom_extendable", "p_nom", "p_nom_min"],
+    )

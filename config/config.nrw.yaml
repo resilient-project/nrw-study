@@ -86,6 +86,9 @@ transmission:
     max_offshore_haversine_distance: 300
     length_factor: 1.25
     cost_factor: 1
+    projects:
+      enable: true
+      extendable: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:

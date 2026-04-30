@@ -510,12 +510,55 @@ def load_capacity_lookup(path, value_column):
     return df.set_index("project")[value_column]
 
 
+def aggregate_duplicate_pairs(df):
+    """
+    Aggregate duplicate (bus0, bus1) pairs (treating A,B and B,A as the same).
+    """
+    df = df.copy()
+    
+    # Normalize bus0/bus1 alphabetically so A,B == B,A
+    df["bus0"], df["bus1"] = zip(*df.apply(
+        lambda r: sorted([r.bus0, r.bus1]), axis=1
+    ))
+    
+    def aggregate_group(group):
+        bus0, bus1 = group.name  # tuple of (bus0, bus1) from groupby keys
+        
+        geometry = group["geometry"].dropna()
+        geometry = geometry.loc[geometry.length.idxmax()] if not geometry.empty else None
+        
+        length = group["length"].max()
+        underwater_fraction = group["underwater_fraction"].max()
+        p_nom = group["p_nom"].sum()
+        
+        labels = group["label"].dropna().unique().tolist()
+        label = f"Merged-{'+'.join(labels)}" if len(labels) > 1 else labels[0]
+        
+        return pd.Series({
+            "label": label,
+            "bus0": bus0,
+            "bus1": bus1,
+            "length": length,
+            "p_nom": p_nom,
+            "underwater_fraction": underwater_fraction,
+            "geometry": geometry,
+        })
+    
+    aggregated = (
+        df.groupby(["bus0", "bus1"], sort=False)
+        .apply(aggregate_group, include_groups=False)  
+        .reset_index(drop=True)
+    )
+    
+    return aggregated
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "build_european_co2_pipelines",
+            "build_carbon_dioxide_projects",
             clusters="adm",
             opts="",
             run="test-offshore-only",
@@ -728,6 +771,8 @@ if __name__ == "__main__":
 
     pipelines = aggregate_links(pipelines)
 
+    pipelines = aggregate_duplicate_pairs(pipelines)
+
     pipelines = make_unidirectional_offshore_links(pipelines, buses_co2_offshore)
 
     # Create unique IDs
@@ -786,9 +831,9 @@ if __name__ == "__main__":
     stores.set_index("id", inplace=True)
 
     # Export
-    buses_co2_offshore.to_csv(snakemake.output.buses_offshore, index=True)
-    pipelines.to_csv(snakemake.output.links_co2_pipeline, index=True)
-    stores.to_csv(snakemake.output.stores_co2, index=True)
+    buses_co2_offshore.to_csv(snakemake.output.co2_buses_offshore, index=True)
+    pipelines.to_csv(snakemake.output.co2_links, index=True)
+    stores.to_csv(snakemake.output.co2_stores, index=True)
 
     # # Debugging
     # map = regions_onshore.explore()

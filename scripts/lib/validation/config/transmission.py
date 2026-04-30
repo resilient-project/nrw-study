@@ -350,6 +350,26 @@ class _TransmissionCarrierConfigHydrogen(_TransmissionCarrierConfigGeneral):
     )
 
 
+class CarbonDioxideProjectsConfig(BaseModel):
+    """Configuration for `carbon_dioxide.projects` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Whether to integrate the carbon dioxide projects or not.",
+    )
+    extendable: bool = Field(
+        False,
+        description="Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
+    )
+
+
+class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
+    projects: CarbonDioxideProjectsConfig = Field(
+        default_factory=CarbonDioxideProjectsConfig,
+        description="Carbon dioxide transmission projects configuration.",
+    )
+
+
 class TransmissionConfig(BaseModel):
     """Configuration for `transmission` settings."""
 
@@ -365,8 +385,8 @@ class TransmissionConfig(BaseModel):
         default_factory=_TransmissionCarrierConfigHydrogen,
         description="Configuration for hydrogen transmission candidates.",
     )
-    carbon_dioxide: _TransmissionCarrierConfigGeneral = Field(
-        default_factory=_TransmissionCarrierConfigGeneral,
+    carbon_dioxide: _TransmissionCarrierConfigCarbonDioxide = Field(
+        default_factory=_TransmissionCarrierConfigCarbonDioxide,
         description="Configuration for carbon dioxide transmission candidates.",
     )
     gas: _TransmissionCarrierConfigGas = Field(
