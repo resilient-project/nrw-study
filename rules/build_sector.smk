@@ -1629,11 +1629,37 @@ def input_transmission_candidates(w):
     return candidates
 
 
+def input_co2_projects(w):
+    co2_projects = config_provider(
+        "transmission", "carbon_dioxide", "projects", "enable"
+    )(w)
+    if co2_projects:
+        inputs = {
+            "co2_buses_offshore": resources(
+                "transmission/carbon_dioxide_projects/co2_buses_offshore_s_{clusters}_{opts}.csv"
+            ),
+            "co2_links": resources(
+                "transmission/carbon_dioxide_projects/co2_links_s_{clusters}_{opts}.csv"
+            ),
+            "co2_stores": resources(
+                "transmission/carbon_dioxide_projects/co2_stores_s_{clusters}_{opts}.csv"
+            ),
+        }
+    else:
+        inputs = {
+            "co2_buses_offshore": [],
+            "co2_links": [],
+            "co2_stores": [],
+        }
+    return inputs
+
+
 rule prepare_sector_network:
     input:
         unpack(input_profile_offwind),
         unpack(input_heat_source_power),
         unpack(input_transmission_candidates),
+        unpack(input_co2_projects),
         **rules.cluster_gas_network.output,
         **rules.build_gas_input_locations.output,
         snapshot_weightings=resources(
@@ -1808,3 +1834,35 @@ rule prepare_sector_network:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:
         scripts("prepare_sector_network.py")
+
+
+rule build_carbon_dioxide_projects:
+    input:
+        network=resources("networks/base_s_{clusters}_elec_{opts}.nc"),
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
+        scope=resources("europe_shape.geojson"),
+        kml="data/nrw/oge-grid/CCUCCS Projektsammlung.kml",
+        transport_volume="data/nrw/oge-grid/transport_volume.csv",
+        co2_sequestration_potential="data/nrw/oge-grid/co2_sequestration_potential.csv",
+    output:
+        co2_buses_offshore=resources(
+            "transmission/carbon_dioxide_projects/co2_buses_offshore_s_{clusters}_{opts}.csv"
+        ),
+        co2_links=resources(
+            "transmission/carbon_dioxide_projects/co2_links_s_{clusters}_{opts}.csv"
+        ),
+        co2_stores=resources(
+            "transmission/carbon_dioxide_projects/co2_stores_s_{clusters}_{opts}.csv"
+        ),
+    log:
+        logs("build_carbon_dioxide_projects_{clusters}_{opts}.log"),
+    benchmark:
+        benchmarks("build_carbon_dioxide_projects_{clusters}_{opts}")
+    conda:
+        "../envs/environment.yaml"
+    threads: 1
+    resources:
+        mem_mb=2000,
+    script:
+        "../scripts/build_carbon_dioxide_projects.py"

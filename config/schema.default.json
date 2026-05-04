@@ -456,6 +456,36 @@
         }
       }
     },
+    "CarbonDioxideProjectsConfig": {
+      "description": "Configuration for `carbon_dioxide.projects` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Whether to integrate the carbon dioxide projects or not.",
+          "type": "boolean"
+        },
+        "extendable": {
+          "default": false,
+          "description": "Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
+          "type": "boolean"
+        },
+        "capacity_mode": {
+          "default": "keep",
+          "description": "How to set capacities for CO2 pipeline projects. 'keep': Use original p_nom from project data. 'zero': Initialize with zero capacity (extendable from 0). 'custom': Set all pipelines to custom_capacity_value.",
+          "enum": [
+            "keep",
+            "zero",
+            "custom"
+          ],
+          "type": "string"
+        },
+        "custom_capacity_value": {
+          "default": 1328,
+          "description": "Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+          "type": "number"
+        }
+      }
+    },
     "ClusteringConfig": {
       "description": "Configuration for `clustering` settings.",
       "properties": {
@@ -5340,26 +5370,74 @@
                   "description": "Switch to enable post-discretization of the network. Disabled by default.",
                   "type": "boolean"
                 },
+                "carriers": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": [
+                    "AC",
+                    "DC",
+                    "H2 pipeline",
+                    "gas pipeline"
+                  ],
+                  "description": "List of link carriers to which post-discretization should be applied."
+                },
                 "line_unit_size": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 1700,
-                  "description": "Discrete unit size of lines in MW.",
-                  "type": "number"
+                  "description": "Discrete unit size of lines in MW."
                 },
                 "line_threshold": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 0.3,
-                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-                  "type": "number"
+                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
                 },
                 "link_unit_size": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
                   "type": "object"
                 },
                 "link_threshold": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
                   "type": "object"
@@ -5964,7 +6042,6 @@
           "description": "Configuration for hydrogen transmission candidates."
         },
         "carbon_dioxide": {
-          "description": "Configuration for a single transmission carrier.",
           "properties": {
             "enable": {
               "default": true,
@@ -5994,8 +6071,39 @@
               "description": "Multiplier applied to the capital cost of transmission infrastructure.",
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "projects": {
+              "description": "Configuration for `carbon_dioxide.projects` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Whether to integrate the carbon dioxide projects or not.",
+                  "type": "boolean"
+                },
+                "extendable": {
+                  "default": false,
+                  "description": "Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
+                  "type": "boolean"
+                },
+                "capacity_mode": {
+                  "default": "keep",
+                  "description": "How to set capacities for CO2 pipeline projects. 'keep': Use original p_nom from project data. 'zero': Initialize with zero capacity (extendable from 0). 'custom': Set all pipelines to custom_capacity_value.",
+                  "enum": [
+                    "keep",
+                    "zero",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                "custom_capacity_value": {
+                  "default": 1328,
+                  "description": "Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+                  "type": "number"
+                }
+              }
             }
-          }
+          },
+          "description": "Configuration for carbon dioxide transmission candidates."
         },
         "gas": {
           "properties": {
@@ -7755,26 +7863,74 @@
           "description": "Switch to enable post-discretization of the network. Disabled by default.",
           "type": "boolean"
         },
+        "carriers": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            "AC",
+            "DC",
+            "H2 pipeline",
+            "gas pipeline"
+          ],
+          "description": "List of link carriers to which post-discretization should be applied."
+        },
         "line_unit_size": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 1700,
-          "description": "Discrete unit size of lines in MW.",
-          "type": "number"
+          "description": "Discrete unit size of lines in MW."
         },
         "line_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": 0.3,
-          "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-          "type": "number"
+          "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
         },
         "link_unit_size": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
           "type": "object"
         },
         "link_threshold": {
           "additionalProperties": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
           "type": "object"
@@ -8382,26 +8538,74 @@
               "description": "Switch to enable post-discretization of the network. Disabled by default.",
               "type": "boolean"
             },
+            "carriers": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": [
+                "AC",
+                "DC",
+                "H2 pipeline",
+                "gas pipeline"
+              ],
+              "description": "List of link carriers to which post-discretization should be applied."
+            },
             "line_unit_size": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "default": 1700,
-              "description": "Discrete unit size of lines in MW.",
-              "type": "number"
+              "description": "Discrete unit size of lines in MW."
             },
             "line_threshold": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "default": 0.3,
-              "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-              "type": "number"
+              "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
             },
             "link_unit_size": {
               "additionalProperties": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
               "type": "object"
             },
             "link_threshold": {
               "additionalProperties": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
               "type": "object"
@@ -8481,6 +8685,69 @@
           ],
           "default": false,
           "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`."
+        }
+      }
+    },
+    "_TransmissionCarrierConfigCarbonDioxide": {
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Enable transmission candidate generation for this carrier.",
+          "type": "boolean"
+        },
+        "gabriel_filter_min_degree": {
+          "default": 1,
+          "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_offshore_haversine_distance": {
+          "default": null,
+          "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "length_factor": {
+          "default": 1.25,
+          "description": "Multiplier applied to geometric corridor lengths.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "cost_factor": {
+          "default": 1,
+          "description": "Multiplier applied to the capital cost of transmission infrastructure.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "projects": {
+          "description": "Configuration for `carbon_dioxide.projects` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "Whether to integrate the carbon dioxide projects or not.",
+              "type": "boolean"
+            },
+            "extendable": {
+              "default": false,
+              "description": "Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
+              "type": "boolean"
+            },
+            "capacity_mode": {
+              "default": "keep",
+              "description": "How to set capacities for CO2 pipeline projects. 'keep': Use original p_nom from project data. 'zero': Initialize with zero capacity (extendable from 0). 'custom': Set all pipelines to custom_capacity_value.",
+              "enum": [
+                "keep",
+                "zero",
+                "custom"
+              ],
+              "type": "string"
+            },
+            "custom_capacity_value": {
+              "default": 1328,
+              "description": "Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+              "type": "number"
+            }
+          }
         }
       }
     },
@@ -8820,40 +9087,6 @@
               "type": "number"
             }
           }
-        }
-      }
-    },
-    "_TransmissionCarrierConfigGeneral": {
-      "description": "Configuration for a single transmission carrier.",
-      "properties": {
-        "enable": {
-          "default": true,
-          "description": "Enable transmission candidate generation for this carrier.",
-          "type": "boolean"
-        },
-        "gabriel_filter_min_degree": {
-          "default": 1,
-          "description": "Minimum node degree target applied after Gabriel graph filtering. Set to >= 1 to activate Gabriel filtering with min-degree backfilling; 0 disables it.",
-          "minimum": 0,
-          "type": "integer"
-        },
-        "max_offshore_haversine_distance": {
-          "default": null,
-          "description": "Maximum haversine distance in km for offshore transmission candidates. Candidate edges a total offshore length exceeding this threshold are excluded. Defaults to infinity (no limit).",
-          "exclusiveMinimum": 0,
-          "type": "number"
-        },
-        "length_factor": {
-          "default": 1.25,
-          "description": "Multiplier applied to geometric corridor lengths.",
-          "exclusiveMinimum": 0,
-          "type": "number"
-        },
-        "cost_factor": {
-          "default": 1,
-          "description": "Multiplier applied to the capital cost of transmission infrastructure.",
-          "exclusiveMinimum": 0,
-          "type": "number"
         }
       }
     },
@@ -9971,7 +10204,6 @@
           "description": "Configuration for hydrogen transmission candidates."
         },
         "carbon_dioxide": {
-          "description": "Configuration for a single transmission carrier.",
           "properties": {
             "enable": {
               "default": true,
@@ -10001,8 +10233,39 @@
               "description": "Multiplier applied to the capital cost of transmission infrastructure.",
               "exclusiveMinimum": 0,
               "type": "number"
+            },
+            "projects": {
+              "description": "Configuration for `carbon_dioxide.projects` settings.",
+              "properties": {
+                "enable": {
+                  "default": false,
+                  "description": "Whether to integrate the carbon dioxide projects or not.",
+                  "type": "boolean"
+                },
+                "extendable": {
+                  "default": false,
+                  "description": "Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
+                  "type": "boolean"
+                },
+                "capacity_mode": {
+                  "default": "keep",
+                  "description": "How to set capacities for CO2 pipeline projects. 'keep': Use original p_nom from project data. 'zero': Initialize with zero capacity (extendable from 0). 'custom': Set all pipelines to custom_capacity_value.",
+                  "enum": [
+                    "keep",
+                    "zero",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                "custom_capacity_value": {
+                  "default": 1328,
+                  "description": "Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+                  "type": "number"
+                }
+              }
             }
-          }
+          },
+          "description": "Configuration for carbon dioxide transmission candidates."
         },
         "gas": {
           "properties": {
@@ -13360,26 +13623,74 @@
                   "description": "Switch to enable post-discretization of the network. Disabled by default.",
                   "type": "boolean"
                 },
+                "carriers": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": [
+                    "AC",
+                    "DC",
+                    "H2 pipeline",
+                    "gas pipeline"
+                  ],
+                  "description": "List of link carriers to which post-discretization should be applied."
+                },
                 "line_unit_size": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 1700,
-                  "description": "Discrete unit size of lines in MW.",
-                  "type": "number"
+                  "description": "Discrete unit size of lines in MW."
                 },
                 "line_threshold": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
                   "default": 0.3,
-                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
-                  "type": "number"
+                  "description": "The threshold relative to the discrete line unit size beyond which to round up to the next unit."
                 },
                 "link_unit_size": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "Discrete unit size of links in MW by carrier (given in dictionary style).",
                   "type": "object"
                 },
                 "link_threshold": {
                   "additionalProperties": {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "description": "The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
                   "type": "object"

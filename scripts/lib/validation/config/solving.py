@@ -22,18 +22,22 @@ class _PostDiscretizationConfig(ConfigModel):
         False,
         description="Switch to enable post-discretization of the network. Disabled by default.",
     )
-    line_unit_size: float = Field(
+    carriers: list[str] | None = Field(
+        ["AC", "DC", "H2 pipeline", "gas pipeline"],
+        description="List of link carriers to which post-discretization should be applied.",
+    )
+    line_unit_size: float | None = Field(
         1700, description="Discrete unit size of lines in MW."
     )
-    line_threshold: float = Field(
+    line_threshold: float | None = Field(
         0.3,
         description="The threshold relative to the discrete line unit size beyond which to round up to the next unit.",
     )
-    link_unit_size: dict[str, float] = Field(
+    link_unit_size: dict[str, float | None] = Field(
         default_factory=lambda: {"DC": 2000, "H2 pipeline": 1200, "gas pipeline": 1500},
         description="Discrete unit size of links in MW by carrier (given in dictionary style).",
     )
-    link_threshold: dict[str, float] = Field(
+    link_threshold: dict[str, float | None] = Field(
         default_factory=lambda: {"DC": 0.3, "H2 pipeline": 0.3, "gas pipeline": 0.3},
         description="The threshold relative to the discrete link unit size beyond which to round up to the next unit by carrier (given in dictionary style).",
     )

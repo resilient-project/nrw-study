@@ -147,6 +147,16 @@ rule all:
         ),
         lambda w: expand(
             (
+                RESULTS
+                + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_{planning_horizons}.pdf"
+                if config_provider("transmission", "carbon_dioxide", "enable")(w)
+                else []
+            ),
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+        lambda w: expand(
+            (
                 RESULTS + "csvs/cumulative_costs.csv"
                 if config_provider("foresight")(w) == "myopic"
                 else []

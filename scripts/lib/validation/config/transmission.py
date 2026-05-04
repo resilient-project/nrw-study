@@ -350,6 +350,34 @@ class _TransmissionCarrierConfigHydrogen(_TransmissionCarrierConfigGeneral):
     )
 
 
+class CarbonDioxideProjectsConfig(BaseModel):
+    """Configuration for `carbon_dioxide.projects` settings."""
+
+    enable: bool = Field(
+        False,
+        description="Whether to integrate the carbon dioxide projects or not.",
+    )
+    extendable: bool = Field(
+        False,
+        description="Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
+    )
+    capacity_mode: Literal["keep", "zero", "custom"] = Field(
+        "keep",
+        description="How to set capacities for CO2 pipeline projects. 'keep': Use original p_nom from project data. 'zero': Initialize with zero capacity (extendable from 0). 'custom': Set all pipelines to custom_capacity_value.",
+    )
+    custom_capacity_value: float = Field(
+        1328,
+        description="Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+    )
+
+
+class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
+    projects: CarbonDioxideProjectsConfig = Field(
+        default_factory=CarbonDioxideProjectsConfig,
+        description="Carbon dioxide transmission projects configuration.",
+    )
+
+
 class TransmissionConfig(BaseModel):
     """Configuration for `transmission` settings."""
 
@@ -365,8 +393,8 @@ class TransmissionConfig(BaseModel):
         default_factory=_TransmissionCarrierConfigHydrogen,
         description="Configuration for hydrogen transmission candidates.",
     )
-    carbon_dioxide: _TransmissionCarrierConfigGeneral = Field(
-        default_factory=_TransmissionCarrierConfigGeneral,
+    carbon_dioxide: _TransmissionCarrierConfigCarbonDioxide = Field(
+        default_factory=_TransmissionCarrierConfigCarbonDioxide,
         description="Configuration for carbon dioxide transmission candidates.",
     )
     gas: _TransmissionCarrierConfigGas = Field(
