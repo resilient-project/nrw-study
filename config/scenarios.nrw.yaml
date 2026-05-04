@@ -11,13 +11,19 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
-test:
-  clustering:
-    temporal:
-      resolution_elec: false
-      resolution_sector: 337h
-
-test-offshore-only:
+oge-only-offshore-storage:
+  transmission:
+    carbon_dioxide:
+      enable: false
+      gabriel_filter_min_degree: 0
+      max_offshore_haversine_distance: 300
+      length_factor: 1.25
+      cost_factor: 1
+      projects:
+        enable: true
+        extendable: false
+        capacity_mode: keep
+        custom_capacity_value: 1328
   sector:
     regional_co2_sequestration_potential:
       enable: true
@@ -27,8 +33,41 @@ test-offshore-only:
       resolution_elec: false
       resolution_sector: 337h
 
+greenfield-oge-fixed-offshore-storage:
+  transmission:
+    carbon_dioxide:
+      enable: true
+      gabriel_filter_min_degree: 0
+      max_offshore_haversine_distance: 300
+      length_factor: 1.25
+      cost_factor: 1
+      projects:
+        enable: true
+        extendable: false
+        capacity_mode: keep
+        custom_capacity_value: 1328
+  sector:
+    regional_co2_sequestration_potential:
+      enable: true
+      include_onshore: false
+  clustering:
+    temporal:
+      resolution_elec: false
+      resolution_sector: 337h
 
-test-offshore-onshore:
+greenfield-oge-extendable-offshore-onshore-storage:
+  transmission:
+    carbon_dioxide:
+      enable: true
+      gabriel_filter_min_degree: 0
+      max_offshore_haversine_distance: 300
+      length_factor: 1.25
+      cost_factor: 1
+      projects:
+        enable: true
+        extendable: true
+        capacity_mode: zero
+        custom_capacity_value: 1328
   sector:
     regional_co2_sequestration_potential:
       enable: true

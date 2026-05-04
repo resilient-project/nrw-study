@@ -10,8 +10,9 @@ version: v2026.02.0
 run:
   prefix: "nrw"
   name:
-  - test-offshore-only
-  - test-offshore-onshore
+  - oge-only-offshore-storage
+  - greenfield-oge-fixed-offshore-storage
+  - greenfield-oge-extendable-offshore-onshore-storage
   scenarios:
     enable: true
     file: config/scenarios.nrw.yaml
@@ -89,6 +90,8 @@ transmission:
     projects:
       enable: true
       extendable: false
+      capacity_mode: keep
+      custom_capacity_value: 1328
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:

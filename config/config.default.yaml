@@ -272,6 +272,8 @@ transmission:
     projects:
       enable: false
       extendable: false
+      capacity_mode: keep
+      custom_capacity_value: 1328
   gas:
     enable: true
     connectivity_upgrade: 1

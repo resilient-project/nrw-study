@@ -6376,8 +6376,19 @@ def add_co2_projects(
     build_year,
     co2_network_cost_factor=1.0,
     extendable=False,
+    capacity_mode="keep",
+    custom_capacity_value=1328,
 ):
-    """Add planned European CO2 pipeline projects to the network."""
+    """
+    Add planned European CO2 pipeline projects to the network.
+
+    Parameters
+    ----------
+    capacity_mode : str
+        How to handle project capacities: 'keep' (original p_nom), 'zero', or 'custom'
+    custom_capacity_value : float
+        Capacity value in MW when capacity_mode is 'custom'
+    """
 
     ### Add offshore buses
     buses_offshore = pd.read_csv(buses_offshore, index_col=0, dtype={"bus": str})
@@ -6464,17 +6475,33 @@ def add_co2_projects(
         existing_dupes,
     )
 
+    # Determine capacity based on mode
+    if capacity_mode == "keep":
+        logger.info("Capacity mode: keep original p_nom values")
+        capacity = pipelines.p_nom
+    elif capacity_mode == "zero":
+        logger.info("Capacity mode: set capacity to zero")
+        capacity = 0
+    elif capacity_mode == "custom":
+        logger.info(f"Capacity mode: set to custom value {custom_capacity_value} MW")
+        capacity = custom_capacity_value
+    else:
+        raise ValueError(
+            f"Invalid capacity_mode: {capacity_mode}. Must be 'keep', 'zero', or 'custom'."
+        )
+
+    # Set extendability and capacity
     if extendable:
         logger.info("Adding planned CO2 pipelines as extendable.")
         params = {
-            "p_nom_min": pipelines.p_nom,
+            "p_nom_min": capacity,
             "p_nom_extendable": True,
         }
     else:
         logger.info("Adding planned CO2 pipelines as fixed investments.")
         params = {
+            "p_nom": capacity,
             "p_nom_extendable": False,
-            "p_nom": pipelines.p_nom,
         }
 
     n.add(
@@ -6808,6 +6835,12 @@ if __name__ == "__main__":
             build_year=investment_year,
             co2_network_cost_factor=cf_transmission["carbon_dioxide"]["cost_factor"],
             extendable=cf_transmission["carbon_dioxide"]["projects"]["extendable"],
+            capacity_mode=cf_transmission["carbon_dioxide"]["projects"][
+                "capacity_mode"
+            ],
+            custom_capacity_value=cf_transmission["carbon_dioxide"]["projects"][
+                "custom_capacity_value"
+            ],
         )
 
     if options["allam_cycle_gas"]:

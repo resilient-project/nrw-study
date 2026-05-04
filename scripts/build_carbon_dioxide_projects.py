@@ -515,41 +515,43 @@ def aggregate_duplicate_pairs(df):
     Aggregate duplicate (bus0, bus1) pairs (treating A,B and B,A as the same).
     """
     df = df.copy()
-    
+
     # Normalize bus0/bus1 alphabetically so A,B == B,A
-    df["bus0"], df["bus1"] = zip(*df.apply(
-        lambda r: sorted([r.bus0, r.bus1]), axis=1
-    ))
-    
+    df["bus0"], df["bus1"] = zip(*df.apply(lambda r: sorted([r.bus0, r.bus1]), axis=1))
+
     def aggregate_group(group):
         bus0, bus1 = group.name  # tuple of (bus0, bus1) from groupby keys
-        
+
         geometry = group["geometry"].dropna()
-        geometry = geometry.loc[geometry.length.idxmax()] if not geometry.empty else None
-        
+        geometry = (
+            geometry.loc[geometry.length.idxmax()] if not geometry.empty else None
+        )
+
         length = group["length"].max()
         underwater_fraction = group["underwater_fraction"].max()
         p_nom = group["p_nom"].sum()
-        
+
         labels = group["label"].dropna().unique().tolist()
         label = f"Merged-{'+'.join(labels)}" if len(labels) > 1 else labels[0]
-        
-        return pd.Series({
-            "label": label,
-            "bus0": bus0,
-            "bus1": bus1,
-            "length": length,
-            "p_nom": p_nom,
-            "underwater_fraction": underwater_fraction,
-            "geometry": geometry,
-        })
-    
+
+        return pd.Series(
+            {
+                "label": label,
+                "bus0": bus0,
+                "bus1": bus1,
+                "length": length,
+                "p_nom": p_nom,
+                "underwater_fraction": underwater_fraction,
+                "geometry": geometry,
+            }
+        )
+
     aggregated = (
         df.groupby(["bus0", "bus1"], sort=False)
-        .apply(aggregate_group, include_groups=False)  
+        .apply(aggregate_group, include_groups=False)
         .reset_index(drop=True)
     )
-    
+
     return aggregated
 
 

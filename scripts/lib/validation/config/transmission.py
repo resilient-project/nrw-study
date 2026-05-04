@@ -361,6 +361,14 @@ class CarbonDioxideProjectsConfig(BaseModel):
         False,
         description="Whether to allow expansion of the capacities of the carbon dioxide transmission projects.",
     )
+    capacity_mode: Literal["keep", "zero", "custom"] = Field(
+        "keep",
+        description="How to set capacities for CO2 pipeline projects. 'keep': Use original p_nom from project data. 'zero': Initialize with zero capacity (extendable from 0). 'custom': Set all pipelines to custom_capacity_value.",
+    )
+    custom_capacity_value: float = Field(
+        1328,
+        description="Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+    )
 
 
 class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
