@@ -1865,4 +1865,4 @@ rule build_carbon_dioxide_projects:
     resources:
         mem_mb=2000,
     script:
-        "../scripts/build_european_co2_pipelines.py"
+        "../scripts/build_carbon_dioxide_projects.py"
