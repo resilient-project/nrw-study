@@ -1,0 +1,8 @@
+project,size,unit,comments
+"Acorn",10,Mtpa,"152 MtCO2 total capacity over 15 years https://www.scottish-enterprise.com/media/jhic3qav/ccus-economic-impact-assessment-report.pdf"
+"Aramis",22,Mtpa,"5 Mtpa at launch store, https://www.aramis-ccs.com/faq/, https://www.shell.com/what-we-do/carbon-capture-and-storage/shell-offshore-carbon-storage-nl/working-in-partnership.html"
+"CarbonConnect",40,Mtpa,"? based on upper bound of transport capacity"
+"CO2TransPorts",2.5,Mtpa,"https://www.porthosco2.nl/en/project/"
+"East Mey",33,Mtpa,"500 Mtpa total capacity over 15 years https://www.scottish-enterprise.com/media/jhic3qav/ccus-economic-impact-assessment-report.pdf"
+"EU2NSEA",25,Mtpa,"https://ec.europa.eu/assets/cinea/PCI/files/PCIFiche_13.8_1st_PCI_PMI_list.pdf"
+"N-Lites",5,Mtpa,"https://ec.europa.eu/assets/cinea/PCI/files/PMIFiche_13.13_1st_PCI_PMI_list.pdf"
