@@ -6394,9 +6394,27 @@ def add_co2_projects(
 
     Parameters
     ----------
-    capacity_mode : str
+    n : pypsa.Network
+        PyPSA network object to add CO2 infrastructure to
+    costs : pd.DataFrame
+        Technology costs dataframe
+    buses_offshore : str
+        Path to CSV file containing offshore bus definitions
+    pipelines : str
+        Path to CSV file containing pipeline definitions
+    stores : str
+        Path to CSV file containing store definitions
+    options : dict
+        Configuration options including co2_sequestration_cost
+    build_year : int
+        Build year for the CO2 projects
+    co2_network_cost_factor : float, default 1.0
+        Cost factor applied to CO2 network infrastructure
+    extendable : bool, default False
+        Whether CO2 network capacities are extendable
+    capacity_mode : str, default "keep"
         How to handle project capacities: 'keep' (original p_nom), 'zero', or 'custom'
-    custom_capacity_value : float
+    custom_capacity_value : float, default 1328
         Capacity value in MW when capacity_mode is 'custom'
     """
 
@@ -6506,12 +6524,14 @@ def add_co2_projects(
         params = {
             "p_nom_min": capacity,
             "p_nom_extendable": True,
+            "build_year": 0,
         }
     else:
         logger.info("Adding planned CO2 pipelines as fixed investments.")
         params = {
             "p_nom": capacity,
             "p_nom_extendable": False,
+            "build_year": build_year,
         }
 
     n.add(
@@ -6525,7 +6545,6 @@ def add_co2_projects(
         marginal_cost=0.1,
         carrier="CO2 pipeline",
         lifetime=costs.at["CO2 pipeline", "lifetime"],
-        build_year=build_year,
         **params,
     )
 
@@ -6544,6 +6563,38 @@ def add_co2_projects(
     )
 
 
+def add_short_co2_pipeline_carrier(
+    n,
+    suffix,
+    max_haversine_distance,
+):
+    """
+    Add a suffix to short CO2 pipelines.
+
+    Parameters
+    ----------
+    n : pypsa.Network
+        PyPSA network object to modify
+    suffix : str
+        Suffix to add to short CO2 pipeline carriers
+    max_haversine_distance : float
+        Maximum haversine distance in km for a pipeline to be considered short
+    """
+
+    short_co2_pipes = n.links.query(
+        "carrier=='CO2 pipeline' & length <= @max_haversine_distance"
+    ).index
+    short_carrier = "CO2 pipeline " + suffix
+
+    if short_carrier not in n.carriers.index:
+        n.add("Carrier", short_carrier)
+
+    logger.info(
+        f"Adding suffix '{suffix}' to {len(short_co2_pipes)} short CO2 pipelines with length <= {max_haversine_distance} km."
+    )
+    n.links.loc[short_co2_pipes, "carrier"] = short_carrier
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -6554,7 +6605,7 @@ if __name__ == "__main__":
             clusters="adm",
             sector_opts="",
             planning_horizons="2035",
-            run="test-offshore-only",
+            run="greenfield-oge-extendable-only-offshore-storage",
             configfiles=["config/config.nrw.yaml"],
         )
 
@@ -6853,6 +6904,21 @@ if __name__ == "__main__":
             ],
         )
 
+    # NRW study: Add short/smaller CO2 pipeline carrier if enabled
+    if (
+        cf_transmission["carbon_dioxide"]["enable"]
+        or cf_transmission["carbon_dioxide"]["projects"]["enable"]
+    ) and cf_transmission["carbon_dioxide"]["short_pipeline_carrier"]["enable"]:
+        add_short_co2_pipeline_carrier(
+            n,
+            suffix=cf_transmission["carbon_dioxide"]["short_pipeline_carrier"][
+                "suffix"
+            ],
+            max_haversine_distance=cf_transmission["carbon_dioxide"][
+                "short_pipeline_carrier"
+            ]["max_haversine_distance"],
+        )
+
     if options["allam_cycle_gas"]:
         add_allam_gas(n, costs, pop_layout=pop_layout, spatial=spatial)
 
@@ -6966,7 +7032,8 @@ if __name__ == "__main__":
 
     # map link_width=1 to carrier CO2 pipeline, else 0 using map
     lwidth = pd.Series(
-        data=np.where(n.links.carrier == "CO2 pipeline", 3, 0), index=n.links.index
+        data=np.where(n.links.carrier == "CO2 pipeline short", 3, 0),
+        index=n.links.index,
     )
     # only CO2 stored buses
     buswidth = pd.Series(
@@ -6977,5 +7044,5 @@ if __name__ == "__main__":
         branch_components=["Link"],
         link_width=lwidth,
         bus_size=buswidth * 700,
-        link_columns=["p_nom_extendable", "p_nom", "p_nom_min"],
+        link_columns=["p_nom_extendable", "p_nom", "p_nom_min", "length"],
     )

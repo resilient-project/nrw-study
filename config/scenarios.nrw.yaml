@@ -11,7 +11,7 @@
 #   electricity:
 #       renewable_carriers: [wind, solar] # override the list of renewable carriers
 
-oge-only-offshore-storage:
+oge-grid___offshore-co2:
   transmission:
     carbon_dioxide:
       enable: false
@@ -24,28 +24,10 @@ oge-only-offshore-storage:
         extendable: false
         capacity_mode: keep
         custom_capacity_value: 1328
-  sector:
-    regional_co2_sequestration_potential:
-      enable: true
-      include_onshore: false
-  clustering:
-    temporal:
-      resolution_elec: false
-      resolution_sector: 337h
-
-greenfield-oge-fixed-offshore-storage:
-  transmission:
-    carbon_dioxide:
-      enable: true
-      gabriel_filter_min_degree: 0
-      max_offshore_haversine_distance: 300
-      length_factor: 1.25
-      cost_factor: 1
-      projects:
+      short_pipeline_carrier:
         enable: true
-        extendable: false
-        capacity_mode: keep
-        custom_capacity_value: 1328
+        suffix: short
+        max_haversine_distance: 100
   sector:
     regional_co2_sequestration_potential:
       enable: true
@@ -55,7 +37,7 @@ greenfield-oge-fixed-offshore-storage:
       resolution_elec: false
       resolution_sector: 337h
 
-greenfield-oge-extendable-offshore-onshore-storage:
+endo-grid___offshore+onshore-co2:
   transmission:
     carbon_dioxide:
       enable: true
@@ -68,6 +50,10 @@ greenfield-oge-extendable-offshore-onshore-storage:
         extendable: true
         capacity_mode: zero
         custom_capacity_value: 1328
+      short_pipeline_carrier:
+        enable: true
+        suffix: short
+        max_haversine_distance: 100
   sector:
     regional_co2_sequestration_potential:
       enable: true
@@ -77,7 +63,7 @@ greenfield-oge-extendable-offshore-onshore-storage:
       resolution_elec: false
       resolution_sector: 337h
 
-greenfield-oge-extendable-only-offshore-storage:
+endo-grid___offshore-co2:
   transmission:
     carbon_dioxide:
       enable: true
@@ -90,6 +76,10 @@ greenfield-oge-extendable-only-offshore-storage:
         extendable: true
         capacity_mode: zero
         custom_capacity_value: 1328
+      short_pipeline_carrier:
+        enable: true
+        suffix: short
+        max_haversine_distance: 100
   sector:
     regional_co2_sequestration_potential:
       enable: true
@@ -98,3 +88,29 @@ greenfield-oge-extendable-only-offshore-storage:
     temporal:
       resolution_elec: false
       resolution_sector: 337h
+
+# greenfield-oge-fixed-offshore-storage:
+#   transmission:
+#     carbon_dioxide:
+#       enable: true
+#       gabriel_filter_min_degree: 0
+#       max_offshore_haversine_distance: 300
+#       length_factor: 1.25
+#       cost_factor: 1
+#       projects:
+#         enable: true
+#         extendable: false
+#         capacity_mode: keep
+#         custom_capacity_value: 1328
+#       short_pipeline_carrier:
+#         enable: true
+#         suffix: short
+#         max_haversine_distance: 100
+#   sector:
+#     regional_co2_sequestration_potential:
+#       enable: true
+#       include_onshore: false
+#   clustering:
+#     temporal:
+#       resolution_elec: false
+#       resolution_sector: 337h

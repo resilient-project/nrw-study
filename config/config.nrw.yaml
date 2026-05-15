@@ -10,10 +10,9 @@ version: v2026.02.0
 run:
   prefix: "nrw"
   name:
-  - oge-only-offshore-storage
-  - greenfield-oge-fixed-offshore-storage
-  - greenfield-oge-extendable-offshore-onshore-storage
-  - greenfield-oge-extendable-only-offshore-storage
+  - oge-grid___offshore-co2
+  - endo-grid___offshore-co2
+  - endo-grid___offshore+onshore-co2
   scenarios:
     enable: true
     file: config/scenarios.nrw.yaml
@@ -93,6 +92,10 @@ transmission:
       extendable: false
       capacity_mode: keep
       custom_capacity_value: 1328
+    short_pipeline_carrier:
+      enable: true
+      suffix: short
+      max_haversine_distance: 100
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
 sector:
@@ -146,8 +149,31 @@ solving:
       enable: true
       carriers:
       - CO2 pipeline
+      - CO2 pipeline short
       link_unit_size:
-        CO2 pipeline: 1328
+        CO2 pipeline: 3198 # 0.7m
+        CO2 pipeline short: 1012 # 0.4m
       link_threshold:
-        CO2 pipeline: 0.3
+        CO2 pipeline: 0.2
+        CO2 pipeline short: 0.2
       fractional_last_unit_size: false
+
+data:
+  scigrid_gas:
+    source: archive
+    version: latest
+  swiss_energy_balances:
+    source: archive
+    version: latest
+  synthetic_electricity_demand:
+    source: archive
+    version: latest
+  copernicus_land_cover:
+    source: archive
+    version: latest
+  bfs_road_vehicle_stock:
+    source: archive
+    version: latest
+  bfs_gdp_and_population:
+    source: archive
+    version: latest

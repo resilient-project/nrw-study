@@ -376,9 +376,9 @@ plotting:
     - 10
     branch_factor: 0.4
     branch_sizes:
-    - 1328
-    - 5312
-    branch_unit_conversion: 1328
+    - 3198
+    - 6396
+    branch_unit_conversion: 3198
     branch_unit: "x ⌀70cm"
 
 
@@ -711,6 +711,7 @@ plotting:
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
+    CO2 pipeline short: '#f5627f'
     # emissions
     process emissions CC: '#000000'
     process emissions: '#222222'

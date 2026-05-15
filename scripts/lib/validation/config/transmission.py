@@ -371,10 +371,31 @@ class CarbonDioxideProjectsConfig(BaseModel):
     )
 
 
+class _ShortPipelineCarrierConfig(BaseModel):
+    """Configuration for `carbon_dioxide.short_pipeline_carrier` settings."""
+
+    enable: bool = Field(
+        True,
+        description="Enable generation of short pipeline carriers.",
+    )
+    suffix: str = Field(
+        "short",
+        description="Suffix appended to the carrier name for short pipelines.",
+    )
+    max_haversine_distance: float = Field(
+        100,
+        description="Maximum haversine distance in km for short pipeline carriers.",
+    )
+
+
 class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
     projects: CarbonDioxideProjectsConfig = Field(
         default_factory=CarbonDioxideProjectsConfig,
         description="Carbon dioxide transmission projects configuration.",
+    )
+    short_pipeline_carrier: _ShortPipelineCarrierConfig = Field(
+        default_factory=_ShortPipelineCarrierConfig,
+        description="Short carbon dioxide pipeline carrier configuration.",
     )
 
 

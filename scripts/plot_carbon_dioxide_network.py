@@ -19,16 +19,18 @@ from scripts.make_summary import assign_locations
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
 
-def load_projection(plotting_params):
+def load_projection(plotting_params: dict) -> ccrs.CRS:
+    """Instantiate the cartopy CRS defined in plotting_params['projection']."""
     proj_kwargs = dict(
         plotting_params.get("projection", {"name": "EqualEarth"})
-    )  # shallow copy
+    )  # shallow copy so pop doesn't mutate the config
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
 
 @retry
-def plot_co2_map(n):
+def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
+    """Plot the optimised CO2 network, storage, and sequestration infrastructure."""
     plot_network = n.copy()
     assign_locations(plot_network)
 
@@ -74,10 +76,18 @@ def plot_co2_map(n):
 
     link_colors = {
         "CO2 pipeline": tech_colors["CO2 pipeline"],
+        "CO2 pipeline short": tech_colors["CO2 pipeline short"],
     }
     plot_links = plot_network.links.loc[
         plot_network.links.carrier.isin(link_colors)
     ].copy()
+
+    # Sum p_nom_opt for parallel links (same bus0/bus1) so widths don't overlay
+    summed = plot_links.groupby(["bus0", "bus1"])["p_nom_opt"].sum()
+    plot_links = plot_links.drop_duplicates(subset=["bus0", "bus1"]).copy()
+    plot_links["p_nom_opt"] = [
+        summed.at[b0, b1] for b0, b1 in zip(plot_links.bus0, plot_links.bus1)
+    ]
 
     plot_network.buses = plot_buses
     plot_network.links = plot_links
@@ -187,8 +197,8 @@ def plot_co2_map(n):
         )
 
     ax.set_facecolor("white")
-    fig.savefig(snakemake.output.map, bbox_inches="tight")
-    plt.close(fig)
+
+    return fig, ax
 
 
 if __name__ == "__main__":
@@ -200,9 +210,9 @@ if __name__ == "__main__":
             opts="",
             clusters="adm",
             sector_opts="",
-            planning_horizons="2045",
+            planning_horizons="2035",
             configfiles=["config/config.nrw.yaml"],
-            run="test-offshore-only",
+            run="greenfield-oge-extendable-only-offshore-storage",
         )
 
     configure_logging(snakemake)
@@ -219,4 +229,7 @@ if __name__ == "__main__":
 
     proj = load_projection(snakemake.params.plotting)
 
-    plot_co2_map(n)
+    fig, ax = plot_co2_map(n)
+
+    fig.savefig(snakemake.output.map, bbox_inches="tight")
+    plt.close(fig)

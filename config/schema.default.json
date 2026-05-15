@@ -6101,6 +6101,26 @@
                   "type": "number"
                 }
               }
+            },
+            "short_pipeline_carrier": {
+              "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Enable generation of short pipeline carriers.",
+                  "type": "boolean"
+                },
+                "suffix": {
+                  "default": "short",
+                  "description": "Suffix appended to the carrier name for short pipelines.",
+                  "type": "string"
+                },
+                "max_haversine_distance": {
+                  "default": 100,
+                  "description": "Maximum haversine distance in km for short pipeline carriers.",
+                  "type": "number"
+                }
+              }
             }
           },
           "description": "Configuration for carbon dioxide transmission candidates."
@@ -8150,6 +8170,26 @@
         }
       }
     },
+    "_ShortPipelineCarrierConfig": {
+      "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Enable generation of short pipeline carriers.",
+          "type": "boolean"
+        },
+        "suffix": {
+          "default": "short",
+          "description": "Suffix appended to the carrier name for short pipelines.",
+          "type": "string"
+        },
+        "max_haversine_distance": {
+          "default": 100,
+          "description": "Maximum haversine distance in km for short pipeline carriers.",
+          "type": "number"
+        }
+      }
+    },
     "_SimplifyNetworkConfig": {
       "description": "Configuration for `clustering.simplify_network` settings.",
       "properties": {
@@ -8745,6 +8785,26 @@
             "custom_capacity_value": {
               "default": 1328,
               "description": "Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+              "type": "number"
+            }
+          }
+        },
+        "short_pipeline_carrier": {
+          "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable generation of short pipeline carriers.",
+              "type": "boolean"
+            },
+            "suffix": {
+              "default": "short",
+              "description": "Suffix appended to the carrier name for short pipelines.",
+              "type": "string"
+            },
+            "max_haversine_distance": {
+              "default": 100,
+              "description": "Maximum haversine distance in km for short pipeline carriers.",
               "type": "number"
             }
           }
@@ -10260,6 +10320,26 @@
                 "custom_capacity_value": {
                   "default": 1328,
                   "description": "Custom capacity value (MW) to apply when capacity_mode is 'custom'. Default 1328 matches post_discretization link_unit_size for CO2.",
+                  "type": "number"
+                }
+              }
+            },
+            "short_pipeline_carrier": {
+              "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Enable generation of short pipeline carriers.",
+                  "type": "boolean"
+                },
+                "suffix": {
+                  "default": "short",
+                  "description": "Suffix appended to the carrier name for short pipelines.",
+                  "type": "string"
+                },
+                "max_haversine_distance": {
+                  "default": 100,
+                  "description": "Maximum haversine distance in km for short pipeline carriers.",
                   "type": "number"
                 }
               }

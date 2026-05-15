@@ -274,6 +274,10 @@ transmission:
       extendable: false
       capacity_mode: keep
       custom_capacity_value: 1328
+    short_pipeline_carrier:
+      enable: true
+      suffix: short
+      max_haversine_distance: 100
   gas:
     enable: true
     connectivity_upgrade: 1
