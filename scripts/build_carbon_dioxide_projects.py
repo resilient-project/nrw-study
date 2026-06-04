@@ -20,7 +20,7 @@ from pypsa.geo import haversine_pts
 from shapely import segmentize, unary_union
 from shapely.algorithms.polylabel import polylabel
 from shapely.geometry import LineString, MultiLineString, MultiPoint, Point
-from shapely.ops import linemerge, nearest_points
+from shapely.ops import linemerge, nearest_points, snap
 
 from scripts._helpers import (
     configure_logging,
@@ -113,8 +113,22 @@ def create_new_buses(
     # Drop all points that are within unary_union(regions_onshore) and a buffer of 5000 meters
     list_points = list_points.difference(buffered_regions)
 
+    # Ensure we handle single Point, MultiPoint, GeometryCollection or empty geometries
+    if list_points is None:
+        geoms = []
+    else:
+        try:
+            # Many shapely geometry collections expose .geoms
+            geoms = list(list_points.geoms)
+        except Exception:
+            # Fallback: single geometry (Point) or other single-geometry result
+            geoms = [list_points]
+
+    # Filter out empty geometries
+    geoms = [g for g in geoms if g is not None and not g.is_empty]
+
     gdf_points = gpd.GeoDataFrame(
-        geometry=[geom for geom in list_points.geoms],
+        geometry=geoms,
         crs=source_crs,
     )
 
@@ -137,9 +151,9 @@ def create_new_buses(
     gdf_points_geo.to_crs(GEO_CRS, inplace=True)
     gdf_points["x"] = gdf_points_geo["poi"].x
     gdf_points["y"] = gdf_points_geo["poi"].y
-    gdf_points["name"] = gdf_points.apply(
-        lambda x: f"OFFSHORE {int(x.name) + 1 + offset}", axis=1
-    )
+    # Ensure a simple integer index, then create stable offshore names
+    gdf_points = gdf_points.reset_index(drop=True)
+    gdf_points["name"] = [f"OFFSHORE {i + 1 + offset}" for i in gdf_points.index]
     gdf_points.set_index("name", inplace=True)
     gdf_points["carrier"] = carrier
 
@@ -385,11 +399,48 @@ def map_to_closest_region(
 
 
 def safe_linemerge(geoms):
-    merged = unary_union(geoms)
-    # linemerge requires a MultiLineString or list of lines
-    if isinstance(merged, shapely.LineString):
+    # Flatten input to a list of LineString parts
+    parts = []
+    for g in geoms:
+        if g is None or g.is_empty:
+            continue
+        if isinstance(g, LineString):
+            parts.append(g)
+        elif isinstance(g, MultiLineString):
+            parts.extend(list(g.geoms))
+
+    if len(parts) == 0:
+        return None
+
+    # Remove exact/virtually-identical duplicates by normalising coordinate order
+    def _norm_coords(line):
+        coords = tuple(line.coords)
+        rev = coords[::-1]
+        return coords if coords <= rev else rev
+
+    uniq = {}
+    for l in parts:
+        uniq[_norm_coords(l)] = l
+    parts = list(uniq.values())
+
+    # Snap small endpoint mismatches before unioning to avoid disconnected pieces
+    reference = unary_union(parts)
+    snapped = [snap(l, reference, 1e-6) for l in parts]
+
+    merged = unary_union(snapped)
+
+    # If unary_union already returned a LineString, return it directly
+    if isinstance(merged, LineString):
         return merged
-    return linemerge(merged)
+
+    # Try a normal linemerge
+    merged_lines = linemerge(merged)
+
+    # If still a MultiLineString, prefer the longest continuous part (likely the real route)
+    if isinstance(merged_lines, MultiLineString):
+        return max(merged_lines.geoms, key=lambda g: g.length)
+
+    return merged_lines
 
 
 def set_underwater_fraction(links, regions_offshore):
@@ -563,8 +614,8 @@ if __name__ == "__main__":
             "build_carbon_dioxide_projects",
             clusters="adm",
             opts="",
-            run="test-offshore-only",
-            configfiles=["config/config.nrw.yaml"],
+            run="endo-grid___offshore+onshore-co2",
+            configfiles=["config/config.nrw-de.yaml"],
         )
 
     configure_logging(snakemake)
@@ -606,12 +657,20 @@ if __name__ == "__main__":
 
     gdf = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True)).to_crs(DISTANCE_CRS)
 
+    # Create regional mask to drop projects completely out of modelling scope
+    scope_union = scope.union_all()
+    mask = gdf.buffer(30000)
+    mask = mask[mask.intersects(scope_union)]
+    mask_union = mask.union_all()
+
+    # Vectorised — no apply, no repeated union_all()
+    gdf = gdf[gdf.intersects(mask_union)]
+
     # Clean text fields
     gdf["Name"] = gdf["Name"].apply(clean_text)
 
     # Only keep the rows within scope
-    scope_union = scope.union_all()
-    gdf = gdf[gdf.geometry.apply(lambda x: x.intersects(scope_union))]
+    gdf = gdf[gdf.geometry.apply(lambda x: x.intersects(mask_union))]
 
     # Pipeline processing
     pipelines = gdf[
@@ -678,6 +737,10 @@ if __name__ == "__main__":
 
     b_merge_candidates = pipelines["intersects_offshore_endpoints"].notna()
     merge_candidates = pipelines.loc[b_merge_candidates].copy()
+    # Drop duplicates by name, geometry and intersecting offshore endpoint, keeping the first one
+    merge_candidates = merge_candidates.drop_duplicates(
+        subset=["Name", "geometry", "intersects_offshore_endpoints"]
+    )
 
     # Drop b_merge_candidates from pipelines
     pipelines = pipelines.loc[~b_merge_candidates]
@@ -742,6 +805,13 @@ if __name__ == "__main__":
         pipelines, regions_onshore, max_distance=COASTAL_DISTANCE
     )
 
+    ### Clean up
+    # Drop rows that are na in bus0 or bus1
+    pipelines = pipelines.dropna(subset=["bus0", "bus1"])
+
+    # Drop lines that connect the same bus
+    pipelines = pipelines[pipelines["bus0"] != pipelines["bus1"]]
+
     # Calculate haversine distances
     pipelines = calculate_haversine_distance(buses_coords, pipelines, length_factor)
 
@@ -750,13 +820,6 @@ if __name__ == "__main__":
         pipelines,
         regions_offshore,
     )
-
-    ### Clean up
-    # Drop rows that are na in bus0 or bus1
-    pipelines = pipelines.dropna(subset=["bus0", "bus1"])
-
-    # Drop lines that connect the same bus
-    pipelines = pipelines[pipelines["bus0"] != pipelines["bus1"]]
 
     # Drop duplicates with same name, bus0, bus1 keeping the longest
     pipelines = pipelines.sort_values("length", ascending=False)
@@ -783,6 +846,7 @@ if __name__ == "__main__":
     # Add missing columns
     pipelines["carrier"] = "CO2 pipeline"
     pipelines["underground"] = "t"
+    pipelines.crs = DISTANCE_CRS
 
     ### STORES
     # Store processing
@@ -816,12 +880,17 @@ if __name__ == "__main__":
     stores = map_to_closest_region(
         stores, buses_co2_offshore, max_distance=MAX_STORE_DISTANCE
     )
+
     # stores = map_to_closest_region(
     #     stores, regions_offshore, max_distance=COASTAL_DISTANCE,
     # )
     # Rename bus0 to bus
     stores = stores.rename(columns={"bus0": "bus"})
     stores = stores.drop(columns=["bus1"])
+
+    # Drop stores that are not mapped to any bus
+    stores = stores.dropna(subset=["bus"])
+
     stores["mtpa"] = stores["label"].map(sequestration_potential)
     stores["e_nom"] = stores["mtpa"] * 1e6  # in tonnes
 
@@ -831,6 +900,13 @@ if __name__ == "__main__":
     # index, rename to id
     stores = stores.rename(columns={"label": "id"})
     stores.set_index("id", inplace=True)
+
+    # Drop buses_co2_offshore that don't appear in pipelines bus0 or bus1 or stores bus
+    buses_co2_offshore = buses_co2_offshore[
+        buses_co2_offshore.index.isin(pipelines["bus0"])
+        | buses_co2_offshore.index.isin(pipelines["bus1"])
+        | buses_co2_offshore.index.isin(stores["bus"])
+    ]
 
     # Export
     buses_co2_offshore.to_csv(snakemake.output.co2_buses_offshore, index=True)

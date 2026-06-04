@@ -1,0 +1,165 @@
+# SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
+#
+# SPDX-License-Identifier: MIT
+# yaml-language-server: $schema=./schema.default.json
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#version
+version: v2026.02.0
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
+run:
+  prefix: "nrw-de"
+  name:
+  - oge-grid___offshore-co2
+  - endo-grid___offshore-co2
+  - endo-grid___offshore+onshore-co2
+  scenarios:
+    enable: true
+    file: config/scenarios.nrw.yaml
+  disable_progressbar: false
+  shared_resources:
+    policy: false
+    exclude: []
+  use_shadow_directory: false
+
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
+foresight: myopic
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
+scenario:
+  clusters:
+  - adm
+  opts:
+  - ""
+  sector_opts:
+  - ""
+  planning_horizons:
+  - 2035
+  - 2040
+  - 2045
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
+countries:
+- DE
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
+electricity:
+  renewable_carriers:
+  - solar
+  - onwind
+  - "offwind-ac"
+  - "offwind-dc"
+  - hydro
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#transmission
+transmission:
+  hydrogen:
+    enable: true
+    gabriel_filter_min_degree: 0
+    max_offshore_haversine_distance: 300
+    length_factor: 1.25
+    cost_factor: 1
+    retrofit:
+      enable: false
+      capacity_per_ch4: 0.6
+    efficiency:
+      enable: true
+      efficiency_per_1000km: 1.0
+      compression_per_1000km: 0.018
+  carbon_dioxide:
+    enable: true
+    gabriel_filter_min_degree: 0
+    max_offshore_haversine_distance: 300
+    length_factor: 1.25
+    cost_factor: 1
+    projects:
+      enable: true
+      extendable: false
+      capacity_mode: keep
+      custom_capacity_value: 1328
+    short_pipeline_carrier:
+      enable: true
+      suffix: short
+      max_haversine_distance: 100
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#sector
+sector:
+  transport: true
+  heating: true
+  biomass: true
+  industry: true
+  shipping: true
+  aviation: true
+  agriculture: true
+  fossil_fuels: true
+  regional_co2_sequestration_potential:
+    enable: true
+    attribute:
+    - conservative estimate Mt
+    - conservative estimate GAS Mt
+    - conservative estimate OIL Mt
+    - conservative estimate aquifer Mt
+    include_onshore: true
+    min_size: 1
+    max_size: 25
+    years_of_storage: 25
+  co2_sequestration_potential:
+    2020: 0
+    2025: 0
+    2030: 40
+    2035: 100
+    2040: 180
+    2045: 250
+    2050: 250
+  co2_sequestration_cost: 30
+  co2_sequestration_lifetime: 50
+
+# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
+clustering:
+  mode: administrative
+  administrative:
+    level: 0
+    countries:
+      BE: 1
+      DE: 2
+      NL: 1
+      DEA: 3
+
+solving:
+  options:
+    skip_iterations: false # set to true skips iterations and disables post_discretization
+    min_iterations: 1
+    max_iterations: 1
+    post_discretization:
+      enable: true
+      carriers:
+      - CO2 pipeline
+      - CO2 pipeline short
+      link_unit_size:
+        CO2 pipeline: 3198 # 0.7m
+        CO2 pipeline short: 1012 # 0.4m
+      link_threshold:
+        CO2 pipeline: 0.2
+        CO2 pipeline short: 0.2
+      fractional_last_unit_size: false
+
+data:
+  scigrid_gas:
+    source: archive
+    version: latest
+  swiss_energy_balances:
+    source: primary
+    version: latest
+  synthetic_electricity_demand:
+    source: archive
+    version: latest
+  copernicus_land_cover:
+    source: archive
+    version: latest
+  bfs_road_vehicle_stock:
+    source: archive
+    version: latest
+  bfs_gdp_and_population:
+    source: primary
+    version: latest
