@@ -59,7 +59,10 @@ except NameError:
 xlsx_infile = (
     ROOT / "data" / "forecast_industry" / "industrial_process_emission_forecast.xlsx"
 )
-nuts3_file = ROOT / "resources" / "nuts3_shapes.geojson"
+if "snakemake" in globals():
+    nuts3_file = Path(snakemake.input.nuts3_shapes)
+else:
+    nuts3_file = ROOT / "resources" / "nuts3_shapes.geojson"
 
 xlsx_outfile = (
     ROOT

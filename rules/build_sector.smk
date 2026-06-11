@@ -1298,7 +1298,7 @@ rule prepare_forecast_process_emissions:
     """Preprocess FORECAST process emissions: translate, geo-locate coordinates → NUTS3 regions."""
     input:
         process_emissions_xlsx="data/forecast_industry/industrial_process_emission_forecast.xlsx",
-        nuts3_shapes="resources/nuts3_shapes.geojson",
+        nuts3_shapes=rules.retrieve_eu_nuts_2021.output["shapes_level_3"],
     output:
         expand(
             "data/forecast_industry/{industry_scenario}/process_emissions.csv",
