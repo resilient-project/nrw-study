@@ -203,6 +203,8 @@ if __name__ == "__main__":
     elif max_h / magnitude > 8:
         magnitude *= 2
 
+    magnitude /= 2
+
     ax.set_ylim(-max_h * 0.25, max_h * 1.05)
     legend_y = -max_h * 0.2
     ax.add_patch(

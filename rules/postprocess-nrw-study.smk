@@ -5,6 +5,27 @@
 FORECAST_INDUSTRY_CFG = config["industry"]["forecast_industry"]
 
 
+rule plot_industry_sankey_pypsa_eur:
+    input:
+        production=resources("industrial_production_per_country_tomorrow_{planning_horizons}.csv"),
+        ratios=resources("industry_sector_ratios_{planning_horizons}.csv"),
+    output:
+        sankey=RESULTS + "nrw-study/industry_sankey_pypsa_eur_{planning_horizons}.pdf",
+    params:
+        country="DE",
+    log:
+        RESULTS + "logs/plot_industry_sankey_pypsa_eur_{planning_horizons}.log",
+    benchmark:
+        benchmarks("plot_industry_sankey_pypsa_eur_{planning_horizons}.json"),
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting PyPSA-EUR industry sankey for {wildcards.planning_horizons}"
+    script:
+        scripts("plot_industry_sankey_pypsa_eur.py")
+
+
 rule plot_industry_sankey_forecast:
     input:
         mapping="data/forecast_industry/mapping.csv",
@@ -45,6 +66,11 @@ rule plot_industry_sankey_forecast_all:
 
 rule plot_nrw_study:
     input:
+        expand(
+            RESULTS + "nrw-study/industry_sankey_pypsa_eur_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
     message:
         "Plotting all NRW study outputs"
