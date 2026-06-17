@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 FORECAST_INDUSTRY_CFG = config["industry"]["forecast_industry"]
+NRW_RESULTS = "results/" + config["run"]["prefix"] + "/"
 
 
 rule plot_industry_sankey_pypsa_eur:
@@ -64,6 +65,29 @@ rule plot_industry_sankey_forecast_all:
         "Plotting industry sankey diagrams for all forecast scenarios and planning horizons"
 
 
+rule plot_costs_overview:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "costs_overview"),
+    input:
+        costs=expand(
+            RESULTS + "csvs/costs.csv",
+            run=config["run"]["name"],
+        ),
+    output:
+        plot=NRW_RESULTS + "nrw-study-summary/costs_overview.pdf",
+    log:
+        NRW_RESULTS + "logs/plot_costs_overview.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_costs_overview",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting costs overview across all NRW scenarios"
+    script:
+        scripts("plot_costs_overview.py")
+
+
 rule plot_nrw_study:
     input:
         expand(
@@ -72,5 +96,6 @@ rule plot_nrw_study:
             planning_horizons=config["scenario"]["planning_horizons"],
         ),
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
+        rules.plot_costs_overview.output.plot,
     message:
         "Plotting all NRW study outputs"
