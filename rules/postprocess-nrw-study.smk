@@ -88,6 +88,29 @@ rule plot_costs_overview:
         scripts("plot_costs_overview.py")
 
 
+rule plot_costs_overview_delta:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "costs_overview"),
+    input:
+        costs=expand(
+            RESULTS + "csvs/costs.csv",
+            run=config["run"]["name"],
+        ),
+    output:
+        plot=NRW_RESULTS + "nrw-study-summary/costs_overview_delta.pdf",
+    log:
+        NRW_RESULTS + "logs/plot_costs_overview_delta.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_costs_overview_delta",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting delta costs overview across all NRW scenarios"
+    script:
+        scripts("plot_costs_overview_delta.py")
+
+
 rule plot_nrw_study:
     input:
         expand(
@@ -97,5 +120,6 @@ rule plot_nrw_study:
         ),
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
         rules.plot_costs_overview.output.plot,
+        rules.plot_costs_overview_delta.output.plot,
     message:
         "Plotting all NRW study outputs"

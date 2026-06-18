@@ -12,6 +12,7 @@ plotting:
         endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
         endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
         endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      main_scenario: oge-grid___Ref___offshore-co2
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
