@@ -2,6 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 
+RUN_PREFIX = config["run"].get("prefix", "")
+SUMMARY_RESULTS = f"results/{RUN_PREFIX}/" if RUN_PREFIX else "results/"
+CCS_FOCUS_MAP_SUMMARY = (
+    SUMMARY_RESULTS
+    + "nrw-study-summary/{run}/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    + "-balance_map_co2_stored_focus"
+    if config["run"].get("scenarios", {}).get("enable")
+    else SUMMARY_RESULTS
+    + "nrw-study-summary/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    + "-balance_map_co2_stored_focus"
+)
+
 
 if config["foresight"] != "perfect":
 
@@ -175,6 +187,35 @@ if config["foresight"] != "perfect":
             "Plotting balance map for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options, {wildcards.planning_horizons} planning horizons and {wildcards.carrier} carrier"
         script:
             scripts("plot_balance_map.py")
+
+    rule plot_ccs_balance_map_focus:
+        input:
+            network=RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        output:
+            nrw=CCS_FOCUS_MAP_SUMMARY + "_nrw.pdf",
+            de=CCS_FOCUS_MAP_SUMMARY + "_de.pdf",
+            nrw_network_only=CCS_FOCUS_MAP_SUMMARY + "_nrw_network_only.pdf",
+            de_network_only=CCS_FOCUS_MAP_SUMMARY + "_de_network_only.pdf",
+        log:
+            RESULTS
+            + "logs/plot_ccs_balance_map_focus/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        benchmark:
+            (
+                RESULTS
+                + "benchmarks/plot_ccs_balance_map_focus/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+            )
+        threads: 1
+        resources:
+            mem_mb=8000,
+        params:
+            plotting=config_provider("plotting"),
+            settings=config_provider("plotting", "balance_map", "co2_stored"),
+        message:
+            "Plotting NRW and Germany focused CO2 stored balance maps for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
+        script:
+            scripts("plot_ccs_balance_map_focus.py")
 
     rule plot_balance_map_interactive:
         input:

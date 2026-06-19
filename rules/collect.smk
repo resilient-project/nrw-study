@@ -116,6 +116,19 @@ def balance_map_paths(kind, w):
     )
 
 
+RUN_PREFIX = config["run"].get("prefix", "")
+SUMMARY_RESULTS = f"results/{RUN_PREFIX}/" if RUN_PREFIX else "results/"
+CCS_FOCUS_MAP_SUMMARY = (
+    SUMMARY_RESULTS
+    + "nrw-study-summary/{run}/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    + "-balance_map_co2_stored_focus_{focus}{variant}.pdf"
+    if config["run"].get("scenarios", {}).get("enable")
+    else SUMMARY_RESULTS
+    + "nrw-study-summary/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+    + "-balance_map_co2_stored_focus_{focus}{variant}.pdf"
+)
+
+
 rule plot_balance_maps:
     input:
         static=lambda w: balance_map_paths("static", w),
@@ -127,6 +140,32 @@ rule plot_balance_maps:
 rule plot_balance_maps_static:
     input:
         lambda w: balance_map_paths("static", w),
+
+
+rule plot_ccs_balance_maps_static:
+    input:
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+            + "-balance_map_co2_stored.pdf",
+            **config["scenario"],
+            run=config["run"]["name"],
+        ),
+    message:
+        "Plotting static CO2 stored balance maps for all configured NRW scenarios"
+
+
+rule plot_ccs_balance_maps_focus_static:
+    input:
+        expand(
+            CCS_FOCUS_MAP_SUMMARY,
+            **config["scenario"],
+            run=config["run"]["name"],
+            focus=["nrw", "de"],
+            variant=["", "_network_only"],
+        ),
+    message:
+        "Plotting NRW and Germany focused CO2 stored balance maps for all configured NRW scenarios"
 
 
 rule plot_balance_maps_interactive:

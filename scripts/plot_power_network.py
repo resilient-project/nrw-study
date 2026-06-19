@@ -47,7 +47,7 @@ def rename_techs_tyndp(tech):
 
 
 def load_projection(plotting_params):
-    proj_kwargs = plotting_params.get("projection", dict(name="EqualEarth"))
+    proj_kwargs = dict(plotting_params.get("projection", dict(name="EqualEarth")))
     proj_func = getattr(ccrs, proj_kwargs.pop("name"))
     return proj_func(**proj_kwargs)
 
