@@ -51,7 +51,55 @@ plotting:
       - Point source CC
       - DAC
       - Load shedding
+    ccs_overview:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (3.5, 2.8)
+      dpi: 300
+      legend_order:
+      - SMR CC
+      - DAC
+      - gas for industry CC
+      - process emissions CC
+      - solid biomass for industry CC
+      - urban central gas CHP CC
+      - urban central solid biomass CHP CC
+    co2_pipeline_overview:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (3.5, 2.8)
+      dpi: 300
+      delta_ymin: -30
+      delta_ymax: 80
+      legend_order:
+        - CO2 Long-distance
+        - CO2 Short (intra-regional)
   enable_heat_source_maps: false
+
   map:
     boundaries: [-11, 30, 34, 71]
     geomap_colors:
@@ -197,8 +245,9 @@ plotting:
       unit: Mt
       unit_conversion: 1_000_000
       bus_factor: 0.015
-      branch_factor: 0.4
-      flow_factor: 120
+      branch_factor: 0.05
+      branch_width_max: 1.5
+      flow_factor: 15
       bus_sizes:
       - 50
       - 10

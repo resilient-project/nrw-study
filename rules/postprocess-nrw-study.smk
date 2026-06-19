@@ -88,6 +88,57 @@ rule plot_costs_overview:
         scripts("plot_costs_overview.py")
 
 
+rule plot_ccs_installed_capacity:
+    input:
+        networks=expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+    output:
+        eu=NRW_RESULTS + "nrw-study-summary/ccs_co2_capture_capacity_eu.pdf",
+        de=NRW_RESULTS + "nrw-study-summary/ccs_co2_capture_capacity_de.pdf",
+        nrw=NRW_RESULTS + "nrw-study-summary/ccs_co2_capture_capacity_nrw.pdf",
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "ccs_overview"),
+    log:
+        NRW_RESULTS + "logs/plot_ccs_installed_capacity.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_ccs_installed_capacity",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting optimized CCS capture capacities across all NRW scenarios"
+    script:
+        scripts("plot_ccs_installed_capacity.py")
+
+rule plot_co2_pipeline_overview:
+    params:
+        plotting_fig=config["plotting"]["nrw-study"]["co2_pipeline_overview"],
+    input:
+        networks=expand(
+            "results/nrw/{run}/networks/base_s_adm___{year}.nc",
+            run=config["plotting"]["nrw-study"]["co2_pipeline_overview"]["run_order"],
+            year=config["scenario"]["planning_horizons"],
+        ),
+    output:
+        eu=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_eu.png",
+        de=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_de.png",
+        nrw=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_nrw.png",
+    log:
+        NRW_RESULTS + "logs/plot_co2_pipeline_overview.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_co2_pipeline_overview",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting optimized CO2 pipeline capacities across all NRW scenarios"
+    script:
+        scripts("plot_co2_pipeline_overview.py")
+
 rule plot_nrw_study:
     input:
         expand(
@@ -97,5 +148,7 @@ rule plot_nrw_study:
         ),
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
         rules.plot_costs_overview.output.plot,
+        rules.plot_ccs_installed_capacity.output,
+        rules.plot_co2_pipeline_overview.output,
     message:
         "Plotting all NRW study outputs"
