@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
         # Set title and labels
         ax.set_xlabel(f"{planning_horizon}", fontsize=fontsize)
-        ax.set_ylabel(f"Total system costs (bn. € p.a.)", fontsize=fontsize)
+        ax.set_ylabel(f"Delta system costs (bn. € p.a.)", fontsize=fontsize)
 
         ax.set_xticklabels(
             data.index,

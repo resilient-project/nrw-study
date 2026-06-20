@@ -210,9 +210,9 @@ if __name__ == "__main__":
             opts="",
             clusters="adm",
             sector_opts="",
-            planning_horizons="2035",
+            planning_horizons="2045",
             configfiles=["config/config.nrw.yaml"],
-            run="greenfield-oge-extendable-only-offshore-storage",
+            run="endo-grid___Ref___offshore-co2",
         )
 
     configure_logging(snakemake)

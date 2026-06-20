@@ -12,7 +12,6 @@ plotting:
         endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
         endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
         endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
-      main_scenario: oge-grid___Ref___offshore-co2
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -24,8 +23,6 @@ plotting:
         size: 6
       figsize: (3.5, 2.8)
       dpi: 300
-      delta_ymin: -30
-      delta_ymax: 80
       legend_order:
       - Other
       - Waste
@@ -45,6 +42,52 @@ plotting:
       - Fischer-Tropsch
       - Methanol
       - Methanolisation
+      - Ammonia
+      - H$_2$ infra
+      - CO$_2$ infra
+      - SMR
+      - Sabatier
+      - Point source CC
+      - DAC
+      - Load shedding
+    costs_overview_delta:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off-1a"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off-1a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on-1a"
+      main_scenario: oge-grid___Ref___offshore-co2
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (3.5, 2.8)
+      dpi: 300
+      legend_order:
+      - Other
+      - Waste
+      - Electricity grid
+      - Hydro & RoR
+      - Biomass & -gas
+      - Nuclear
+      - Oil
+      - Coal
+      - PtH
+      - Gas
+      - CHP
+      - Solar
+      - Wind
+      - Battery
+      - Electrolysis
+      - Fischer-Tropsch
+      - Methanol
+      - Methanolisation
+      - Ammonia
       - H$_2$ infra
       - CO$_2$ infra
       - SMR
@@ -517,6 +560,7 @@ plotting:
     oil: '#c9c9c9'
     oil primary: '#d2d2d2'
     oil refining: '#e6e6e6'
+    oil for industry: '#692e0a'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -807,6 +851,7 @@ grouping:
   CCGT: Gas
   CO2: CO$_2$ infra
   CO2 pipeline: CO$_2$ infra
+  CO2 pipeline short: CO$_2$ infra
   DAC: DAC
   DC: Electricity grid
   EV battery: Battery
@@ -822,9 +867,11 @@ grouping:
   H2 pipeline (Kernnetz): H$_2$ infra
   H2 pipeline retrofitted: H$_2$ infra
   H2 turbine: H$_2$ infra
+  Haber-Bosch: Ammonia
   HVC to air: Other
   import H2: H$_2$ imports
   OCGT: Gas
+  OCGT methanol: Methanol
   PHS: Hydro & RoR
   SMR: SMR
   SMR CC: Point source CC
@@ -832,7 +879,10 @@ grouping:
   V2G: Battery
   agriculture electricity: Other
   agriculture heat: Other
+  agriculture machinery electric: Other
   agriculture machinery oil: Other
+  ammonia cracker: Ammonia
+  ammonia store: Ammonia
   battery: Battery
   battery charger: Battery
   battery discharger: Battery
@@ -840,6 +890,7 @@ grouping:
   biogas to gas: Biomass & -gas
   biomass to liquid: Biomass & -gas
   biomass to liquid CC: Point source CC
+  biomass-to-methanol: Methanol
   co2: CO$_2$ infra
   co2 sequestered: CO$_2$ infra
   co2 stored: CO$_2$ infra
@@ -847,10 +898,13 @@ grouping:
   coal for industry: Coal
   electricity: Electricity grid
   electricity distribution grid: Electricity grid
+  electrobiofuels: Biomass & -gas
   gas: Gas
   gas compressing: Gas
   gas for industry: Gas
   gas for industry CC: Point source CC
+  gas pipeline: Gas
+  gas pipeline new: Gas
   gas primary: Gas
   renewable gas: Biomass & -gas
   home battery: Battery
@@ -868,6 +922,7 @@ grouping:
   methanol: Methanol
   methanolisation: Methanolisation
   naphtha for industry: Oil # TODO
+  NH3: Ammonia
   nuclear: Nuclear
   offwind-ac: Wind
   offwind-dc: Wind
@@ -945,8 +1000,11 @@ grouping:
   biogas to gas CC: Point source CC
   oil for industry: Oil
   Methanol steam reforming CC: Point source CC
+  "": Other
+  "none": Other
 
 group_colors:
+  Ammonia: "#46caf0"
   Battery: "#ace37f"
   Biomass & -gas: "#baa741"
   CHP: "#8a5751"

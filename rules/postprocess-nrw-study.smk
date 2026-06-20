@@ -90,7 +90,7 @@ rule plot_costs_overview:
 
 rule plot_costs_overview_delta:
     params:
-        plotting_fig=config_provider("plotting", "nrw-study", "costs_overview"),
+        plotting_fig=config_provider("plotting", "nrw-study", "costs_overview_delta"),
     input:
         costs=expand(
             RESULTS + "csvs/costs.csv",
