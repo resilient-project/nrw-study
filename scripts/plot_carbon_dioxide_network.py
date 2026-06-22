@@ -93,8 +93,11 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         "CO2 pipeline": tech_colors["CO2 pipeline"],
         "CO2 pipeline short": tech_colors["CO2 pipeline short"],
     }
+    is_reversed = plot_network.links.get(
+        "reversed", pd.Series(False, index=plot_network.links.index)
+    ).fillna(False)
     plot_links = plot_network.links.loc[
-        plot_network.links.carrier.isin(link_colors)
+        plot_network.links.carrier.isin(link_colors) & ~is_reversed
     ].copy()
 
     # Sum p_nom_opt for parallel links (same bus0/bus1) so widths don't overlay

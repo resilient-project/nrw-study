@@ -2,8 +2,12 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates a zoomed map of the optimised carbon dioxide network for NRW (DEA region).
-Neighbouring regions remain visible but the view is centred on North Rhine-Westphalia.
+Creates a CO₂ flow map for the NRW region with directional arrows showing
+net annual CO₂ transport on each pipeline corridor.
+
+Combines the NRW map style from plot_carbon_dioxide_network_nrw with the
+flow-arrow approach from plot_balance_map. Useful for verifying that no
+artificial circulation loops appear after the CO₂ pipeline efficiency fix.
 """
 
 import re
@@ -25,10 +29,8 @@ from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
-# Bounding box for NRW (DEA): [lon_min, lon_max, lat_min, lat_max]
 NRW_BOUNDS = [5.75, 9.55, 50.2, 52.65]
 
-# Neighbouring region labels: (lon, lat, name)
 NEIGHBOUR_LABELS = [
     (6.15, 52.0, "NIEDERLANDE"),
     (6.03, 50.34, "BELGIEN"),
@@ -37,7 +39,6 @@ NEIGHBOUR_LABELS = [
     (7.75, 52.55, "NIEDERSACHSEN"),
 ]
 
-# Carrier name translations (English → German) for Supply/Consumption legends
 CARRIER_NAMES_DE: dict[str, str] = {
     "co2 sequestered": "CO$_2$-Sequestrierung",
     "DAC": "Direct Air Capture",
@@ -48,57 +49,28 @@ CARRIER_NAMES_DE: dict[str, str] = {
     "solid biomass for industry CC": "Feste Biomasse für Industrie",
     "urban central gas CHP CC": "Städtische Gas-KWK",
     "urban central solid biomass CHP CC": "Städtische Biomasse-KWK",
-
 }
-
-# City reference data — kept for optional future use
-# NRW_CITIES = pd.DataFrame(
-#     {
-#         "name": [
-#             "Münster", "Aachen", "Bonn", "Köln",
-#             "Düsseldorf", "Wuppertal", "Gelsenkirchen", "Duisburg",
-#             "Essen", "Bochum", "Bielefeld",
-#         ],
-#         "lon": [
-#             7.6261, 6.0839, 7.0982, 6.9603,
-#             6.7735, 7.1827, 7.0956, 6.7623,
-#             7.0116, 7.2156, 8.5325,
-#         ],
-#         "lat": [
-#             51.9607, 50.7753, 50.7374, 50.9333,
-#             51.2217, 51.2562, 51.5177, 51.4344,
-#             51.4556, 51.4818, 52.0302,
-#         ],
-#     }
-# )
 
 
 def _clean_nuts3_name(name: str) -> str:
     return re.sub(r",\s*Kreisfreie\s+Stadt$", "", name).strip()
 
 
-def load_projection(plotting_params: dict) -> ccrs.CRS:
-    """Instantiate the cartopy CRS defined in plotting_params['projection']."""
-    proj_kwargs = dict(
-        plotting_params.get("projection", {"name": "EqualEarth"})
-    )  # shallow copy so pop doesn't mutate the config
-    proj_func = getattr(ccrs, proj_kwargs.pop("name"))
-    return proj_func(**proj_kwargs)
-
-
 @retry
-def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
-    """Plot the optimised CO2 network zoomed into NRW (DEA region)."""
+def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
+    """Plot net annual CO₂ pipeline flows with directional arrows for NRW."""
     plot_network = n.copy()
     assign_locations(plot_network)
 
     tech_colors = snakemake.params.plotting["tech_colors"]
-    settings = snakemake.params.plotting["carbon_dioxide_network_nrw"]
+    settings = snakemake.params.plotting["co2_flow_map_nrw"]
 
     bus_size_factor = settings["bus_factor"]
     unit_conversion = settings["unit_conversion"]
-    linewidth_factor = 2e3
+    flow_linewidth_factor = settings["flow_linewidth_factor"]
+    flow_factor = settings.get("flow_factor", 1.0)
 
+    # --- bus sizes from energy balance (same as capacity map) ---
     bus_carrier = "co2 stored"
     transmission_carriers = get_transmission_carriers(
         plot_network, bus_carrier=bus_carrier
@@ -135,6 +107,8 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         "CO2 pipeline": tech_colors["CO2 pipeline"],
         "CO2 pipeline short": tech_colors["CO2 pipeline short"],
     }
+
+    # Exclude reversed links — only forward links define corridor direction
     is_reversed = plot_network.links.get(
         "reversed", pd.Series(False, index=plot_network.links.index)
     ).fillna(False)
@@ -142,17 +116,40 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         plot_network.links.carrier.isin(link_colors) & ~is_reversed
     ].copy()
 
-    # Sum p_nom_opt for parallel links (same bus0/bus1) so widths don't overlay
-    summed = plot_links.groupby(["bus0", "bus1"])["p_nom_opt"].sum()
+    # --- net annual flows ---
+    # statistics.transmission returns total annual flow (MW·h = t_CO₂ for CO₂ pipelines)
+    flow = plot_network.statistics.transmission(
+        groupby=False, bus_carrier=bus_carrier
+    ).div(unit_conversion)
+
+    link_flow_series = pd.Series(dtype=float)
+    if not flow.empty:
+        raw = flow.get("Link", pd.Series(dtype=float))
+        if not raw.empty:
+            # Net out reversed-link flows: forward - reverse = signed net on corridor
+            rev_mask = raw.index.str.contains("-reversed")
+            flow_rev = raw[rev_mask].rename(lambda x: x.replace("-reversed", ""))
+            link_flow_series = raw[~rev_mask].subtract(flow_rev, fill_value=0)
+
+    # Assign flow to each forward link; aggregate parallel links sharing the same bus pair
+    plot_links["_flow"] = link_flow_series.reindex(plot_links.index).fillna(0)
+    summed_cap = plot_links.groupby(["bus0", "bus1"])["p_nom_opt"].sum()
+    summed_flow = plot_links.groupby(["bus0", "bus1"])["_flow"].sum()
     plot_links = plot_links.drop_duplicates(subset=["bus0", "bus1"]).copy()
     plot_links["p_nom_opt"] = [
-        summed.at[b0, b1] for b0, b1 in zip(plot_links.bus0, plot_links.bus1)
+        summed_cap.at[b0, b1] for b0, b1 in zip(plot_links.bus0, plot_links.bus1)
     ]
+    plot_links["_flow"] = [
+        summed_flow.at[b0, b1] for b0, b1 in zip(plot_links.bus0, plot_links.bus1)
+    ]
+
+    link_flow = plot_links["_flow"]
+    # Line thickness proportional to absolute net flow; minimum width so zero-flow
+    # links remain visible as thin grey lines
+    link_width = link_flow.abs().div(flow_linewidth_factor).clip(lower=0.15)
 
     plot_network.buses = plot_buses
     plot_network.links = plot_links
-
-    link_width = plot_links.p_nom_opt.div(linewidth_factor)
 
     fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
@@ -161,11 +158,9 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     non_dea.plot(
         ax=ax, facecolor="#f2f2f2", edgecolor="#999999", linewidth=0.3, zorder=1
     )
-    # Foreign country borders (2-char codes) — already at country level
     non_dea[non_dea.index.str.len() <= 2].boundary.plot(
         ax=ax, edgecolor="#999999", linewidth=1.0, zorder=2
     )
-    # German federal state borders: dissolve non-NRW NUTS3 polygons to NUTS1 level
     de_non_dea = non_dea[
         non_dea.index.str.startswith("DE") & (non_dea.index.str.len() > 3)
     ].copy()
@@ -175,14 +170,6 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
             ax=ax, edgecolor="#999999", linewidth=1.0, zorder=2
         )
 
-    # Urban area footprints (Natural Earth 10 m).
-    # ax.add_feature(  # type: ignore[attr-defined]
-    #     cfeature.NaturalEarthFeature("cultural", "urban_areas", "10m"),
-    #     facecolor="#e0d8d0", edgecolor="none", zorder=2,
-    # )
-
-    # Rivers and lakes (Natural Earth 10 m).
-    # ax is a GeoAxes at runtime (subplot_kw={"projection": proj}); Pyright sees Axes.
     ax.add_feature(  # type: ignore[attr-defined]
         cfeature.NaturalEarthFeature(
             "physical", "rivers_lake_centerlines", "10m", facecolor="none"
@@ -203,6 +190,7 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         bus_split_circle=True,
         link_color=plot_links.carrier.map(link_colors),
         link_width=link_width,
+        link_flow=link_flow * flow_factor,
         branch_components=["Link"],
         ax=ax,
         **map_opts,
@@ -266,8 +254,8 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
 
     legend_bus_size = settings["bus_sizes"]
     carrier_unit = settings["unit"]
-    branch_unit = settings["branch_unit"]
-    branch_unit_conversion = settings["branch_unit_conversion"]
+    flow_unit = settings["flow_unit"]
+    legend_flow_sizes = settings["flow_sizes"]
 
     br_kw = {**legend_kw, "loc": "lower right", "bbox_to_anchor": (0.99, 0.02)}
     if legend_bus_size is not None:
@@ -282,15 +270,11 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
             legend_kw=br_kw,
         )
 
-    legend_branch_sizes = settings["branch_sizes"]
-    if legend_branch_sizes is not None:
+    if legend_flow_sizes is not None:
         add_legend_lines(
             ax,
-            [s / linewidth_factor for s in legend_branch_sizes],
-            [
-                f"{s / branch_unit_conversion} {branch_unit}"
-                for s in legend_branch_sizes
-            ],
+            [s / flow_linewidth_factor for s in legend_flow_sizes],
+            [f"{s} {flow_unit}" for s in legend_flow_sizes],
             patch_kw=dict(color="#666", solid_capstyle="round"),
             legend_kw={**br_kw, "bbox_to_anchor": (0.78, 0.02)},
         )
@@ -305,13 +289,13 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_carbon_dioxide_network_nrw",
+            "plot_balance_map_nrw",
             opts="",
             clusters="adm",
             sector_opts="",
             planning_horizons="2045",
             configfiles=["config/config.nrw.yaml"],
-            run="endo-grid___Ref___offshore-co2",
+            run="oge-grid___Ref___offshore-co2",
         )
 
     configure_logging(snakemake)
@@ -323,10 +307,10 @@ if __name__ == "__main__":
 
     map_opts = snakemake.params.plotting["map"]
     map_opts["boundaries"] = NRW_BOUNDS
-    map_opts.pop("geomap_colors", None)  # replaced by explicit geomap_color=False below
+    map_opts.pop("geomap_colors", None)
 
     proj = ccrs.Mercator()
-    fig, ax = plot_co2_map(n)
+    fig, ax = plot_co2_flow_map(n)
 
     # Overlay DEA (NRW) administrative boundaries
     dea_regions = regions[regions.index.str.startswith("DEA")].to_crs(proj.proj4_init)
@@ -334,8 +318,6 @@ if __name__ == "__main__":
 
     dea_regions.boundary.plot(ax=ax, edgecolor="grey", linewidth=0.5, zorder=3)
 
-    # Strip interior holes (gaps between source polygons show up as black rings after
-    # dissolve) by rebuilding each polygon from its exterior ring only.
     def _exterior_only(geom):
         if geom.geom_type == "Polygon":
             return Polygon(geom.exterior)
@@ -345,7 +327,6 @@ if __name__ == "__main__":
         geometry=dea_outer.geometry.apply(_exterior_only), crs=dea_outer.crs
     ).boundary.plot(ax=ax, edgecolor="black", linewidth=1.0, zorder=4)
 
-    # NUTS3 region name labels inside each DEA subregion
     nuts3 = gpd.read_file(snakemake.input.nuts3_shapes)
     dea_nuts3 = nuts3[nuts3["index"].str.startswith("DEA")].copy()
     dea_nuts3 = dea_nuts3.to_crs(proj.proj4_init)
@@ -353,13 +334,8 @@ if __name__ == "__main__":
         geom = row.geometry
         centroid = geom.centroid
         name = _clean_nuts3_name(row["name"])
-
-        # Scale font by bounding-box width in projected metres.
-        # Mercator x-coords at NRW latitudes: ~70 km per degree longitude.
-        # Rural Kreis (~60 km wide) → ~7 pt; small Kreisfreie Stadt (~15 km) → ~4 pt.
         bbox_width = geom.bounds[2] - geom.bounds[0]
         fontsize = max(4.0, min(7.0, bbox_width / 9_000))
-
         wrapped = "\n".join(textwrap.wrap(name, width=12, break_long_words=False))
         ax.text(
             centroid.x, centroid.y, wrapped,
@@ -368,7 +344,6 @@ if __name__ == "__main__":
             multialignment="center", fontweight="bold", alpha=0.5,
         )
 
-    # Neighbouring region/country labels
     geo_crs = ccrs.PlateCarree()
     for lon, lat, label in NEIGHBOUR_LABELS:
         ax.text(
@@ -381,3 +356,4 @@ if __name__ == "__main__":
     fig.savefig(snakemake.output.map, bbox_inches="tight")
     fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
     plt.close(fig)
+

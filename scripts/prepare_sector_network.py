@@ -1044,7 +1044,6 @@ def add_co2_network(
         p_nom_extendable=True,
         length=scaled_length.values,
         capital_cost=capital_cost.values,
-        marginal_cost=0.1,  # to avoid looping
         carrier="CO2 pipeline",
         lifetime=costs.at["CO2 pipeline", "lifetime"],
     )
@@ -6592,7 +6591,6 @@ def add_co2_projects(
         p_min_pu=pipelines.p_min_pu,
         length=pipelines.length,
         capital_cost=capital_cost,
-        marginal_cost=0.1,
         carrier="CO2 pipeline",
         lifetime=costs.at["CO2 pipeline", "lifetime"],
         **params,
@@ -6655,7 +6653,7 @@ if __name__ == "__main__":
             clusters="adm",
             sector_opts="",
             planning_horizons="2035",
-            run="greenfield-oge-extendable-only-offshore-storage",
+            run="endo-grid___CCS-Exp__offshore-co2",
             configfiles=["config/config.nrw.yaml"],
         )
 
@@ -7039,6 +7037,7 @@ if __name__ == "__main__":
     if options["electricity_grid_connection_cost"]:
         add_electricity_grid_connection_cost(n, costs)
 
+    co2_efficiency = cf_transmission["carbon_dioxide"]["efficiency"]
     transmission_efficiency_map = {
         "DC": cf_transmission["electricity"]["links"]["efficiency"],
         "H2 pipeline": cf_transmission["hydrogen"]["efficiency"],
@@ -7046,7 +7045,16 @@ if __name__ == "__main__":
         "electricity distribution grid": cf_transmission["electricity_distribution"][
             "efficiency"
         ],
+        "CO2 pipeline": co2_efficiency,
     }
+
+    # Apply the same efficiency config to the short CO2 pipeline carrier if enabled,
+    # since add_short_co2_pipeline_carrier runs before this loop and renames those links.
+    if cf_transmission["carbon_dioxide"]["short_pipeline_carrier"]["enable"]:
+        short_suffix = cf_transmission["carbon_dioxide"]["short_pipeline_carrier"][
+            "suffix"
+        ]
+        transmission_efficiency_map[f"CO2 pipeline {short_suffix}"] = co2_efficiency
 
     for carrier, efficiency_config in transmission_efficiency_map.items():
         if efficiency_config["enable"]:

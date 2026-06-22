@@ -402,7 +402,7 @@ plotting:
       region_alpha: 0.8
       unit_conversion: 1_000_000
       branch_color: orange
-      branch_width_max: 20
+      branch_width_max: 7
       bus_size_max: 15000
       arrow_size_factor: 2
       map_style: road
@@ -520,6 +520,20 @@ plotting:
     - 1012
     branch_unit_conversion: 1012
     branch_unit: "x ⌀40cm"
+
+  co2_flow_map_nrw:
+    unit: Mtpa
+    unit_conversion: 1_000_000
+    bus_factor: 0.00525
+    bus_sizes:
+    - 3
+    - 1
+    flow_linewidth_factor: 10   # MtCO₂/a per point of line width
+    flow_factor: 0.02            # scaling for arrow head size passed to n.plot(link_flow=)
+    flow_unit: "MtCO₂/a"
+    flow_sizes:
+    - 50
+    - 10
 
   process_emissions_nrw:
     figsize: (7, 6)

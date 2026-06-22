@@ -225,6 +225,36 @@ rule animate_carbon_dioxide_network:
         scripts("animate_carbon_dioxide_network.py")
 
 
+rule plot_balance_map_nrw:
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.pdf",
+        png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.png",
+    log:
+        RESULTS
+        + "logs/plot_balance_map_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/plot_balance_map_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 2
+    resources:
+        mem_mb=10000,
+    params:
+        plotting=config_provider("plotting"),
+    message:
+        "Plotting CO2 flow map NRW for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
+    script:
+        scripts("plot_balance_map_nrw.py")
+
+
 rule plot_carbon_dioxide_network_nrw:
     input:
         network=RESULTS

@@ -22,8 +22,9 @@ def co2_pipeline_lengths(
     regions_offshore: gpd.GeoDataFrame,
 ) -> pd.DataFrame:
     co2_carriers = ["CO2 pipeline", "CO2 pipeline short"]
+    is_reversed = n.links.get("reversed", pd.Series(False, index=n.links.index)).fillna(False)
     pipe_links = n.links[
-        n.links.carrier.isin(co2_carriers) & (n.links.p_nom_opt > 0)
+        n.links.carrier.isin(co2_carriers) & (n.links.p_nom_opt > 0) & ~is_reversed
     ].copy()
 
     if pipe_links.empty:
