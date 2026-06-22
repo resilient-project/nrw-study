@@ -111,6 +111,87 @@ rule plot_costs_overview_delta:
         scripts("plot_costs_overview_delta.py")
 
 
+rule make_summary_nrw_study:
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions_onshore=resources("regions_onshore_base_s_{clusters}.geojson"),
+        regions_offshore=resources("regions_offshore_base_s_{clusters}.geojson"),
+    output:
+        co2_pipeline_length=RESULTS
+        + "nrw-study/co2_pipeline_length_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+    log:
+        RESULTS
+        + "logs/make_summary_nrw_study/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/make_summary_nrw_study/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Making NRW study CO2 pipeline summary for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
+    script:
+        scripts("make_summary_nrw_study.py")
+
+
+rule plot_co2_pipeline_comparison:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "co2_pipeline_comparison"),
+    input:
+        csvs=expand(
+            RESULTS + "nrw-study/co2_pipeline_length_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
+    output:
+        plot=NRW_RESULTS + "nrw-study-summary/co2_pipeline_comparison.pdf",
+    log:
+        NRW_RESULTS + "logs/plot_co2_pipeline_comparison.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_co2_pipeline_comparison",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting CO2 pipeline comparison across all NRW scenarios"
+    script:
+        scripts("plot_co2_pipeline_comparison.py")
+
+
+rule plot_carbon_dioxide_network_nrw:
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_{planning_horizons}.pdf",
+    log:
+        RESULTS
+        + "logs/plot_carbon_dioxide_network_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/plot_carbon_dioxide_network_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 2
+    resources:
+        mem_mb=10000,
+    params:
+        plotting=config_provider("plotting"),
+    message:
+        "Plotting NRW carbon dioxide network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
+    script:
+        scripts("plot_carbon_dioxide_network_nrw.py")
+
+
 rule plot_nrw_study:
     input:
         expand(
@@ -121,5 +202,24 @@ rule plot_nrw_study:
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
         rules.plot_costs_overview.output.plot,
         rules.plot_costs_overview_delta.output.plot,
+        rules.plot_co2_pipeline_comparison.output.plot,
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
+        expand(
+            RESULTS
+            + "nrw-study/co2_pipeline_length_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
     message:
         "Plotting all NRW study outputs"

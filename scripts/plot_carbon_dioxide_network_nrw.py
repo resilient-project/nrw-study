@@ -2,23 +2,40 @@
 #
 # SPDX-License-Identifier: MIT
 """
-Creates a map of the optimised carbon dioxide network, storage and sequestration infrastructure.
+Creates a zoomed map of the optimised carbon dioxide network for NRW (DEA region).
+Neighbouring regions remain visible but the view is centred on North Rhine-Westphalia.
 """
 
+import re
+import textwrap
+
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
-from matplotlib.gridspec import GridSpec
 from packaging.version import Version, parse
 from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
 from pypsa.statistics import get_transmission_carriers
+from shapely.geometry import MultiPolygon, Polygon
 
 from scripts._helpers import configure_logging, retry, set_scenario_config
 from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
+
+# Bounding box for NRW (DEA): [lon_min, lon_max, lat_min, lat_max]
+NRW_BOUNDS = [5.75, 9.55, 50.2, 52.65]
+
+# Neighbouring region labels: (lon, lat, name)
+NEIGHBOUR_LABELS = [
+    (6.15, 52.0, "NIEDERLANDE"),
+    (6.03, 50.34, "BELGIEN"),
+    (7.07, 50.26, "RHEINLAND-PFALZ"),
+    (8.9, 51.05, "HESSEN"),
+    (7.75, 52.55, "NIEDERSACHSEN"),
+]
 
 # Carrier name translations (English → German) for Supply/Consumption legends
 CARRIER_NAMES_DE: dict[str, str] = {
@@ -31,7 +48,33 @@ CARRIER_NAMES_DE: dict[str, str] = {
     "solid biomass for industry CC": "Feste Biomasse für Industrie",
     "urban central gas CHP CC": "Städtische Gas-KWK",
     "urban central solid biomass CHP CC": "Städtische Biomasse-KWK",
+
 }
+
+# City reference data — kept for optional future use
+# NRW_CITIES = pd.DataFrame(
+#     {
+#         "name": [
+#             "Münster", "Aachen", "Bonn", "Köln",
+#             "Düsseldorf", "Wuppertal", "Gelsenkirchen", "Duisburg",
+#             "Essen", "Bochum", "Bielefeld",
+#         ],
+#         "lon": [
+#             7.6261, 6.0839, 7.0982, 6.9603,
+#             6.7735, 7.1827, 7.0956, 6.7623,
+#             7.0116, 7.2156, 8.5325,
+#         ],
+#         "lat": [
+#             51.9607, 50.7753, 50.7374, 50.9333,
+#             51.2217, 51.2562, 51.5177, 51.4344,
+#             51.4556, 51.4818, 52.0302,
+#         ],
+#     }
+# )
+
+
+def _clean_nuts3_name(name: str) -> str:
+    return re.sub(r",\s*Kreisfreie\s+Stadt$", "", name).strip()
 
 
 def load_projection(plotting_params: dict) -> ccrs.CRS:
@@ -44,14 +87,13 @@ def load_projection(plotting_params: dict) -> ccrs.CRS:
 
 
 @retry
-def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
-    """Plot the optimised CO2 network, storage, and sequestration infrastructure."""
+def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
+    """Plot the optimised CO2 network zoomed into NRW (DEA region)."""
     plot_network = n.copy()
     assign_locations(plot_network)
 
     tech_colors = snakemake.params.plotting["tech_colors"]
-    # read plotting settings from dedicated carbon_dioxide_network config
-    settings = snakemake.params.plotting["carbon_dioxide_network"]
+    settings = snakemake.params.plotting["carbon_dioxide_network_nrw"]
 
     bus_size_factor = settings["bus_factor"]
     unit_conversion = settings["unit_conversion"]
@@ -109,15 +151,44 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
 
     link_width = plot_links.p_nom_opt.div(linewidth_factor)
 
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
-    else:
-        fig = ax.get_figure()
+    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
 
-    # Draw modelled regions as background instead of PyPSA's global cartopy map
-    regions_proj = regions.to_crs(proj.proj4_init)
-    regions_proj.plot(
-        ax=ax, facecolor="#f5f5f5", edgecolor="#aaaaaa", linewidth=0.4, zorder=1
+    # Grey background for regions outside NRW/DEA
+    non_dea = regions[~regions.index.str.startswith("DEA")].to_crs(proj.proj4_init)
+    non_dea.plot(
+        ax=ax, facecolor="#f2f2f2", edgecolor="#999999", linewidth=0.3, zorder=1
+    )
+    # Foreign country borders (2-char codes) — already at country level
+    non_dea[non_dea.index.str.len() <= 2].boundary.plot(
+        ax=ax, edgecolor="#999999", linewidth=1.0, zorder=2
+    )
+    # German federal state borders: dissolve non-NRW NUTS3 polygons to NUTS1 level
+    de_non_dea = non_dea[
+        non_dea.index.str.startswith("DE") & (non_dea.index.str.len() > 3)
+    ].copy()
+    if not de_non_dea.empty:
+        de_non_dea["nuts1"] = de_non_dea.index.str[:3]
+        de_non_dea.dissolve(by="nuts1").boundary.plot(
+            ax=ax, edgecolor="#999999", linewidth=1.0, zorder=2
+        )
+
+    # Urban area footprints (Natural Earth 10 m).
+    # ax.add_feature(  # type: ignore[attr-defined]
+    #     cfeature.NaturalEarthFeature("cultural", "urban_areas", "10m"),
+    #     facecolor="#e0d8d0", edgecolor="none", zorder=2,
+    # )
+
+    # Rivers and lakes (Natural Earth 10 m).
+    # ax is a GeoAxes at runtime (subplot_kw={"projection": proj}); Pyright sees Axes.
+    ax.add_feature(  # type: ignore[attr-defined]
+        cfeature.NaturalEarthFeature(
+            "physical", "rivers_lake_centerlines", "10m", facecolor="none"
+        ),
+        edgecolor="#6baed6", linewidth=0.6, zorder=3,
+    )
+    ax.add_feature(  # type: ignore[attr-defined]
+        cfeature.NaturalEarthFeature("physical", "lakes", "10m"),
+        facecolor="#c6dbef", edgecolor="#6baed6", linewidth=0.3, zorder=3,
     )
 
     plot_network.plot(
@@ -125,6 +196,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         geomap_color=False,
         bus_size=bus_size * bus_size_factor,
         bus_color=colors,
+        bus_alpha=0.9,
         bus_split_circle=True,
         link_color=plot_links.carrier.map(link_colors),
         link_width=link_width,
@@ -145,7 +217,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         title_fontproperties={"weight": "bold"},
     )
 
-    pad = 0.05
+    pad = 0.02
     n.carriers.loc["", "color"] = "None"
 
     pos_carriers = bus_size[bus_size > 0].index.unique("carrier")
@@ -182,7 +254,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         n.carriers.color[cons_carriers],
         [CARRIER_NAMES_DE.get(c, c) for c in cons_carriers],
         legend_kw={
-            "bbox_to_anchor": (0.7, -pad),
+            "bbox_to_anchor": (0.5, -pad),
             "ncol": 1,
             "title": "Nutzung",
             **legend_kw,
@@ -193,6 +265,8 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
     carrier_unit = settings["unit"]
     branch_unit = settings["branch_unit"]
     branch_unit_conversion = settings["branch_unit_conversion"]
+
+    br_kw = {**legend_kw, "loc": "lower right", "bbox_to_anchor": (0.99, 0.02)}
     if legend_bus_size is not None:
         add_legend_semicircles(
             ax,
@@ -202,10 +276,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
             ],
             [f"{s} {carrier_unit}" for s in legend_bus_size],
             patch_kw={"color": "#666"},
-            legend_kw={
-                "bbox_to_anchor": (0, 1),
-                **legend_kw,
-            },
+            legend_kw=br_kw,
         )
 
     legend_branch_sizes = settings["branch_sizes"]
@@ -217,26 +288,11 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
                 f"{s / branch_unit_conversion} {branch_unit}"
                 for s in legend_branch_sizes
             ],
-            patch_kw=dict(color="lightgrey", solid_capstyle="round"),
-            legend_kw={"bbox_to_anchor": (0.25, 1), **legend_kw},
+            patch_kw=dict(color="#666", solid_capstyle="round"),
+            legend_kw={**br_kw, "bbox_to_anchor": (0.78, 0.02)},
         )
 
     ax.set_facecolor("white")
-
-    # Pipeline-length bar legend (shown when include_lengths is enabled)
-    if settings.get("include_lengths", False):
-        length_colors = settings.get("lengths_bar_colors", {})
-        add_legend_patches(
-            ax,
-            list(length_colors.values()),
-            ["Onshore ⌀70cm", "Onshore ⌀40cm", "Offshore ⌀70cm"],
-            legend_kw={
-                "bbox_to_anchor": (0.7, -0.35),
-                "ncol": 1,
-                "title": "Leitungstyp",
-                **legend_kw,
-            },
-        )
 
     return fig, ax
 
@@ -246,7 +302,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_carbon_dioxide_network",
+            "plot_carbon_dioxide_network_nrw",
             opts="",
             clusters="adm",
             sector_opts="",
@@ -263,74 +319,61 @@ if __name__ == "__main__":
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
 
     map_opts = snakemake.params.plotting["map"]
-    map_opts.pop("geomap_colors", None)  # replaced by explicit geomap_color=False
+    map_opts["boundaries"] = NRW_BOUNDS
+    map_opts.pop("geomap_colors", None)  # replaced by explicit geomap_color=False below
 
-    # [lon_min, lon_max, lat_min, lat_max]
-    # West: Dublin (~-6.3°), East: eastern Poland (~24.0°),
-    # South: Corsica (~41.5°), North: Tromsø (~70.0°)
-    map_opts["boundaries"] = [-6.5, 24.0, 41.5, 70.0]
+    proj = ccrs.Mercator()
+    fig, ax = plot_co2_map(n)
 
-    proj = load_projection(snakemake.params.plotting)
+    # Overlay DEA (NRW) administrative boundaries
+    dea_regions = regions[regions.index.str.startswith("DEA")].to_crs(proj.proj4_init)
+    dea_outer = dea_regions.dissolve()
 
-    settings = snakemake.params.plotting["carbon_dioxide_network"]
-    include_lengths = settings.get("include_lengths", False)
-    # Use declared input if present, otherwise derive from the network path
-    lengths_path = getattr(snakemake.input, "lengths", None) or (
-        snakemake.input.network
-        .replace("/networks/base_s_", "/nrw-study/co2_pipeline_length_base_s_")
-        .replace(".nc", ".csv")
-    )
+    dea_regions.boundary.plot(ax=ax, edgecolor="grey", linewidth=0.5, zorder=3)
 
-    fig, map_ax = plot_co2_map(n)
+    # Strip interior holes (gaps between source polygons show up as black rings after
+    # dissolve) by rebuilding each polygon from its exterior ring only.
+    def _exterior_only(geom):
+        if geom.geom_type == "Polygon":
+            return Polygon(geom.exterior)
+        return MultiPolygon([Polygon(p.exterior) for p in geom.geoms])
 
-    if include_lengths:
-        # Inset stacked bar on the lower-right corner of the map
-        # [x0, y0, width, height] in axes-fraction coordinates
-        bar_ax = map_ax.inset_axes([0.80, 0.02, 0.18, 0.41])
+    gpd.GeoDataFrame(
+        geometry=dea_outer.geometry.apply(_exterior_only), crs=dea_outer.crs
+    ).boundary.plot(ax=ax, edgecolor="black", linewidth=1.0, zorder=4)
 
-        lengths_df = pd.read_csv(lengths_path)
+    # NUTS3 region name labels inside each DEA subregion
+    nuts3 = gpd.read_file(snakemake.input.nuts3_shapes)
+    dea_nuts3 = nuts3[nuts3["index"].str.startswith("DEA")].copy()
+    dea_nuts3 = dea_nuts3.to_crs(proj.proj4_init)
+    for _, row in dea_nuts3.iterrows():
+        geom = row.geometry
+        centroid = geom.centroid
+        name = _clean_nuts3_name(row["name"])
 
-        # Onshore: pivot NRW and DE by pipe diameter
-        onshore_pivot = (
-            lengths_df[
-                (lengths_df["terrain"] == "onshore")
-                & lengths_df["region"].isin(["DE", "DEA"])
-            ]
-            .pivot_table(index="region", columns="carrier", values="length_km", fill_value=0)
-            .rename(columns={"CO2 pipeline": "⌀70cm", "CO2 pipeline short": "⌀40cm"})
-            .rename(index={"DEA": "NRW"})
+        # Scale font by bounding-box width in projected metres.
+        # Mercator x-coords at NRW latitudes: ~70 km per degree longitude.
+        # Rural Kreis (~60 km wide) → ~7 pt; small Kreisfreie Stadt (~15 km) → ~4 pt.
+        bbox_width = geom.bounds[2] - geom.bounds[0]
+        fontsize = max(4.0, min(7.0, bbox_width / 9_000))
+
+        wrapped = "\n".join(textwrap.wrap(name, width=12, break_long_words=False))
+        ax.text(
+            centroid.x, centroid.y, wrapped,
+            fontsize=fontsize, ha="center", va="center",
+            color="#333333", zorder=5, clip_on=True,
+            multialignment="center", fontweight="bold", alpha=0.5,
         )
-        # Offshore: sum DE + DEA, CO2 pipeline only — stacked on top of DE
-        offshore_km = lengths_df[
-            (lengths_df["terrain"] == "offshore")
-            & lengths_df["region"].isin(["DE", "DEA"])
-            & (lengths_df["carrier"] == "CO2 pipeline")
-        ]["length_km"].sum()
 
-        onshore_pivot["Offshore"] = 0.0
-        onshore_pivot.loc["DE", "Offshore"] = offshore_km
-
-        bar_data = onshore_pivot.reindex(["NRW", "DE"])
-        bar_colors = list(settings.get("lengths_bar_colors", {}).values())
-        ylim_max = settings.get("lengths_bar_ylim", 6000)
-
-        bar_data.plot(
-            kind="bar", stacked=True, ax=bar_ax,
-            color=bar_colors, legend=False, width=0.6,
+    # Neighbouring region/country labels
+    geo_crs = ccrs.PlateCarree()
+    for lon, lat, label in NEIGHBOUR_LABELS:
+        ax.text(
+            lon, lat, label,
+            transform=geo_crs, fontsize=8.5, ha="center", va="center",
+            color="#555555", style="italic", fontweight="bold",
+            alpha=0.6, zorder=5, clip_on=True,
         )
-        totals = bar_data.sum(axis=1)
-        for i, total in enumerate(totals):
-            bar_ax.text(i, total, f"{total:.0f}\nkm", ha="center", va="bottom", fontsize=8)
-        bar_ax.set_ylim(0, ylim_max)
-        bar_ax.set_xlabel("")
-        bar_ax.set_ylabel("")
-        bar_ax.tick_params(labelsize=6)
-        bar_ax.set_xticklabels(bar_data.index, rotation=0, fontsize=8)
-        bar_ax.set_yticks([])
-        bar_ax.grid(False)
-        bar_ax.patch.set_alpha(0.3)
-        for spine in bar_ax.spines.values():
-            spine.set_visible(False)
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
     plt.close(fig)

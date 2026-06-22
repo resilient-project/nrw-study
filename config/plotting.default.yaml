@@ -50,6 +50,35 @@ plotting:
       - Point source CC
       - DAC
       - Load shedding
+    co2_pipeline_comparison:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (7, 5)
+      dpi: 300
+      segment_colors:
+        "Offshore (DE)": "#4292c6"
+        "Onshore ⌀70cm (DE)": "#525252"
+        "Onshore ⌀40cm (DE)": "#969696"
+        "Onshore ⌀70cm (NRW)": "#e6550d"
+        "Onshore ⌀40cm (NRW)": "#fdae6b"
+      segment_order:
+      - "Onshore ⌀70cm (DE)"
+      - "Onshore ⌀40cm (DE)"
+      - "Offshore (DE)"
+      - "Onshore ⌀70cm (NRW)"
+      - "Onshore ⌀40cm (NRW)"
     costs_overview_delta:
       nice_names:
         oge-grid___Ref___offshore-co2: "1a.Basis"
@@ -466,10 +495,30 @@ plotting:
     - 10
     branch_factor: 0.4
     branch_sizes:
-    - 3198
     - 6396
+    - 3198
     branch_unit_conversion: 3198
     branch_unit: "x ⌀70cm"
+    include_lengths: true
+    lengths_bar_ylim: 6000
+    lengths_bar_colors:
+      "CO2 pipeline": "#525252"
+      "CO2 pipeline short": "#969696"
+      "Offshore": "#4292c6"
+
+  carbon_dioxide_network_nrw:
+    unit: Mtpa
+    unit_conversion: 1_000_000
+    bus_factor: 0.00525
+    bus_sizes:
+    - 3
+    - 1
+    branch_factor: 2.5
+    branch_sizes:
+    - 4048
+    - 1012
+    branch_unit_conversion: 1012
+    branch_unit: "x ⌀40cm"
 
 
   nice_names:
