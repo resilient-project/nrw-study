@@ -376,4 +376,5 @@ if __name__ == "__main__":
         )
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
+    fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
     plt.close(fig)

@@ -501,6 +501,7 @@ plotting:
     branch_unit: "x ⌀70cm"
     include_lengths: true
     lengths_bar_ylim: 6000
+    gif_frame_duration: 700
     lengths_bar_colors:
       "CO2 pipeline": "#525252"
       "CO2 pipeline short": "#969696"
@@ -520,6 +521,56 @@ plotting:
     branch_unit_conversion: 1012
     branch_unit: "x ⌀40cm"
 
+  process_emissions_nrw:
+    figsize: (7, 6)
+    dpi: 300
+    circle_factor: 400
+    circle_color: "#e6550d"
+    circle_alpha: 0.7
+    circle_sizes:
+    - 0.5
+    - 1.0
+    - 2.0
+
+  process_energy_demand_nrw:
+    figsize: (7, 6)
+    dpi: 300
+    max_pie_size: 0.13
+    min_pie_size: 0.025
+    legend_sizes:
+    - 5
+    - 20
+    - 60
+    subsector_colors:
+      Basic chemicals: "#e6550d"
+      Basic metals (metal production): "#756bb1"
+      Fabricated metal products (metalworking): "#31a354"
+      Food and tobacco: "#fd8d3c"
+      Glass and ceramics: "#9ecae1"
+      Machinery and equipment (mechanical engineering): "#2c7fb8"
+      Non-ferrous metals and foundries: "#bcbddc"
+      Other chemical industry: "#d94701"
+      Other economic sectors: "#bdbdbd"
+      Paper industry: "#74c476"
+      Processing of stone and earth (non-metallic mineral processing): "#a1d99b"
+      Quarrying of stone and earth; other mining: "#969696"
+      Rubber and plastic products: "#fdae6b"
+      Vehicle manufacturing (motor vehicles and transport equipment): "#08519c"
+    subsector_names:
+      Basic chemicals: Grundchemikalien
+      Basic metals (metal production): Eisen & Stahl
+      Fabricated metal products (metalworking): Metallverarbeitung
+      Food and tobacco: "Nahrung & Tabak"
+      Glass and ceramics: Glas & Keramik
+      Machinery and equipment (mechanical engineering): Maschinenbau
+      Non-ferrous metals and foundries: NE-Metalle
+      Other chemical industry: Sonstige Chemie
+      Other economic sectors: Sonstige
+      Paper industry: Papier
+      Processing of stone and earth (non-metallic mineral processing): "Steine & Erden"
+      Quarrying of stone and earth; other mining: Bergbau
+      Rubber and plastic products: "Gummi & Kunststoff"
+      Vehicle manufacturing (motor vehicles and transport equipment): Fahrzeugbau
 
   nice_names:
     OCGT: "Open-Cycle Gas"

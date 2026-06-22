@@ -28,9 +28,9 @@ CARRIER_NAMES_DE: dict[str, str] = {
     "methanolisation": "Methanisierung",
     "process emissions CC": "Prozessemissionen",
     "SMR CC": "Dampfreformierung",
-    "solid biomass for industry CC": "Feste Biomasse für Industrie",
-    "urban central gas CHP CC": "Städtische Gas-KWK",
-    "urban central solid biomass CHP CC": "Städtische Biomasse-KWK",
+    "solid biomass for industry CC": "Biomasse für Industrie",
+    "urban central gas CHP CC": "Gas-KWK",
+    "urban central solid biomass CHP CC": "Biomasse-KWK",
 }
 
 
@@ -172,7 +172,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         legend_kw={
             "bbox_to_anchor": (0, -pad),
             "ncol": 1,
-            "title": "Erzeugung (CO$_2$-Abscheidung)",
+            "title": "CO$_2$-Abscheidung",
             **legend_kw,
         },
     )
@@ -218,7 +218,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
                 for s in legend_branch_sizes
             ],
             patch_kw=dict(color="lightgrey", solid_capstyle="round"),
-            legend_kw={"bbox_to_anchor": (0.25, 1), **legend_kw},
+            legend_kw={"bbox_to_anchor": (0.45, 1), **legend_kw},
         )
 
     ax.set_facecolor("white")
@@ -231,9 +231,9 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
             list(length_colors.values()),
             ["Onshore ⌀70cm", "Onshore ⌀40cm", "Offshore ⌀70cm"],
             legend_kw={
-                "bbox_to_anchor": (0.7, -0.35),
+                "bbox_to_anchor": (0.7, -0.4),
                 "ncol": 1,
-                "title": "Leitungstyp",
+                "title": "Durchmesser",
                 **legend_kw,
             },
         )
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     # [lon_min, lon_max, lat_min, lat_max]
     # West: Dublin (~-6.3°), East: eastern Poland (~24.0°),
     # South: Corsica (~41.5°), North: Tromsø (~70.0°)
-    map_opts["boundaries"] = [-6.5, 24.0, 41.5, 70.0]
+    map_opts["boundaries"] = [-9.5, 24.0, 41.5, 70.0]
 
     proj = load_projection(snakemake.params.plotting)
 
@@ -333,4 +333,5 @@ if __name__ == "__main__":
             spine.set_visible(False)
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
+    fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
     plt.close(fig)
