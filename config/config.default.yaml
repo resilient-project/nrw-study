@@ -270,6 +270,9 @@ transmission:
     max_offshore_haversine_distance: .inf
     length_factor: 1.25
     cost_factor: 1
+    efficiency:
+      enable: true
+      efficiency_per_1000km: 0.999
     projects:
       enable: false
       extendable: false
