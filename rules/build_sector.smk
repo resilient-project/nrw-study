@@ -1285,7 +1285,7 @@ rule prepare_forecast_energy_demand:
     benchmark:
         "benchmarks/prepare_forecast_energy_demand.txt"
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     params:
         config_forecast=config_provider("industry", "forecast_industry"),
     message:
