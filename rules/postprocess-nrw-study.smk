@@ -5,6 +5,158 @@
 FORECAST_INDUSTRY_CFG = config["industry"]["forecast_industry"]
 NRW_RESULTS = "results/" + config["run"]["prefix"] + "/"
 
+rule make_summary_de:
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+    output:
+        nodal_costs=RESULTS
+        + "de/csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_capacities=RESULTS
+        + "de/csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_capacity_factors=RESULTS
+        + "de/csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        capacity_factors=RESULTS
+        + "de/csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        costs=RESULTS
+        + "de/csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        capacities=RESULTS
+        + "de/csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        curtailment=RESULTS
+        + "de/csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        energy=RESULTS
+        + "de/csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        energy_balance=RESULTS
+        + "de/csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        nodal_energy_balance=RESULTS
+        + "de/csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        prices=RESULTS
+        + "de/csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        weighted_prices=RESULTS
+        + "de/csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        market_values=RESULTS
+        + "de/csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+        metrics=RESULTS
+        + "de/csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+    log:
+        RESULTS
+        + "logs/make_summary_de_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/make_summary_de_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 1
+    resources:
+        mem_mb=8000,
+    message:
+        "Creating optimization results summary statistics"
+    script:
+        scripts("make_summary_de.py")
+
+
+rule make_global_summary_de:
+    input:
+        nodal_costs=expand(
+            RESULTS + "de/csvs/individual/nodal_costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        nodal_capacities=expand(
+            RESULTS + "de/csvs/individual/nodal_capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        nodal_capacity_factors=expand(
+            RESULTS + "de/csvs/individual/nodal_capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        capacity_factors=expand(
+            RESULTS + "de/csvs/individual/capacity_factors_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        costs=expand(
+            RESULTS + "de/csvs/individual/costs_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        capacities=expand(
+            RESULTS + "de/csvs/individual/capacities_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        curtailment=expand(
+            RESULTS + "de/csvs/individual/curtailment_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        energy=expand(
+            RESULTS + "de/csvs/individual/energy_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        energy_balance=expand(
+            RESULTS + "de/csvs/individual/energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        nodal_energy_balance=expand(
+            RESULTS + "de/csvs/individual/nodal_energy_balance_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        prices=expand(
+            RESULTS + "de/csvs/individual/prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        weighted_prices=expand(
+            RESULTS + "de/csvs/individual/weighted_prices_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        market_values=expand(
+            RESULTS + "de/csvs/individual/market_values_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+        metrics=expand(
+            RESULTS + "de/csvs/individual/metrics_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+            **config["scenario"],
+            allow_missing=True,
+        ),
+    output:
+        costs=RESULTS + "de/csvs/costs.csv",
+        capacities=RESULTS + "de/csvs/capacities.csv",
+        energy=RESULTS + "de/csvs/energy.csv",
+        energy_balance=RESULTS + "de/csvs/energy_balance.csv",
+        capacity_factors=RESULTS + "de/csvs/capacity_factors.csv",
+        metrics=RESULTS + "de/csvs/metrics.csv",
+        curtailment=RESULTS + "de/csvs/curtailment.csv",
+        prices=RESULTS + "de/csvs/prices.csv",
+        weighted_prices=RESULTS + "de/csvs/weighted_prices.csv",
+        market_values=RESULTS + "de/csvs/market_values.csv",
+        nodal_costs=RESULTS + "de/csvs/nodal_costs.csv",
+        nodal_capacities=RESULTS + "de/csvs/nodal_capacities.csv",
+        nodal_energy_balance=RESULTS + "de/csvs/nodal_energy_balance.csv",
+        nodal_capacity_factors=RESULTS + "de/csvs/nodal_capacity_factors.csv",
+    log:
+        RESULTS + "logs/make_global_summary_de.log",
+    benchmark:
+        RESULTS + "benchmarks/make_global_summary_de"
+    threads: 1
+    resources:
+        mem_mb=8000,
+    params:
+        scenario=config_provider("scenario"),
+        RDIR=RDIR,
+    message:
+        "Creating global DE summary of optimization results for all scenarios"
+    script:
+        scripts("make_global_summary_de.py")
+
 
 rule plot_industry_sankey_pypsa_eur:
     input:
@@ -86,6 +238,68 @@ rule plot_costs_overview:
         "Plotting costs overview across all NRW scenarios"
     script:
         scripts("plot_costs_overview.py")
+
+
+rule plot_capacities_overview:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "capacities_overview"),
+    input:
+        capacities=expand(
+            RESULTS + "csvs/capacities.csv",
+            run=config["run"]["name"],
+        ),
+        network=expand(
+            RESULTS + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            run=[config["run"]["name"][0]],
+            clusters=[config["scenario"]["clusters"][0]],
+            opts=[config["scenario"]["opts"][0]],
+            sector_opts=[config["scenario"]["sector_opts"][0]],
+            planning_horizons=[config["scenario"]["planning_horizons"][0]],
+        )[0],
+    output:
+        plot=NRW_RESULTS + "nrw-study-summary/capacities_overview.pdf",
+    log:
+        NRW_RESULTS + "logs/plot_capacities_overview.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_capacities_overview",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting capacities overview across all NRW scenarios"
+    script:
+        scripts("plot_capacities_overview.py")
+
+
+rule plot_capacities_overview_de:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "capacities_overview_de"),
+    input:
+        capacities=expand(
+            RESULTS + "de/csvs/capacities.csv",
+            run=config["run"]["name"],
+        ),
+        network=expand(
+            RESULTS + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            run=[config["run"]["name"][0]],
+            clusters=[config["scenario"]["clusters"][0]],
+            opts=[config["scenario"]["opts"][0]],
+            sector_opts=[config["scenario"]["sector_opts"][0]],
+            planning_horizons=[config["scenario"]["planning_horizons"][0]],
+        )[0],
+    output:
+        plot=NRW_RESULTS + "nrw-study-summary/capacities_overview_de.pdf",
+    log:
+        NRW_RESULTS + "logs/plot_capacities_overview_de.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_capacities_overview_de",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting Germany capacities overview across all NRW scenarios"
+    script:
+        scripts("plot_capacities_overview.py")
 
 
 rule plot_ccs_installed_capacity:
@@ -502,6 +716,7 @@ rule plot_nrw_study:
         ),
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
         rules.plot_costs_overview.output.plot,
+        rules.plot_capacities_overview.output.plot,
         rules.plot_ccs_installed_capacity.output,
         rules.plot_co2_pipeline_overview.output,
         rules.plot_costs_overview_delta.output.plot,

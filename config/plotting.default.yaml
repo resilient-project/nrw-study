@@ -51,6 +51,96 @@ plotting:
       - Point source CC
       - DAC
       - Load shedding
+    capacities_overview:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (3.5, 2.8)
+      dpi: 300
+      legend_order:
+      - Other
+      - Waste
+      - Electricity grid
+      - Hydro & RoR
+      - Biomass & -gas
+      - Nuclear
+      - Oil
+      - Coal
+      - PtH
+      - Gas
+      - CHP
+      - Solar
+      - Onshore Wind
+      - Offshore Wind
+      - Battery
+      - Electrolysis
+      - Fischer-Tropsch
+      - Methanol
+      - Methanolisation
+      - Ammonia
+      - H$_2$ infra
+      - CO$_2$ infra
+      - SMR
+      - Sabatier
+      - Point source CC
+      - DAC
+      - Load shedding
+    capacities_overview_de:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (3.5, 2.8)
+      dpi: 300
+      legend_order:
+      - Other
+      - Waste
+      - Electricity grid
+      - Hydro & RoR
+      - Biomass & -gas
+      - Nuclear
+      - Oil
+      - Coal
+      - PtH
+      - Gas
+      - CHP
+      - Solar
+      - Onshore Wind
+      - Offshore Wind
+      - Battery
+      - Electrolysis
+      - Fischer-Tropsch
+      - Methanol
+      - Methanolisation
+      - Ammonia
+      - H$_2$ infra
+      - CO$_2$ infra
+      - SMR
+      - Sabatier
+      - Point source CC
+      - DAC
+      - Load shedding
     co2_pipeline_comparison:
       nice_names:
         oge-grid___Ref___offshore-co2: "1a.Basis"
