@@ -9,9 +9,9 @@
 Plot CO2 pipeline capacity overview for all scenarios side-by-side.
 Produces separate EU, Germany, and NRW figures.
 
-Shows installed CO2 pipeline capacity split by:
-- Long-distance (inter-regional): carrier "CO2 pipeline"
-- Short (intra-regional): carrier "CO2 pipeline short"
+Shows installed CO2 pipeline capacity split by carrier:
+- Trunk pipeline: carrier "CO2 pipeline"
+- Feeder pipeline: carrier "CO2 pipeline short"
 
 Utilization rate (%) is shown inside each block.
 Total capacity is shown on top.
@@ -52,15 +52,15 @@ SCOPE_BUS_PREFIXES = {
 }
 
 PIPE_TYPE_LABELS = {
-    "CO2 pipeline": "CO2 Long-distance",
-    "CO2 pipeline short": "CO2 Short (intra-regional)",
+    "CO2 pipeline": "CO2 trunk pipeline",
+    "CO2 pipeline short": "CO2 feeder pipeline",
 }
 
 # Keep this plot locally distinguishable: the global tech_colors currently assigns
 # the same color to both CO2 pipeline carriers because they share one tech group.
 PIPE_TYPE_COLORS = {
-    "CO2 Long-distance": "#0072B2",        # blue, Okabe-Ito palette
-    "CO2 Short (intra-regional)": "#D55E00",  # vermillion, Okabe-Ito palette
+    "CO2 trunk pipeline": "#0072B2",        # blue, Okabe-Ito palette
+    "CO2 feeder pipeline": "#D55E00",  # vermillion, Okabe-Ito palette
 }
 
 
@@ -380,7 +380,7 @@ def plot_pipeline_scope(
     ymax = 1 if pd.isna(ymax) or ymax <= 0 else ymax
 
     pipe_colors = PIPE_TYPE_COLORS
-    pipe_order = ["CO2 Long-distance", "CO2 Short (intra-regional)"]
+    pipe_order = ["CO2 trunk pipeline", "CO2 feeder pipeline"]
 
     x_anchor = 0
     ncol = 3

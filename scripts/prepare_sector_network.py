@@ -972,9 +972,9 @@ def add_co2_network(
     """
     Add CO2 transport network to the PyPSA network.
 
-    Creates a CO2 pipeline network with both onshore and submarine pipeline segments,
-    considering different costs for each type. The network allows bidirectional flow
-    and is extendable.
+    Creates an extendable CO2 pipeline network with both onshore and submarine
+    candidate corridors. Bidirectional corridor splitting, if enabled, is applied
+    later together with project pipelines.
 
     Parameters
     ----------
@@ -991,17 +991,11 @@ def add_co2_network(
     co2_transmission_length_factor : float, optional
         Factor to scale transmission lengths read from topology candidates,
         default 1.0
-
     Returns
     -------
     None
         Modifies the network object in-place by adding CO2 pipeline links
 
-    Notes
-    -----
-    The function creates bidirectional CO2 pipeline links between nodes, with costs
-    depending on the underwater fraction of the pipeline. The network topology is
-    created using the create_network_topology helper function.
     """
     logger.info("Adding CO2 network.")
     co2_links = gpd.read_file(carbon_dioxide_transmission_candidates).copy()
@@ -6027,6 +6021,61 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         )
 
 
+def split_co2_bidirectional_links(n, carriers):
+    """
+    Split signed bidirectional CO2 pipeline links into paired one-way links.
+
+    Only links with one of the selected CO2 pipeline carriers and ``p_min_pu < 0``
+    are split. One-way links, such as offshore project connections with
+    ``p_min_pu = 0``, are left unchanged. Reverse links follow the existing
+    lossy-bidirectional convention used by gas and H2 pipelines: a ``-reversed``
+    suffix, ``reversed=True``, zero investment cost, zero model length, and the
+    original length retained in ``length_original``.
+    """
+    if "reversed" not in n.links.columns:
+        n.links["reversed"] = False
+    else:
+        n.links["reversed"] = n.links["reversed"].fillna(False).astype(bool)
+
+    bidirectional = (
+        n.links.carrier.isin(carriers)
+        & (n.links.p_min_pu < 0)
+        & ~n.links["reversed"]
+    )
+    link_i = n.links.index[bidirectional]
+    if link_i.empty:
+        return
+
+    logger.info(
+        f"Splitting {len(link_i)} bidirectional CO2 pipeline links into paired one-way links."
+    )
+
+    n.links.loc[link_i, "p_min_pu"] = 0
+    if "length_original" not in n.links.columns:
+        n.links["length_original"] = n.links.length
+    else:
+        n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
+    n.links.loc[link_i, "reversed"] = False
+
+    reverse = n.links.loc[link_i].copy().rename(
+        {"bus0": "bus1", "bus1": "bus0"}, axis=1
+    )
+    reverse["length_original"] = reverse["length"]
+    reverse["capital_cost"] = 0.0
+    reverse["length"] = 0.0
+    reverse["reversed"] = True
+    reverse.index = reverse.index.map(lambda x: f"{x}-reversed")
+
+    existing = reverse.index.intersection(n.links.index)
+    if not existing.empty:
+        raise ValueError(
+            "Cannot split CO2 bidirectional links because reverse link names already exist: "
+            f"{existing.tolist()}"
+        )
+
+    n.links = pd.concat([n.links, reverse], sort=False)
+
+
 def add_enhanced_geothermal(
     n,
     costs,
@@ -6575,16 +6624,21 @@ def add_short_co2_pipeline_carrier(
     max_haversine_distance,
 ):
     """
-    Add a suffix to short CO2 pipelines.
+    Add a separate carrier for local CO2 pipelines with smaller diameter units.
+
+    The current selection uses a haversine-distance threshold as a proxy for local
+    pipelines. The modelling distinction is the smaller post-discretization unit
+    size configured for the resulting carrier, not the physical length itself.
 
     Parameters
     ----------
     n : pypsa.Network
         PyPSA network object to modify
     suffix : str
-        Suffix to add to short CO2 pipeline carriers
+        Suffix to add to local/smaller-diameter CO2 pipeline carriers
     max_haversine_distance : float
-        Maximum haversine distance in km for a pipeline to be considered short
+        Distance threshold in km used as proxy for assigning local/smaller-diameter
+        CO2 pipeline units.
     """
 
     short_co2_pipes = n.links.query(
@@ -6596,7 +6650,8 @@ def add_short_co2_pipeline_carrier(
         n.add("Carrier", short_carrier)
 
     logger.info(
-        f"Adding suffix '{suffix}' to {len(short_co2_pipes)} short CO2 pipelines with length <= {max_haversine_distance} km."
+        f"Adding suffix '{suffix}' to {len(short_co2_pipes)} local CO2 pipeline links "
+        f"using distance proxy <= {max_haversine_distance} km for smaller-diameter units."
     )
     n.links.loc[short_co2_pipes, "carrier"] = short_carrier
 
@@ -6923,6 +6978,12 @@ if __name__ == "__main__":
             max_haversine_distance=cf_transmission["carbon_dioxide"][
                 "short_pipeline_carrier"
             ]["max_haversine_distance"],
+        )
+
+    if cf_transmission["carbon_dioxide"].get("split_bidirectional_links", True):
+        split_co2_bidirectional_links(
+            n,
+            carriers=["CO2 pipeline", "CO2 pipeline short"],
         )
 
     if options["allam_cycle_gas"]:

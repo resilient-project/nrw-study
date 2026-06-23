@@ -372,30 +372,34 @@ class CarbonDioxideProjectsConfig(BaseModel):
 
 
 class _ShortPipelineCarrierConfig(BaseModel):
-    """Configuration for `carbon_dioxide.short_pipeline_carrier` settings."""
+    """Configuration for local/smaller-diameter CO2 pipeline carrier settings."""
 
     enable: bool = Field(
         True,
-        description="Enable generation of short pipeline carriers.",
+        description="Enable generation of a local CO2 pipeline carrier with smaller post-discretization unit size.",
     )
     suffix: str = Field(
         "short",
-        description="Suffix appended to the carrier name for short pipelines.",
+        description="Suffix appended to the carrier name for local/smaller-diameter CO2 pipelines.",
     )
     max_haversine_distance: float = Field(
         100,
-        description="Maximum haversine distance in km for short pipeline carriers.",
+        description="Distance threshold in km used as proxy for assigning local/smaller-diameter CO2 pipeline units.",
     )
 
 
 class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
+    split_bidirectional_links: bool = Field(
+        True,
+        description="Split signed bidirectional CO2 pipeline links into paired one-way links after CO2 pipeline carriers have been assigned.",
+    )
     projects: CarbonDioxideProjectsConfig = Field(
         default_factory=CarbonDioxideProjectsConfig,
         description="Carbon dioxide transmission projects configuration.",
     )
     short_pipeline_carrier: _ShortPipelineCarrierConfig = Field(
         default_factory=_ShortPipelineCarrierConfig,
-        description="Short carbon dioxide pipeline carrier configuration.",
+        description="Local/smaller-diameter carbon dioxide pipeline carrier configuration.",
     )
 
 

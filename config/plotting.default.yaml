@@ -96,8 +96,8 @@ plotting:
       delta_ymin: -30
       delta_ymax: 80
       legend_order:
-        - CO2 Long-distance
-        - CO2 Short (intra-regional)
+        - CO2 trunk pipeline
+        - CO2 feeder pipeline
   enable_heat_source_maps: false
 
   map:
