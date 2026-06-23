@@ -36,7 +36,8 @@ plotting:
       - Gas
       - CHP
       - Solar
-      - Wind
+      - Onshore Wind
+      - Offshore Wind
       - Battery
       - Electrolysis
       - Fischer-Tropsch
@@ -110,7 +111,8 @@ plotting:
       - Gas
       - CHP
       - Solar
-      - Wind
+      - Onshore Wind
+      - Offshore Wind
       - Battery
       - Electrolysis
       - Fischer-Tropsch
@@ -1087,13 +1089,13 @@ grouping:
   naphtha for industry: Oil # TODO
   NH3: Ammonia
   nuclear: Nuclear
-  offwind-ac: Wind
-  offwind-dc: Wind
+  offwind-ac: Offshore Wind
+  offwind-dc: Offshore Wind
   oil: Oil
   oil primary: Oil
   oil refining: Oil
   renewable oil: Biomass & -gas
-  onwind: Wind
+  onwind: Onshore Wind
   process emissions: Other
   process emissions CC: Point source CC
   ror: Hydro & RoR
@@ -1190,7 +1192,8 @@ group_colors:
   Sabatier: "#c44ce6" 
   SMR: "#870c71"
   Solar: "#ffe066"
-  Wind: "#66b5ff"
+  Onshore Wind: "#66b5ff"
+  Offshore Wind: "#8895dd"
   Waste: "#e3d37d"
   Other: "#bbbbbb"
   Load shedding: "#00ff00" # only for debugging
