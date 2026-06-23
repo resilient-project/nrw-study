@@ -717,6 +717,7 @@ rule plot_nrw_study:
         rules.plot_industry_sankey_forecast_all.input if FORECAST_INDUSTRY_CFG["enable"] else [],
         rules.plot_costs_overview.output.plot,
         rules.plot_capacities_overview.output.plot,
+        rules.plot_capacities_overview_de.output.plot,
         rules.plot_ccs_installed_capacity.output,
         rules.plot_co2_pipeline_overview.output,
         rules.plot_costs_overview_delta.output.plot,
