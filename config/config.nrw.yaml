@@ -6,6 +6,10 @@
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#version
 version: v2026.02.0
 
+remote:
+  ssh: "z3"
+  path: "scratch/projects/nrw-study"
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
   prefix: "nrw"
@@ -164,6 +168,9 @@ clustering:
       DEA: 3
 
 solving:
+  mem_mb: 30000
+  memory_logging_frequency: 5
+  runtime: 1h
   options:
     skip_iterations: false # set to true skips iterations and disables post_discretization
     min_iterations: 1
@@ -215,8 +222,3 @@ industry:
       endo-grid___Ref___offshore-co2: Orientierungsszenario_Strom
       endo-grid___CCS-Exp__offshore-co2: Industrie-CCS
       endo-grid___CCS-Exp__offshore+onshore-co2: Industrie-CCS
-
-solving:
-  mem_mb: 30000
-  memory_logging_frequency: 5
-  runtime: 1h

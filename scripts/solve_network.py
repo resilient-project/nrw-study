@@ -1521,7 +1521,7 @@ if __name__ == "__main__":
             configfiles="config/config.nrw.yaml",
             sector_opts="",
             planning_horizons="2035",
-            run="test-offshore-only",
+            run="endo-grid___Ref___offshore-co2",
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -1551,7 +1551,9 @@ if __name__ == "__main__":
     rolling_horizon = cf_solving.get("rolling_horizon", False)
     skip_iterations = cf_solving.get("skip_iterations", False)
 
-    if not n.lines.s_nom_extendable.any():
+    # TODO: add fix to upstream pypsa-eur, it should also check other links
+    post_disc_enabled = cf_solving.get("post_discretization", {}).get("enable", False)
+    if not n.lines.s_nom_extendable.any() and not post_disc_enabled:
         skip_iterations = True
         logger.info("No expandable lines found. Skipping iterative solving.")
 
