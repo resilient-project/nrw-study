@@ -265,14 +265,14 @@ transmission:
       compression_per_1000km: 0.018
   carbon_dioxide:
     enable: true
-    split_bidirectional_links: true
     gabriel_filter_min_degree: 1
     max_offshore_haversine_distance: .inf
     length_factor: 1.25
     cost_factor: 1
+    marginal_cost: 0.1
     efficiency:
       enable: true
-      efficiency_per_1000km: 0.999
+      efficiency_per_1000km: 1
     projects:
       enable: false
       extendable: false
@@ -1006,13 +1006,13 @@ industry:
     strict_industry_validation: true
     mto_route: true
     available_scenarios:
-      - Orientierungsszenario_Strom
-      - Industrie-CCS
+    - Orientierungsszenario_Strom
+    - "Industrie-CCS"
     scenario_mapping:
-      oge-grid___Ref___offshore-co2: Orientierungsszenario_Strom
-      endo-grid___Ref___offshore-co2: Orientierungsszenario_Strom
-      endo-grid___CCS-Exp__offshore-co2: Industrie-CCS
-      endo-grid___CCS-Exp__offshore+onshore-co2: Industrie-CCS
+      "oge-grid___Ref___offshore-co2": Orientierungsszenario_Strom
+      "endo-grid___Ref___offshore-co2": Orientierungsszenario_Strom
+      "endo-grid___CCS-Exp__offshore-co2": "Industrie-CCS"
+      "endo-grid___CCS-Exp__offshore+onshore-co2": "Industrie-CCS"
   St_primary_fraction:
     2020: 0.6
     2025: 0.55

@@ -388,10 +388,27 @@ class _ShortPipelineCarrierConfig(BaseModel):
     )
 
 
-class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
-    split_bidirectional_links: bool = Field(
+class _CarbonDioxideEfficiencyConfig(BaseModel):
+    """Configuration for `transmission.carbon_dioxide.efficiency` settings."""
+
+    enable: bool = Field(
         True,
-        description="Split signed bidirectional CO2 pipeline links into paired one-way links after CO2 pipeline carriers have been assigned.",
+        description="Apply transmission efficiency for CO2 pipelines.",
+    )
+    efficiency_per_1000km: float = Field(
+        1,
+        description="Distance-dependent efficiency factor per 1000 km.",
+    )
+
+
+class _TransmissionCarrierConfigCarbonDioxide(_TransmissionCarrierConfigGeneral):
+    marginal_cost: float = Field(
+        0.1,
+        description="Marginal cost of CO2 pipeline transport (EUR/t).",
+    )
+    efficiency: _CarbonDioxideEfficiencyConfig = Field(
+        default_factory=_CarbonDioxideEfficiencyConfig,
+        description="CO2 pipeline transmission efficiency configuration.",
     )
     projects: CarbonDioxideProjectsConfig = Field(
         default_factory=CarbonDioxideProjectsConfig,

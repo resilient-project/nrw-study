@@ -2511,6 +2511,53 @@
     "IndustryConfig": {
       "description": "Configuration for `industry` settings.",
       "properties": {
+        "forecast_industry": {
+          "description": "Configuration for `industry.forecast_industry` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable forecast-based industry demand.",
+              "type": "boolean"
+            },
+            "current_electricity_year": {
+              "default": 2021,
+              "description": "Reference year for current electricity demand in industry.",
+              "type": "integer"
+            },
+            "strict_industry_validation": {
+              "default": true,
+              "description": "Raise an error if industry scenario data cannot be matched.",
+              "type": "boolean"
+            },
+            "mto_route": {
+              "default": true,
+              "description": "Enable methanol-to-olefins (MTO) production route.",
+              "type": "boolean"
+            },
+            "available_scenarios": {
+              "description": "Fixed set of valid industry forecast scenarios.",
+              "items": {
+                "enum": [
+                  "Orientierungsszenario_Strom",
+                  "Industrie-CCS"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "scenario_mapping": {
+              "additionalProperties": {
+                "enum": [
+                  "Orientierungsszenario_Strom",
+                  "Industrie-CCS"
+                ],
+                "type": "string"
+              },
+              "description": "Mapping from run/scenario names to the corresponding industry forecast scenario.",
+              "type": "object"
+            }
+          }
+        },
         "St_primary_fraction": {
           "additionalProperties": {
             "type": "number"
@@ -6072,6 +6119,26 @@
               "exclusiveMinimum": 0,
               "type": "number"
             },
+            "marginal_cost": {
+              "default": 0.1,
+              "description": "Marginal cost of CO2 pipeline transport (EUR/t).",
+              "type": "number"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.carbon_dioxide.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for CO2 pipelines.",
+                  "type": "boolean"
+                },
+                "efficiency_per_1000km": {
+                  "default": 1,
+                  "description": "Distance-dependent efficiency factor per 1000 km.",
+                  "type": "number"
+                }
+              }
+            },
             "projects": {
               "description": "Configuration for `carbon_dioxide.projects` settings.",
               "properties": {
@@ -6102,37 +6169,22 @@
                 }
               }
             },
-            "efficiency": {
-              "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
-              "properties": {
-                "enable": {
-                  "default": true,
-                  "description": "Apply transmission efficiency for this carrier.",
-                  "type": "boolean"
-                },
-                "efficiency_per_1000km": {
-                  "default": 0.999,
-                  "description": "Distance-dependent efficiency factor per 1000 km.",
-                  "type": "number"
-                }
-              }
-            },
             "short_pipeline_carrier": {
-              "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+              "description": "Configuration for local/smaller-diameter CO2 pipeline carrier settings.",
               "properties": {
                 "enable": {
                   "default": true,
-                  "description": "Enable generation of short pipeline carriers.",
+                  "description": "Enable generation of a local CO2 pipeline carrier with smaller post-discretization unit size.",
                   "type": "boolean"
                 },
                 "suffix": {
                   "default": "short",
-                  "description": "Suffix appended to the carrier name for short pipelines.",
+                  "description": "Suffix appended to the carrier name for local/smaller-diameter CO2 pipelines.",
                   "type": "string"
                 },
                 "max_haversine_distance": {
                   "default": 100,
-                  "description": "Maximum haversine distance in km for short pipeline carriers.",
+                  "description": "Distance threshold in km used as proxy for assigning local/smaller-diameter CO2 pipeline units.",
                   "type": "number"
                 }
               }
@@ -6395,6 +6447,21 @@
           "default": false,
           "description": "Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.",
           "type": "boolean"
+        }
+      }
+    },
+    "_CarbonDioxideEfficiencyConfig": {
+      "description": "Configuration for `transmission.carbon_dioxide.efficiency` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Apply transmission efficiency for CO2 pipelines.",
+          "type": "boolean"
+        },
+        "efficiency_per_1000km": {
+          "default": 1,
+          "description": "Distance-dependent efficiency factor per 1000 km.",
+          "type": "number"
         }
       }
     },
@@ -7153,6 +7220,53 @@
           "default": 0,
           "description": "Default standing losses.",
           "type": "number"
+        }
+      }
+    },
+    "_ForecastIndustryConfig": {
+      "description": "Configuration for `industry.forecast_industry` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Enable forecast-based industry demand.",
+          "type": "boolean"
+        },
+        "current_electricity_year": {
+          "default": 2021,
+          "description": "Reference year for current electricity demand in industry.",
+          "type": "integer"
+        },
+        "strict_industry_validation": {
+          "default": true,
+          "description": "Raise an error if industry scenario data cannot be matched.",
+          "type": "boolean"
+        },
+        "mto_route": {
+          "default": true,
+          "description": "Enable methanol-to-olefins (MTO) production route.",
+          "type": "boolean"
+        },
+        "available_scenarios": {
+          "description": "Fixed set of valid industry forecast scenarios.",
+          "items": {
+            "enum": [
+              "Orientierungsszenario_Strom",
+              "Industrie-CCS"
+            ],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "scenario_mapping": {
+          "additionalProperties": {
+            "enum": [
+              "Orientierungsszenario_Strom",
+              "Industrie-CCS"
+            ],
+            "type": "string"
+          },
+          "description": "Mapping from run/scenario names to the corresponding industry forecast scenario.",
+          "type": "object"
         }
       }
     },
@@ -8186,21 +8300,21 @@
       }
     },
     "_ShortPipelineCarrierConfig": {
-      "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+      "description": "Configuration for local/smaller-diameter CO2 pipeline carrier settings.",
       "properties": {
         "enable": {
           "default": true,
-          "description": "Enable generation of short pipeline carriers.",
+          "description": "Enable generation of a local CO2 pipeline carrier with smaller post-discretization unit size.",
           "type": "boolean"
         },
         "suffix": {
           "default": "short",
-          "description": "Suffix appended to the carrier name for short pipelines.",
+          "description": "Suffix appended to the carrier name for local/smaller-diameter CO2 pipelines.",
           "type": "string"
         },
         "max_haversine_distance": {
           "default": 100,
-          "description": "Maximum haversine distance in km for short pipeline carriers.",
+          "description": "Distance threshold in km used as proxy for assigning local/smaller-diameter CO2 pipeline units.",
           "type": "number"
         }
       }
@@ -8774,6 +8888,26 @@
           "exclusiveMinimum": 0,
           "type": "number"
         },
+        "marginal_cost": {
+          "default": 0.1,
+          "description": "Marginal cost of CO2 pipeline transport (EUR/t).",
+          "type": "number"
+        },
+        "efficiency": {
+          "description": "Configuration for `transmission.carbon_dioxide.efficiency` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Apply transmission efficiency for CO2 pipelines.",
+              "type": "boolean"
+            },
+            "efficiency_per_1000km": {
+              "default": 1,
+              "description": "Distance-dependent efficiency factor per 1000 km.",
+              "type": "number"
+            }
+          }
+        },
         "projects": {
           "description": "Configuration for `carbon_dioxide.projects` settings.",
           "properties": {
@@ -8805,21 +8939,21 @@
           }
         },
         "short_pipeline_carrier": {
-          "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+          "description": "Configuration for local/smaller-diameter CO2 pipeline carrier settings.",
           "properties": {
             "enable": {
               "default": true,
-              "description": "Enable generation of short pipeline carriers.",
+              "description": "Enable generation of a local CO2 pipeline carrier with smaller post-discretization unit size.",
               "type": "boolean"
             },
             "suffix": {
               "default": "short",
-              "description": "Suffix appended to the carrier name for short pipelines.",
+              "description": "Suffix appended to the carrier name for local/smaller-diameter CO2 pipelines.",
               "type": "string"
             },
             "max_haversine_distance": {
               "default": 100,
-              "description": "Maximum haversine distance in km for short pipeline carriers.",
+              "description": "Distance threshold in km used as proxy for assigning local/smaller-diameter CO2 pipeline units.",
               "type": "number"
             }
           }
@@ -10309,6 +10443,26 @@
               "exclusiveMinimum": 0,
               "type": "number"
             },
+            "marginal_cost": {
+              "default": 0.1,
+              "description": "Marginal cost of CO2 pipeline transport (EUR/t).",
+              "type": "number"
+            },
+            "efficiency": {
+              "description": "Configuration for `transmission.carbon_dioxide.efficiency` settings.",
+              "properties": {
+                "enable": {
+                  "default": true,
+                  "description": "Apply transmission efficiency for CO2 pipelines.",
+                  "type": "boolean"
+                },
+                "efficiency_per_1000km": {
+                  "default": 1,
+                  "description": "Distance-dependent efficiency factor per 1000 km.",
+                  "type": "number"
+                }
+              }
+            },
             "projects": {
               "description": "Configuration for `carbon_dioxide.projects` settings.",
               "properties": {
@@ -10339,37 +10493,22 @@
                 }
               }
             },
-            "efficiency": {
-              "description": "Configuration for `transmission.<carrier>.efficiency` settings.",
-              "properties": {
-                "enable": {
-                  "default": true,
-                  "description": "Apply transmission efficiency for this carrier.",
-                  "type": "boolean"
-                },
-                "efficiency_per_1000km": {
-                  "default": 0.999,
-                  "description": "Distance-dependent efficiency factor per 1000 km.",
-                  "type": "number"
-                }
-              }
-            },
             "short_pipeline_carrier": {
-              "description": "Configuration for `carbon_dioxide.short_pipeline_carrier` settings.",
+              "description": "Configuration for local/smaller-diameter CO2 pipeline carrier settings.",
               "properties": {
                 "enable": {
                   "default": true,
-                  "description": "Enable generation of short pipeline carriers.",
+                  "description": "Enable generation of a local CO2 pipeline carrier with smaller post-discretization unit size.",
                   "type": "boolean"
                 },
                 "suffix": {
                   "default": "short",
-                  "description": "Suffix appended to the carrier name for short pipelines.",
+                  "description": "Suffix appended to the carrier name for local/smaller-diameter CO2 pipelines.",
                   "type": "string"
                 },
                 "max_haversine_distance": {
                   "default": 100,
-                  "description": "Maximum haversine distance in km for short pipeline carriers.",
+                  "description": "Distance threshold in km used as proxy for assigning local/smaller-diameter CO2 pipeline units.",
                   "type": "number"
                 }
               }
@@ -12886,6 +13025,53 @@
     "industry": {
       "description": "Configuration for `industry` settings.",
       "properties": {
+        "forecast_industry": {
+          "description": "Configuration for `industry.forecast_industry` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Enable forecast-based industry demand.",
+              "type": "boolean"
+            },
+            "current_electricity_year": {
+              "default": 2021,
+              "description": "Reference year for current electricity demand in industry.",
+              "type": "integer"
+            },
+            "strict_industry_validation": {
+              "default": true,
+              "description": "Raise an error if industry scenario data cannot be matched.",
+              "type": "boolean"
+            },
+            "mto_route": {
+              "default": true,
+              "description": "Enable methanol-to-olefins (MTO) production route.",
+              "type": "boolean"
+            },
+            "available_scenarios": {
+              "description": "Fixed set of valid industry forecast scenarios.",
+              "items": {
+                "enum": [
+                  "Orientierungsszenario_Strom",
+                  "Industrie-CCS"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "scenario_mapping": {
+              "additionalProperties": {
+                "enum": [
+                  "Orientierungsszenario_Strom",
+                  "Industrie-CCS"
+                ],
+                "type": "string"
+              },
+              "description": "Mapping from run/scenario names to the corresponding industry forecast scenario.",
+              "type": "object"
+            }
+          }
+        },
         "St_primary_fraction": {
           "additionalProperties": {
             "type": "number"

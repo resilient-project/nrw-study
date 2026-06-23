@@ -6064,61 +6064,6 @@ def lossy_bidirectional_links(n, carrier, efficiencies={}):
         )
 
 
-def split_co2_bidirectional_links(n, carriers):
-    """
-    Split signed bidirectional CO2 pipeline links into paired one-way links.
-
-    Only links with one of the selected CO2 pipeline carriers and ``p_min_pu < 0``
-    are split. One-way links, such as offshore project connections with
-    ``p_min_pu = 0``, are left unchanged. Reverse links follow the existing
-    lossy-bidirectional convention used by gas and H2 pipelines: a ``-reversed``
-    suffix, ``reversed=True``, zero investment cost, zero model length, and the
-    original length retained in ``length_original``.
-    """
-    if "reversed" not in n.links.columns:
-        n.links["reversed"] = False
-    else:
-        n.links["reversed"] = n.links["reversed"].fillna(False).astype(bool)
-
-    bidirectional = (
-        n.links.carrier.isin(carriers)
-        & (n.links.p_min_pu < 0)
-        & ~n.links["reversed"]
-    )
-    link_i = n.links.index[bidirectional]
-    if link_i.empty:
-        return
-
-    logger.info(
-        f"Splitting {len(link_i)} bidirectional CO2 pipeline links into paired one-way links."
-    )
-
-    n.links.loc[link_i, "p_min_pu"] = 0
-    if "length_original" not in n.links.columns:
-        n.links["length_original"] = n.links.length
-    else:
-        n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
-    n.links.loc[link_i, "reversed"] = False
-
-    reverse = n.links.loc[link_i].copy().rename(
-        {"bus0": "bus1", "bus1": "bus0"}, axis=1
-    )
-    reverse["length_original"] = reverse["length"]
-    reverse["capital_cost"] = 0.0
-    reverse["length"] = 0.0
-    reverse["reversed"] = True
-    reverse.index = reverse.index.map(lambda x: f"{x}-reversed")
-
-    existing = reverse.index.intersection(n.links.index)
-    if not existing.empty:
-        raise ValueError(
-            "Cannot split CO2 bidirectional links because reverse link names already exist: "
-            f"{existing.tolist()}"
-        )
-
-    n.links = pd.concat([n.links, reverse], sort=False)
-
-
 def add_enhanced_geothermal(
     n,
     costs,
@@ -7007,6 +6952,14 @@ if __name__ == "__main__":
             ],
         )
 
+    # Add marginal cost to transmission carriers, currently implemented for CO2 pipelines
+    co2_pipeline_mc = cf_transmission["carbon_dioxide"]["marginal_cost"]
+    if co2_pipeline_mc:
+        logger.info(
+            f"Setting marginal cost of CO2 pipeline links to {co2_pipeline_mc} €/tCO2."
+        )
+        n.links.loc[n.links.carrier=="CO2 pipeline", "marginal_cost"] = co2_pipeline_mc
+
     # NRW study: Add short/smaller CO2 pipeline carrier if enabled
     if (
         cf_transmission["carbon_dioxide"]["enable"]
@@ -7020,12 +6973,6 @@ if __name__ == "__main__":
             max_haversine_distance=cf_transmission["carbon_dioxide"][
                 "short_pipeline_carrier"
             ]["max_haversine_distance"],
-        )
-
-    if cf_transmission["carbon_dioxide"].get("split_bidirectional_links", True):
-        split_co2_bidirectional_links(
-            n,
-            carriers=["CO2 pipeline", "CO2 pipeline short"],
         )
 
     if options["allam_cycle_gas"]:
@@ -7109,6 +7056,7 @@ if __name__ == "__main__":
         "CO2 pipeline": co2_efficiency,
     }
 
+
     # Apply the same efficiency config to the short CO2 pipeline carrier if enabled,
     # since add_short_co2_pipeline_carrier runs before this loop and renames those links.
     if cf_transmission["carbon_dioxide"]["short_pipeline_carrier"]["enable"]:
@@ -7149,19 +7097,19 @@ if __name__ == "__main__":
 
     n.export_to_netcdf(snakemake.output[0])
 
-    # map link_width=1 to carrier CO2 pipeline, else 0 using map
-    lwidth = pd.Series(
-        data=np.where(n.links.carrier == "CO2 pipeline short", 3, 0),
-        index=n.links.index,
-    )
-    # only CO2 stored buses
-    buswidth = pd.Series(
-        data=np.where(n.buses.carrier == "co2 sequestered", 1, 0), index=n.buses.index
-    )
+    # # # map link_width=1 to carrier CO2 pipeline, else 0 using map
+    # lwidth = pd.Series(
+    #     data=np.where(n.links.carrier == "CO2 pipeline short", 3, 0),
+    #     index=n.links.index,
+    # )
+    # # only CO2 stored buses
+    # buswidth = pd.Series(
+    #     data=np.where(n.buses.carrier == "co2 sequestered", 1, 0), index=n.buses.index
+    # )
 
-    n.explore(
-        branch_components=["Link"],
-        link_width=lwidth,
-        bus_size=buswidth * 700,
-        link_columns=["p_nom_extendable", "p_nom", "p_nom_min", "length"],
-    )
+    # n.explore(
+    #     branch_components=["Link"],
+    #     link_width=lwidth,
+    #     bus_size=buswidth * 700,
+    #     link_columns=["p_nom_extendable", "p_nom", "p_nom_min", "length", "marginal_cost"],
+    # )

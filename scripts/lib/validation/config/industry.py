@@ -8,14 +8,56 @@ Industry configuration.
 See docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 """
 
-from pydantic import Field
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 from scripts.lib.validation.config._base import ConfigModel
+
+_IndustryScenario = Literal["Orientierungsszenario_Strom", "Industrie-CCS"]
+
+
+class _ForecastIndustryConfig(BaseModel):
+    """Configuration for `industry.forecast_industry` settings."""
+
+    enable: bool = Field(
+        True,
+        description="Enable forecast-based industry demand.",
+    )
+    current_electricity_year: int = Field(
+        2021,
+        description="Reference year for current electricity demand in industry.",
+    )
+    strict_industry_validation: bool = Field(
+        True,
+        description="Raise an error if industry scenario data cannot be matched.",
+    )
+    mto_route: bool = Field(
+        True,
+        description="Enable methanol-to-olefins (MTO) production route.",
+    )
+    available_scenarios: list[_IndustryScenario] = Field(
+        default_factory=lambda: ["Orientierungsszenario_Strom", "Industrie-CCS"],
+        description="Fixed set of valid industry forecast scenarios.",
+    )
+    scenario_mapping: dict[str, _IndustryScenario] = Field(
+        default_factory=lambda: {
+            "oge-grid___Ref___offshore-co2": "Orientierungsszenario_Strom",
+            "endo-grid___Ref___offshore-co2": "Orientierungsszenario_Strom",
+            "endo-grid___CCS-Exp__offshore-co2": "Industrie-CCS",
+            "endo-grid___CCS-Exp__offshore+onshore-co2": "Industrie-CCS",
+        },
+        description="Mapping from run/scenario names to the corresponding industry forecast scenario.",
+    )
 
 
 class IndustryConfig(ConfigModel):
     """Configuration for `industry` settings."""
 
+    forecast_industry: _ForecastIndustryConfig = Field(
+        default_factory=_ForecastIndustryConfig,
+        description="Configuration for forecast-based industry demand.",
+    )
     St_primary_fraction: dict[int, float] = Field(
         default_factory=lambda: {
             2020: 0.6,

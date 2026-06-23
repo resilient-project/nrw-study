@@ -50,13 +50,12 @@ countries:
 - DK
 - FR
 - GB
+- IT
 - LU
 - NL
 - "NO"
 - PL
 - SE
-- ES
-- IT
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
