@@ -583,5 +583,14 @@ rule plot_nrw_study:
             opts=config["scenario"]["opts"],
             sector_opts=config["scenario"]["sector_opts"],
         ),
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
     message:
         "Plotting all NRW study outputs"
