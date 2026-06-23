@@ -46,7 +46,7 @@ if __name__ == "__main__":
         summaries_dict = {
             (cluster, opt + sector_opt, planning_horizon): "results/"
             + snakemake.params.RDIR
-            + f"de/csvs/individual/{kind}_s_{cluster}_{opt}_{sector_opt}_{planning_horizon}.csv"
+            + f"csvs_de/individual/{kind}_s_{cluster}_{opt}_{sector_opt}_{planning_horizon}.csv"
             for cluster in snakemake.params.scenario["clusters"]
             for opt in snakemake.params.scenario["opts"]
             for sector_opt in snakemake.params.scenario["sector_opts"]
