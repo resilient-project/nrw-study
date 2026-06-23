@@ -268,10 +268,12 @@ if __name__ == "__main__":
     map_opts = snakemake.params.plotting["map"]
     map_opts.pop("geomap_colors", None)  # replaced by explicit geomap_color=False
 
+    europe_bounds = snakemake.params.plotting["map"]["boundaries"]
+
     # [lon_min, lon_max, lat_min, lat_max]
     # West: Dublin (~-6.3°), East: eastern Poland (~24.0°),
     # South: Corsica (~41.5°), North: Tromsø (~70.0°)
-    map_opts["boundaries"] = [-9.5, 24.0, 41.5, 70.0]
+    map_opts["boundaries"] = europe_bounds # [-9.5, 24.0, 41.5, 70.0]
 
     proj = load_projection(snakemake.params.plotting)
 
@@ -315,7 +317,7 @@ if __name__ == "__main__":
 
         bar_data = onshore_pivot.reindex(["NRW", "DE"])
         bar_colors = list(settings.get("lengths_bar_colors", {}).values())
-        ylim_max = settings.get("lengths_bar_ylim", 6000)
+        ylim_max = settings.get("lengths_bar_ylim", 30000)
 
         bar_data.plot(
             kind="bar", stacked=True, ax=bar_ax,
@@ -323,8 +325,9 @@ if __name__ == "__main__":
         )
         totals = bar_data.sum(axis=1)
         for i, total in enumerate(totals):
-            bar_ax.text(i, total, f"{total:.0f}\nkm", ha="center", va="bottom", fontsize=8)
-        bar_ax.set_ylim(0, ylim_max)
+            prefix = "+" if i == 1 else ""
+            bar_ax.text(i, total, f"{prefix}{total:.0f}\nkm", ha="center", va="bottom", fontsize=8)
+        bar_ax.set_ylim(0, max(totals) * 1.35)
         bar_ax.set_xlabel("")
         bar_ax.set_ylabel("")
         bar_ax.tick_params(labelsize=6)
