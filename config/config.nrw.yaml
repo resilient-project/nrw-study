@@ -93,6 +93,9 @@ transmission:
       extendable: false
       capacity_mode: keep
       custom_capacity_value: 1328
+    efficiency:
+      enable: true
+      efficiency_per_1000km: 0.999
     short_pipeline_carrier:
       enable: true
       suffix: short
