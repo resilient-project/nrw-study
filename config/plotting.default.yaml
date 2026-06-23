@@ -23,8 +23,6 @@ plotting:
         size: 6
       figsize: (3.5, 2.8)
       dpi: 300
-      delta_ymin: -30
-      delta_ymax: 80
       legend_order:
       - Other
       - Waste
@@ -44,6 +42,81 @@ plotting:
       - Fischer-Tropsch
       - Methanol
       - Methanolisation
+      - Ammonia
+      - H$_2$ infra
+      - CO$_2$ infra
+      - SMR
+      - Sabatier
+      - Point source CC
+      - DAC
+      - Load shedding
+    co2_pipeline_comparison:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (7, 5)
+      dpi: 300
+      segment_colors:
+        "Offshore (DE)": "#4292c6"
+        "Onshore ⌀70cm (DE)": "#525252"
+        "Onshore ⌀40cm (DE)": "#969696"
+        "Onshore ⌀70cm (NRW)": "#e6550d"
+        "Onshore ⌀40cm (NRW)": "#fdae6b"
+      segment_order:
+      - "Onshore ⌀70cm (DE)"
+      - "Onshore ⌀40cm (DE)"
+      - "Offshore (DE)"
+      - "Onshore ⌀70cm (NRW)"
+      - "Onshore ⌀40cm (NRW)"
+    costs_overview_delta:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1a.Basis"
+        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off-1a"
+        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off-1a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on-1a"
+      main_scenario: oge-grid___Ref___offshore-co2
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 6
+      figsize: (3.5, 2.8)
+      dpi: 300
+      legend_order:
+      - Other
+      - Waste
+      - Electricity grid
+      - Hydro & RoR
+      - Biomass & -gas
+      - Nuclear
+      - Oil
+      - Coal
+      - PtH
+      - Gas
+      - CHP
+      - Solar
+      - Wind
+      - Battery
+      - Electrolysis
+      - Fischer-Tropsch
+      - Methanol
+      - Methanolisation
+      - Ammonia
       - H$_2$ infra
       - CO$_2$ infra
       - SMR
@@ -471,11 +544,82 @@ plotting:
     - 10
     branch_factor: 0.4
     branch_sizes:
-    - 3198
     - 6396
+    - 3198
     branch_unit_conversion: 3198
     branch_unit: "x ⌀70cm"
+    include_lengths: true
+    lengths_bar_ylim: 6000
+    gif_frame_duration: 700
+    lengths_bar_colors:
+      "CO2 pipeline": "#525252"
+      "CO2 pipeline short": "#969696"
+      "Offshore": "#4292c6"
 
+  carbon_dioxide_network_nrw:
+    unit: Mtpa
+    unit_conversion: 1_000_000
+    bus_factor: 0.00525
+    bus_sizes:
+    - 3
+    - 1
+    branch_factor: 2.5
+    branch_sizes:
+    - 4048
+    - 1012
+    branch_unit_conversion: 1012
+    branch_unit: "x ⌀40cm"
+
+  process_emissions_nrw:
+    figsize: (7, 6)
+    dpi: 300
+    circle_factor: 400
+    circle_color: "#e6550d"
+    circle_alpha: 0.7
+    circle_sizes:
+    - 0.5
+    - 1.0
+    - 2.0
+
+  process_energy_demand_nrw:
+    figsize: (7, 6)
+    dpi: 300
+    max_pie_size: 0.13
+    min_pie_size: 0.025
+    legend_sizes:
+    - 5
+    - 20
+    - 60
+    subsector_colors:
+      Basic chemicals: "#e6550d"
+      Basic metals (metal production): "#756bb1"
+      Fabricated metal products (metalworking): "#31a354"
+      Food and tobacco: "#fd8d3c"
+      Glass and ceramics: "#9ecae1"
+      Machinery and equipment (mechanical engineering): "#2c7fb8"
+      Non-ferrous metals and foundries: "#bcbddc"
+      Other chemical industry: "#d94701"
+      Other economic sectors: "#bdbdbd"
+      Paper industry: "#74c476"
+      Processing of stone and earth (non-metallic mineral processing): "#a1d99b"
+      Quarrying of stone and earth; other mining: "#969696"
+      Rubber and plastic products: "#fdae6b"
+      Vehicle manufacturing (motor vehicles and transport equipment): "#08519c"
+    subsector_names:
+      Basic chemicals: Grundchemikalien
+      Basic metals (metal production): Eisen & Stahl
+      Fabricated metal products (metalworking): Metallverarbeitung
+      Food and tobacco: "Nahrung & Tabak"
+      Glass and ceramics: Glas & Keramik
+      Machinery and equipment (mechanical engineering): Maschinenbau
+      Non-ferrous metals and foundries: NE-Metalle
+      Other chemical industry: Sonstige Chemie
+      Other economic sectors: Sonstige
+      Paper industry: Papier
+      Processing of stone and earth (non-metallic mineral processing): "Steine & Erden"
+      Quarrying of stone and earth; other mining: Bergbau
+      Rubber and plastic products: "Gummi & Kunststoff"
+      Vehicle manufacturing (motor vehicles and transport equipment): Fahrzeugbau
 
   nice_names:
     OCGT: "Open-Cycle Gas"
@@ -565,6 +709,7 @@ plotting:
     oil: '#c9c9c9'
     oil primary: '#d2d2d2'
     oil refining: '#e6e6e6'
+    oil for industry: '#692e0a'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -855,6 +1000,7 @@ grouping:
   CCGT: Gas
   CO2: CO$_2$ infra
   CO2 pipeline: CO$_2$ infra
+  CO2 pipeline short: CO$_2$ infra
   DAC: DAC
   DC: Electricity grid
   EV battery: Battery
@@ -870,9 +1016,11 @@ grouping:
   H2 pipeline (Kernnetz): H$_2$ infra
   H2 pipeline retrofitted: H$_2$ infra
   H2 turbine: H$_2$ infra
+  Haber-Bosch: Ammonia
   HVC to air: Other
   import H2: H$_2$ imports
   OCGT: Gas
+  OCGT methanol: Methanol
   PHS: Hydro & RoR
   SMR: SMR
   SMR CC: Point source CC
@@ -880,7 +1028,10 @@ grouping:
   V2G: Battery
   agriculture electricity: Other
   agriculture heat: Other
+  agriculture machinery electric: Other
   agriculture machinery oil: Other
+  ammonia cracker: Ammonia
+  ammonia store: Ammonia
   battery: Battery
   battery charger: Battery
   battery discharger: Battery
@@ -888,6 +1039,7 @@ grouping:
   biogas to gas: Biomass & -gas
   biomass to liquid: Biomass & -gas
   biomass to liquid CC: Point source CC
+  biomass-to-methanol: Methanol
   co2: CO$_2$ infra
   co2 sequestered: CO$_2$ infra
   co2 stored: CO$_2$ infra
@@ -895,10 +1047,13 @@ grouping:
   coal for industry: Coal
   electricity: Electricity grid
   electricity distribution grid: Electricity grid
+  electrobiofuels: Biomass & -gas
   gas: Gas
   gas compressing: Gas
   gas for industry: Gas
   gas for industry CC: Point source CC
+  gas pipeline: Gas
+  gas pipeline new: Gas
   gas primary: Gas
   renewable gas: Biomass & -gas
   home battery: Battery
@@ -916,6 +1071,7 @@ grouping:
   methanol: Methanol
   methanolisation: Methanolisation
   naphtha for industry: Oil # TODO
+  NH3: Ammonia
   nuclear: Nuclear
   offwind-ac: Wind
   offwind-dc: Wind
@@ -993,8 +1149,11 @@ grouping:
   biogas to gas CC: Point source CC
   oil for industry: Oil
   Methanol steam reforming CC: Point source CC
+  "": Other
+  "none": Other
 
 group_colors:
+  Ammonia: "#46caf0"
   Battery: "#ace37f"
   Biomass & -gas: "#baa741"
   CHP: "#8a5751"

@@ -997,6 +997,19 @@ sector:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
+  forecast_industry:
+    enable: true
+    current_electricity_year: 2021
+    strict_industry_validation: true
+    mto_route: true
+    available_scenarios:
+      - Orientierungsszenario_Strom
+      - Industrie-CCS
+    scenario_mapping:
+      oge-grid___Ref___offshore-co2: Orientierungsszenario_Strom
+      endo-grid___Ref___offshore-co2: Orientierungsszenario_Strom
+      endo-grid___CCS-Exp__offshore-co2: Industrie-CCS
+      endo-grid___CCS-Exp__offshore+onshore-co2: Industrie-CCS
   St_primary_fraction:
     2020: 0.6
     2025: 0.55

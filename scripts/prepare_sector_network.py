@@ -186,6 +186,7 @@ def define_spatial(nodes, options, cf_transmission):
         spatial.oil.shipping = nodes + " shipping oil"
         spatial.oil.agriculture_machinery = nodes + " agriculture machinery oil"
         spatial.oil.land_transport = nodes + " land transport oil"
+        spatial.oil.industry = nodes + " oil for industry"
     else:
         spatial.oil.demand_locations = ["EU"]
         spatial.oil.naphtha = ["EU naphtha for industry"]
@@ -194,6 +195,7 @@ def define_spatial(nodes, options, cf_transmission):
         spatial.oil.shipping = ["EU shipping oil"]
         spatial.oil.agriculture_machinery = ["EU agriculture machinery oil"]
         spatial.oil.land_transport = ["EU land transport oil"]
+        spatial.oil.industry = ["EU oil for industry"]
 
     # uranium
     spatial.uranium = SimpleNamespace()
@@ -5269,6 +5271,48 @@ def add_industry(
             p_nom_extendable=True,
             efficiency2=costs.at["coal", "CO2 intensity"],
         )
+
+        # Add industry for oil ("Heizöl") if "oil" in industrial demand columns
+        if "oil" in industrial_demand.columns:
+            logger.info("Found oil demand for industry, adding corresponding buses and links.")
+            p_set = (
+                industrial_demand["oil"] / nhours
+            ).rename(lambda x: x + " oil for industry")
+
+            if not options["regional_oil_demand"]:
+                p_set = p_set.sum()
+
+            # Add carrier
+            n.add(
+                "Carrier", "oil for industry"
+            )
+
+            n.add(
+                "Bus",
+                spatial.oil.industry,
+                location=spatial.oil.demand_locations,
+                carrier="oil for industry",
+                unit="MWh_LHV",
+            )
+
+            n.add(
+                "Load",
+                spatial.oil.industry,
+                bus=spatial.oil.industry,
+                carrier="oil for industry",
+                p_set=p_set,
+            )
+
+            n.add(
+                "Link",
+                spatial.oil.industry,
+                bus0=spatial.oil.nodes,
+                bus1=spatial.oil.industry,
+                bus2="co2 atmosphere",
+                carrier="oil for industry",
+                p_nom_extendable=True,
+                efficiency2=costs.at["oil", "CO2 intensity"],
+            )
 
 
 def add_aviation(
