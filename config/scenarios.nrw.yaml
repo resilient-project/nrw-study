@@ -35,7 +35,7 @@ oge-grid___Ref___offshore-co2:
   clustering:
     temporal:
       resolution_elec: false
-      resolution_sector: 168h #2190SEG #337h
+      resolution_sector: 1752SEG
 
 endo-grid___CCS-Exp__offshore+onshore-co2:
   transmission:
@@ -61,7 +61,7 @@ endo-grid___CCS-Exp__offshore+onshore-co2:
   clustering:
     temporal:
       resolution_elec: false
-      resolution_sector: 168h #2190SEG #337h
+      resolution_sector: 1752SEG
 
 endo-grid___Ref___offshore-co2:
   transmission:
@@ -87,7 +87,7 @@ endo-grid___Ref___offshore-co2:
   clustering:
     temporal:
       resolution_elec: false
-      resolution_sector: 168h #2190SEG #337h
+      resolution_sector: 1752SEG
 
 
 endo-grid___CCS-Exp__offshore-co2:
@@ -114,7 +114,7 @@ endo-grid___CCS-Exp__offshore-co2:
   clustering:
     temporal:
       resolution_elec: false
-      resolution_sector: 168h #2190SEG #337h
+      resolution_sector: 1752SEG
 
 # greenfield-oge-fixed-offshore-storage:
 #   transmission:
