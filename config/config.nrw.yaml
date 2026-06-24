@@ -12,7 +12,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "nrw-targets"
+  prefix: "nrw-targets-forecast-fix"
   name:
   - oge-grid___Ref___offshore-co2
   - endo-grid___Ref___offshore-co2
