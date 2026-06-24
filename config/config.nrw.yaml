@@ -14,10 +14,10 @@ remote:
 run:
   prefix: "workshop-final-small"
   name:
-  # - oge-grid___Ref___offshore-co2
+  - oge-grid___Ref___offshore-co2
   - endo-grid___Ref___offshore-co2
-  # - endo-grid___CCS-Exp__offshore-co2
-  # - endo-grid___CCS-Exp__offshore+onshore-co2
+  - endo-grid___CCS-Exp__offshore-co2
+  - endo-grid___CCS-Exp__offshore+onshore-co2
   scenarios:
     enable: true
     file: config/scenarios.nrw.yaml
