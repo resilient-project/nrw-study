@@ -184,9 +184,9 @@ clustering:
         y: 42.353363
 
 solving:
-  mem_mb: 30000
+  mem_mb: 200000
   memory_logging_frequency: 5
-  runtime: 1h
+  runtime: 40h
   options:
     skip_iterations: false # set to true skips iterations and disables post_discretization
     min_iterations: 1
