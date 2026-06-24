@@ -12,12 +12,12 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "workshop-final"
+  prefix: "workshop-final-small"
   name:
-  - oge-grid___Ref___offshore-co2
+  # - oge-grid___Ref___offshore-co2
   - endo-grid___Ref___offshore-co2
-  - endo-grid___CCS-Exp__offshore-co2
-  - endo-grid___CCS-Exp__offshore+onshore-co2
+  # - endo-grid___CCS-Exp__offshore-co2
+  # - endo-grid___CCS-Exp__offshore+onshore-co2
   scenarios:
     enable: true
     file: config/scenarios.nrw.yaml
@@ -46,40 +46,40 @@ scenario:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
 countries:
-- AL
 - AT
-- BA
 - BE
-- BG
 - CH
 - CZ
 - DE
 - DK
 - EE
-- ES
 - FI
 - FR
-- GB
-- GR
-- HR
-- HU
-- IE
 - IT
 - LT
 - LU
 - LV
-- ME
-- MK
 - NL
 - 'NO'
 - PL
-- PT
-- RO
-- RS
 - SE
 - SI
 - SK
-- XK
+# - AL
+# - BA
+# - BG
+# - ES
+# - GB
+# - GR
+# - HR
+# - HU
+# - IE
+# - ME
+# - MK
+# - PT
+# - RO
+# - RS
+# - XK
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -173,20 +173,32 @@ clustering:
     level: 0
     countries:
       BE: 1
-      DE: 2
+      DE: 1
       NL: 1
       DEA: 3
   assign_new_bus_coords:
     enable: true
     buses:
       IT:
-        x: 13.3935787
-        y: 42.353363
+        x: 11.8457843
+        y: 43.5014025
 
 solving:
-  mem_mb: 200000
+  mem_mb: 140000
   memory_logging_frequency: 5
-  runtime: 40h
+  runtime: 25h
+  solver_options:
+    "gurobi-default":
+      threads: 64
+      NumericFocus: 1
+      method: 2
+      crossover: 0
+      BarConvTol: 1.0e-05
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
+      GURO_PAR_BARDENSETHRESH: 200
+      IISMethod: 1
   options:
     skip_iterations: false # set to true skips iterations and disables post_discretization
     min_iterations: 1
@@ -231,9 +243,9 @@ solving:
             2045: 250
         offwind:
           DE:
-            2035: 50
-            2040: 60
-            2045: 80
+            2035: 70
+            2040: 80
+            2045: 100
         solar:
           DE:
             2035: 315   # EEG 2023
@@ -241,9 +253,9 @@ solving:
             2045: 500
   override_offwind_p_nom_max:
     DE:
-      2035: 50
-      2040: 60
-      2045: 80
+      2035: 70
+      2040: 80
+      2045: 100
 
 data:
   scigrid_gas:
