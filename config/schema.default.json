@@ -4745,6 +4745,23 @@
             }
           }
         },
+        "chp_cc": {
+          "description": "Configuration for `sector.chp_cc` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Add option for using Combined Heat and Power with Carbon Capture (CHP CC).",
+              "type": "boolean"
+            },
+            "fuel": {
+              "description": "Fuels for which CHP CC plants are added. Must be a subset of the fuels enabled in `sector.chp`.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        },
         "solar_thermal": {
           "default": true,
           "description": "Add option for using solar thermal to generate heat.",
@@ -6425,6 +6442,23 @@
           "default": false,
           "description": "Adjust the shape file to the TYNDP topology. Aggregate the Southern Norwegian bidding zones and extract Crete as a separate zone from the Greek shape.",
           "type": "boolean"
+        }
+      }
+    },
+    "_CHPCCConfig": {
+      "description": "Configuration for `sector.chp_cc` settings.",
+      "properties": {
+        "enable": {
+          "default": true,
+          "description": "Add option for using Combined Heat and Power with Carbon Capture (CHP CC).",
+          "type": "boolean"
+        },
+        "fuel": {
+          "description": "Fuels for which CHP CC plants are added. Must be a subset of the fuels enabled in `sector.chp`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       }
     },
@@ -12596,6 +12630,23 @@
               "default": false,
               "description": "Add option for using gas-fired Combined Heat and Power (CHP) for decentral areas.",
               "type": "boolean"
+            }
+          }
+        },
+        "chp_cc": {
+          "description": "Configuration for `sector.chp_cc` settings.",
+          "properties": {
+            "enable": {
+              "default": true,
+              "description": "Add option for using Combined Heat and Power with Carbon Capture (CHP CC).",
+              "type": "boolean"
+            },
+            "fuel": {
+              "description": "Fuels for which CHP CC plants are added. Must be a subset of the fuels enabled in `sector.chp`.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           }
         },

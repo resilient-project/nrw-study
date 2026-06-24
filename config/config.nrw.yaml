@@ -155,6 +155,16 @@ sector:
     2050: 250
   co2_sequestration_cost: 30
   co2_sequestration_lifetime: 50
+  chp:
+    enable: true
+    fuel:
+    - solid biomass
+    - gas
+    micro_chp: false
+  chp_cc:
+    enable: true
+    fuel:
+    - solid biomass
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#clustering
 clustering:

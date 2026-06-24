@@ -197,6 +197,19 @@ class _CHPConfig(BaseModel):
     )
 
 
+class _CHPCCConfig(BaseModel):
+    """Configuration for `sector.chp_cc` settings."""
+
+    enable: bool = Field(
+        True,
+        description="Add option for using Combined Heat and Power with Carbon Capture (CHP CC).",
+    )
+    fuel: list[str] = Field(
+        default_factory=lambda: ["solid biomass", "gas"],
+        description="Fuels for which CHP CC plants are added. Must be a subset of the fuels enabled in `sector.chp`.",
+    )
+
+
 class _MethanolConfig(BaseModel):
     """Configuration for `sector.methanol` settings."""
 
@@ -598,6 +611,9 @@ class SectorConfig(BaseModel):
 
     chp: _CHPConfig = Field(
         default_factory=_CHPConfig, description="CHP configuration."
+    )
+    chp_cc: _CHPCCConfig = Field(
+        default_factory=_CHPCCConfig, description="CHP CC configuration."
     )
     solar_thermal: bool = Field(
         True, description="Add option for using solar thermal to generate heat."
