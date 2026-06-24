@@ -326,8 +326,8 @@ if __name__ == "__main__":
         totals = bar_data.sum(axis=1)
         for i, total in enumerate(totals):
             prefix = "+" if i == 1 else ""
-            bar_ax.text(i, total, f"{prefix}{total:.0f}\nkm", ha="center", va="bottom", fontsize=8)
-        bar_ax.set_ylim(0, max(totals) * 1.35)
+            bar_ax.text(i, total, f"{prefix}{total:.0f}\nkm", ha="center", va="bottom", fontsize=8, clip_on=False)
+        bar_ax.set_ylim(0, ylim_max)
         bar_ax.set_xlabel("")
         bar_ax.set_ylabel("")
         bar_ax.tick_params(labelsize=6)
