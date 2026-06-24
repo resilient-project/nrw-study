@@ -12,7 +12,7 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: "nrw-targets-forecast-fix"
+  prefix: "nrw-targets-forecast-fix-italy-location-dac1p5"
   name:
   - oge-grid___Ref___offshore-co2
   - endo-grid___Ref___offshore-co2
@@ -279,3 +279,10 @@ industry:
       endo-grid___Ref___offshore-co2: Orientierungsszenario_Strom
       endo-grid___CCS-Exp__offshore-co2: Industrie-CCS
       endo-grid___CCS-Exp__offshore+onshore-co2: Industrie-CCS
+
+adjustments:
+  sector:
+    factor:
+      Link:
+        DAC:
+          capital_cost: 1.5 # DEA costs too low https://www.iea.org/reports/direct-air-capture-2022/executive-summary
