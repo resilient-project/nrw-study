@@ -673,6 +673,37 @@
               "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`."
             }
           }
+        },
+        "assign_new_bus_coords": {
+          "description": "Configuration for `clustering.assign_new_bus_coords` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "If True, overwrite x/y coordinates of the listed buses after clustering.",
+              "type": "boolean"
+            },
+            "buses": {
+              "additionalProperties": {
+                "description": "x/y coordinate override for a single bus.",
+                "properties": {
+                  "x": {
+                    "description": "Longitude to assign to the bus.",
+                    "type": "number"
+                  },
+                  "y": {
+                    "description": "Latitude to assign to the bus.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ]
+              },
+              "description": "Mapping of bus id to new coordinates, e.g. ``{'IT': {x: 12.5, y: 42.0}}``.",
+              "type": "object"
+            }
+          }
         }
       }
     },
@@ -6382,6 +6413,37 @@
         }
       }
     },
+    "_AssignNewBusCoordsConfig": {
+      "description": "Configuration for `clustering.assign_new_bus_coords` settings.",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "If True, overwrite x/y coordinates of the listed buses after clustering.",
+          "type": "boolean"
+        },
+        "buses": {
+          "additionalProperties": {
+            "description": "x/y coordinate override for a single bus.",
+            "properties": {
+              "x": {
+                "description": "Longitude to assign to the bus.",
+                "type": "number"
+              },
+              "y": {
+                "description": "Latitude to assign to the bus.",
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          },
+          "description": "Mapping of bus id to new coordinates, e.g. ``{'IT': {x: 12.5, y: 42.0}}``.",
+          "type": "object"
+        }
+      }
+    },
     "_AutarkyConfig": {
       "description": "Configuration for `electricity.autarky` settings.",
       "properties": {
@@ -6444,6 +6506,23 @@
           "type": "boolean"
         }
       }
+    },
+    "_BusCoordOverride": {
+      "description": "x/y coordinate override for a single bus.",
+      "properties": {
+        "x": {
+          "description": "Longitude to assign to the bus.",
+          "type": "number"
+        },
+        "y": {
+          "description": "Latitude to assign to the bus.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ]
     },
     "_CHPCCConfig": {
       "description": "Configuration for `sector.chp_cc` settings.",
@@ -13646,6 +13725,37 @@
               ],
               "default": false,
               "description": "Resample the time-resolution by averaging over every `n` snapshots in `prepare_sector_network`."
+            }
+          }
+        },
+        "assign_new_bus_coords": {
+          "description": "Configuration for `clustering.assign_new_bus_coords` settings.",
+          "properties": {
+            "enable": {
+              "default": false,
+              "description": "If True, overwrite x/y coordinates of the listed buses after clustering.",
+              "type": "boolean"
+            },
+            "buses": {
+              "additionalProperties": {
+                "description": "x/y coordinate override for a single bus.",
+                "properties": {
+                  "x": {
+                    "description": "Longitude to assign to the bus.",
+                    "type": "number"
+                  },
+                  "y": {
+                    "description": "Latitude to assign to the bus.",
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ]
+              },
+              "description": "Mapping of bus id to new coordinates, e.g. ``{'IT': {x: 12.5, y: 42.0}}``.",
+              "type": "object"
             }
           }
         }

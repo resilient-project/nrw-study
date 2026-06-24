@@ -775,6 +775,7 @@ rule cluster_network:
         ),
         cluster_mode=config_provider("clustering", "mode"),
         copperplate_regions=config_provider("clustering", "copperplate_regions"),
+        assign_new_bus_coords=config_provider("clustering", "assign_new_bus_coords"),
     message:
         "Clustering network to {wildcards.clusters} clusters"
     script:

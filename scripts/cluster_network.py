@@ -603,7 +603,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=60)
+        snakemake = mock_snakemake("cluster_network", clusters="adm", run="endo-grid___Ref___offshore-co2", configfiles=["config/config.nrw.yaml"])
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
@@ -696,6 +696,16 @@ if __name__ == "__main__":
 
     if snakemake.params.copperplate_regions:
         copperplate_buses(nc, snakemake.params.copperplate_regions)
+
+    assign_coords = snakemake.params.assign_new_bus_coords
+    if assign_coords.get("enable", False):
+        for bus_id, coords in assign_coords.get("buses", {}).items():
+            if bus_id in nc.buses.index:
+                nc.buses.loc[bus_id, "x"] = coords["x"]
+                nc.buses.loc[bus_id, "y"] = coords["y"]
+                logger.info(f"Overwriting coordinates of bus '{bus_id}' to x={coords['x']}, y={coords['y']}.")
+            else:
+                logger.warning(f"Bus '{bus_id}' not found in clustered network, skipping coordinate override.")
 
     for attr in ["busmap", "linemap"]:
         getattr(clustering, attr).to_csv(snakemake.output[attr])

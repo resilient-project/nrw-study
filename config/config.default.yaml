@@ -1157,6 +1157,9 @@ clustering:
   temporal:
     resolution_elec: false
     resolution_sector: false
+  assign_new_bus_coords:
+    enable: false
+    buses: {}
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:

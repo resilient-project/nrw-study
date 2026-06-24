@@ -88,6 +88,26 @@ class _AggregationStrategiesConfig(BaseModel):
     )
 
 
+class _BusCoordOverride(BaseModel):
+    """x/y coordinate override for a single bus."""
+
+    x: float = Field(description="Longitude to assign to the bus.")
+    y: float = Field(description="Latitude to assign to the bus.")
+
+
+class _AssignNewBusCoordsConfig(BaseModel):
+    """Configuration for `clustering.assign_new_bus_coords` settings."""
+
+    enable: bool = Field(
+        False,
+        description="If True, overwrite x/y coordinates of the listed buses after clustering.",
+    )
+    buses: dict[str, _BusCoordOverride] = Field(
+        default_factory=dict,
+        description="Mapping of bus id to new coordinates, e.g. ``{'IT': {x: 12.5, y: 42.0}}``.",
+    )
+
+
 class _TemporalConfig(BaseModel):
     """Configuration for `clustering.temporal` settings."""
 
@@ -149,4 +169,8 @@ class ClusteringConfig(BaseModel):
     temporal: _TemporalConfig = Field(
         default_factory=_TemporalConfig,
         description="Options for temporal resolution.",
+    )
+    assign_new_bus_coords: _AssignNewBusCoordsConfig = Field(
+        default_factory=_AssignNewBusCoordsConfig,
+        description="Optionally overwrite bus x/y coordinates after clustering.",
     )

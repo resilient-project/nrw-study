@@ -176,6 +176,12 @@ clustering:
       DE: 2
       NL: 1
       DEA: 3
+  assign_new_bus_coords:
+    enable: true
+    buses:
+      IT:
+        x: 13.3935787
+        y: 42.353363
 
 solving:
   mem_mb: 30000
