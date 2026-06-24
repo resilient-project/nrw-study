@@ -6643,6 +6643,50 @@ def add_short_co2_pipeline_carrier(
     n.links.loc[short_co2_pipes, "carrier"] = short_carrier
 
 
+def apply_p_nom_max_override(n, investment_year, override_offwind_p_nom_max):
+    """Scale extendable offwind p_nom_max proportionally to a political capacity ceiling.
+
+    Modifies n.generators.p_nom_max before the network is saved, so create_model()
+    picks up the correct bounds. Values in the config are total GW (existing + new).
+    """
+    for ct, years in override_offwind_p_nom_max.items():
+        if investment_year not in years:
+            continue
+
+        override_limit = 1e3 * years[investment_year]  # GW → MW
+
+        offwind_mask = (n.generators.index.str[:2] == ct) & n.generators.carrier.str.startswith(
+            "offwind"
+        )
+        existing_idx = n.generators.index[offwind_mask & ~n.generators.p_nom_extendable]
+        extendable_idx = n.generators.index[offwind_mask & n.generators.p_nom_extendable]
+
+        existing_capacity = n.generators.loc[existing_idx, "p_nom"].sum()
+        total_extendable_max = n.generators.loc[extendable_idx, "p_nom_max"].sum()
+        new_ceiling = override_limit - existing_capacity
+
+        if extendable_idx.empty or total_extendable_max == 0:
+            logger.warning(
+                f"No extendable offwind generators found in {ct}. Skipping p_nom_max override."
+            )
+            continue
+
+        if new_ceiling <= 0:
+            logger.warning(
+                f"Existing offwind in {ct} ({existing_capacity/1e3:.1f} GW) already exceeds "
+                f"override limit ({override_limit/1e3:.1f} GW). Skipping."
+            )
+            continue
+
+        scale = new_ceiling / total_extendable_max
+        logger.info(
+            f"Scaling extendable offwind p_nom_max in {ct} by {scale:.2f}x: "
+            f"{total_extendable_max/1e3:.1f} GW → {new_ceiling/1e3:.1f} GW extendable "
+            f"(total ceiling: {override_limit/1e3:.1f} GW)"
+        )
+        n.generators.loc[extendable_idx, "p_nom_max"] *= scale
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -7089,6 +7133,10 @@ if __name__ == "__main__":
     maybe_adjust_costs_and_potentials(
         n, snakemake.params["adjustments"], investment_year
     )
+
+    override = snakemake.params.solving.get("override_offwind_p_nom_max")
+    if override:
+        apply_p_nom_max_override(n, investment_year, override)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

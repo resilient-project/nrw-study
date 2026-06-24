@@ -1956,6 +1956,7 @@ rule prepare_sector_network:
             "sector", "district_heating", "temperature_limited_stores"
         ),
         transmission=config_provider("transmission"),
+        solving=config_provider("solving"),
     message:
         "Preparing integrated sector-coupled energy network for {wildcards.clusters} clusters, {wildcards.planning_horizons} planning horizon, {wildcards.opts} electric options and {wildcards.sector_opts} sector options"
     script:

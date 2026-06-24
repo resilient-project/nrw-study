@@ -1520,7 +1520,7 @@ if __name__ == "__main__":
             clusters="adm",
             configfiles="config/config.nrw.yaml",
             sector_opts="",
-            planning_horizons="2035",
+            planning_horizons="2040",
             run="endo-grid___Ref___offshore-co2",
         )
     configure_logging(snakemake)
