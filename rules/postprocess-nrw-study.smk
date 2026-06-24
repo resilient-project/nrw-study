@@ -333,7 +333,7 @@ rule plot_co2_pipeline_overview:
         plotting_fig=config["plotting"]["nrw-study"]["co2_pipeline_overview"],
     input:
         networks=expand(
-            "results/nrw/{run}/networks/base_s_adm___{year}.nc",
+            NRW_RESULTS + "{run}/networks/base_s_adm___{year}.nc",
             run=config["plotting"]["nrw-study"]["co2_pipeline_overview"]["run_order"],
             year=config["scenario"]["planning_horizons"],
         ),
