@@ -423,11 +423,19 @@ df = assign_nuts3_from_coordinates(df)
 # Sector is fixed to `Industry` for this workflow.
 df["Sector"] = "Industry"
 
-# Use the original `sector` column as `Subsector` when available.
-if "sector" in df.columns:
-    df["Subsector"] = df["sector"]
-else:
-    df["Subsector"] = pd.NA
+# Preserve Subsector if it exists, otherwise try to use `sector` column.
+# If neither exists, leave as NA.
+if "Subsector" not in df.columns:
+    if "sector" in df.columns:
+        df["Subsector"] = df["sector"]
+    else:
+        df["Subsector"] = pd.NA
+
+# Clean up whitespace in Subsector names (trailing/leading spaces, etc.)
+if "Subsector" in df.columns:
+    df["Subsector"] = df["Subsector"].apply(
+        lambda x: x.strip() if isinstance(x, str) else x
+    )
 
 # Align NUTS3 columns with the naming expected by the downstream forecast rule.
 if "NUTS3_code" in df.columns and "Region" not in df.columns:

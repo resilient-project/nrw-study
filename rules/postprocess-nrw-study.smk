@@ -584,6 +584,39 @@ rule plot_process_emissions_nrw:
         scripts("plot_process_emissions_nrw.py")
 
 
+rule plot_process_emissions_nrw_subsectors:
+    input:
+        process_emissions=lambda wc: (
+            "data/forecast_industry/"
+            + config["industry"]["forecast_industry"]["scenario_mapping"][wc.run]
+            + "/process_emissions.csv"
+        ),
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-process_emissions_nrw_subsectors_{planning_horizons}.pdf",
+        png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-process_emissions_nrw_subsectors_{planning_horizons}.png",
+    params:
+        plotting=config_provider("plotting"),
+    log:
+        RESULTS
+        + "logs/plot_process_emissions_nrw_subsectors/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/plot_process_emissions_nrw_subsectors/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 1
+    resources:
+        mem_mb=4000,
+    message:
+        "Plotting process emissions NRW by subsector for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
+    script:
+        scripts("plot_process_emissions_nrw_subsectors.py")
+
+
 rule plot_energy_demand_nrw:
     input:
         energy_demand=lambda wc: (
@@ -612,7 +645,7 @@ rule plot_energy_demand_nrw:
     resources:
         mem_mb=8000,
     message:
-        "Plotting energy demand NRW for {wildcards.planning_horizons}"
+        "Plotting energy demand NRW for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
     script:
         scripts("plot_energy_demand_nrw.py")
 

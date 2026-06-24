@@ -4,7 +4,7 @@
 """
 Plot industry energy demand for NRW (DEA) NUTS3 regions as proportional pie
 charts, one per planning horizon.  Pie radius scales with sqrt(regional total
-TWh); slices are coloured by subsector.
+TWh); slices are coloured by energy carrier.
 
 The forecast-industry CSV is selected via
 config.industry.forecast_industry.scenario_mapping.
@@ -90,6 +90,19 @@ def _draw_basemap(regions, dea_nuts3_proj, proj, figsize):
     return fig, ax
 
 
+def _industry_scenario_name(snakemake) -> str:
+    mapping = snakemake.config["industry"]["forecast_industry"].get(
+        "scenario_mapping", {}
+    )
+    return mapping.get(str(snakemake.wildcards.run), str(snakemake.wildcards.run))
+
+
+def _title_label(planning_horizon: str, industry_scenario: str, settings: dict) -> str:
+    if settings.get("show_industry_scenario_label", False):
+        return f"{industry_scenario} · {planning_horizon}"
+    return planning_horizon
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -99,7 +112,7 @@ if __name__ == "__main__":
             opts="",
             clusters="adm",
             sector_opts="",
-            planning_horizons="2035",
+            planning_horizons="2045",
             configfiles=["config/config.nrw.yaml"],
             run="endo-grid___CCS-Exp__offshore-co2",
         )
@@ -113,10 +126,11 @@ if __name__ == "__main__":
     max_pie = settings["max_pie_size"]
     min_pie = settings["min_pie_size"]
     legend_sizes = settings["legend_sizes"]       # reference TWh values for legend
-    subsector_colors = settings["subsector_colors"]
-    subsector_names = settings["subsector_names"]
+    carrier_colors = settings["carrier_colors"]
+    carrier_names = settings["carrier_names"]
 
     planning_horizon = str(snakemake.wildcards.planning_horizons)
+    industry_scenario = _industry_scenario_name(snakemake)
 
     proj = ccrs.Mercator()
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
@@ -129,14 +143,14 @@ if __name__ == "__main__":
     df = pd.read_csv(snakemake.input.energy_demand)
     dea = df[df["Region"].str.startswith("DEA")].copy()
 
-    # Sum all energy carriers: Region × Subsector → TWh
+    # Sum all applications and subsectors: Region × energy carrier → TWh
     pivot = (
-        dea.groupby(["Region", "Subsector"])[planning_horizon]
+        dea.groupby(["Region", "Energy_carrier"])[planning_horizon]
         .sum()
-        .unstack("Subsector")
+        .unstack("Energy_carrier")
         .fillna(0)
     )
-    # Drop subsectors with no activity across all DEA regions
+    # Drop carriers with no activity across all DEA regions
     pivot = pivot.loc[:, pivot.sum() > 0]
 
     region_totals = pivot.sum(axis=1)
@@ -179,7 +193,7 @@ if __name__ == "__main__":
 
         slice_vals = pivot.loc[region]
         slice_vals = slice_vals[slice_vals > 0]
-        colors = [subsector_colors.get(s, "#cccccc") for s in slice_vals.index]
+        colors = [carrier_colors.get(s, "#cccccc") for s in slice_vals.index]
 
         ax_pie.pie(
             slice_vals.values,
@@ -188,9 +202,9 @@ if __name__ == "__main__":
             wedgeprops={"linewidth": 0.3, "edgecolor": "white"},
         )
 
-    # --- year annotation ---
+    # --- industry scenario and year annotation ---
     ax.text(
-        0.02, 0.97, planning_horizon,
+        0.02, 0.97, _title_label(planning_horizon, industry_scenario, settings),
         transform=ax.transAxes,
         fontsize=14, fontweight="bold", va="top", ha="left",
         color="#333333", zorder=9,
@@ -225,22 +239,24 @@ if __name__ == "__main__":
         bbox_to_anchor=(0.01, 0.02),
         ncol=1,
         fontsize=7,
+        labelspacing=1.5,
+        borderpad=0.8,
         **legend_kw,
     )
     ax.add_artist(size_leg)
 
-    # --- subsector colour legend (bottom-right) ---
-    active_subsectors = [s for s in subsector_colors if s in pivot.columns and pivot[s].sum() > 0]
+    # --- carrier colour legend (bottom-right) ---
+    active_carriers = [s for s in carrier_colors if s in pivot.columns and pivot[s].sum() > 0]
     color_handles = [
         mpatches.Patch(
-            facecolor=subsector_colors[s],
-            label=subsector_names.get(s, s),
+            facecolor=carrier_colors[s],
+            label=carrier_names.get(s, s),
         )
-        for s in active_subsectors
+        for s in active_carriers
     ]
     ax.legend(
         handles=color_handles,
-        title="Subsektoren",
+        title="Energieträger",
         loc="lower right",
         bbox_to_anchor=(0.99, 0.02),
         ncol=2,
@@ -250,4 +266,5 @@ if __name__ == "__main__":
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
     fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=dpi)
+    plt.show()
     plt.close(fig)

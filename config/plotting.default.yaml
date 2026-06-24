@@ -687,45 +687,64 @@ plotting:
     - 1.0
     - 2.0
 
+  process_emissions_nrw_subsectors:
+    figsize: (12, 10)
+    dpi: 300
+    circle_factor: 700
+    circle_alpha: 0.75
+    # Emission threshold (Mt/a) above which a city label is shown (NRW only)
+    label_threshold_mt: 1.0
+    # Bubble sizes shown in the size legend (Mt/a)
+    circle_sizes:
+    - 0.1
+    - 0.5
+    # Optional: show scenario name and year on map (disabled by default)
+    show_scenario_year: false
+    # Optional: rename FORECAST scenarios to short display names on figure
+    # Set show_scenario_year: true to activate the label, then these names apply
+    # Disable renaming by removing or leaving scenario_display_names empty
+    scenario_display_names:
+      Orientierungsszenario_Strom: "HtA"
+      Industrie-CCS: "HtA+"
+
   process_energy_demand_nrw:
     figsize: (7, 6)
     dpi: 300
+    show_industry_scenario_label: false
     max_pie_size: 0.13
     min_pie_size: 0.025
     legend_sizes:
     - 5
     - 20
     - 60
-    subsector_colors:
-      Basic chemicals: "#e6550d"
-      Basic metals (metal production): "#756bb1"
-      Fabricated metal products (metalworking): "#31a354"
-      Food and tobacco: "#fd8d3c"
-      Glass and ceramics: "#9ecae1"
-      Machinery and equipment (mechanical engineering): "#2c7fb8"
-      Non-ferrous metals and foundries: "#bcbddc"
-      Other chemical industry: "#d94701"
-      Other economic sectors: "#bdbdbd"
-      Paper industry: "#74c476"
-      Processing of stone and earth (non-metallic mineral processing): "#a1d99b"
-      Quarrying of stone and earth; other mining: "#969696"
-      Rubber and plastic products: "#fdae6b"
-      Vehicle manufacturing (motor vehicles and transport equipment): "#08519c"
-    subsector_names:
-      Basic chemicals: Grundchemikalien
-      Basic metals (metal production): Eisen & Stahl
-      Fabricated metal products (metalworking): Metallverarbeitung
-      Food and tobacco: "Nahrung & Tabak"
-      Glass and ceramics: Glas & Keramik
-      Machinery and equipment (mechanical engineering): Maschinenbau
-      Non-ferrous metals and foundries: NE-Metalle
-      Other chemical industry: Sonstige Chemie
-      Other economic sectors: Sonstige
-      Paper industry: Papier
-      Processing of stone and earth (non-metallic mineral processing): "Steine & Erden"
-      Quarrying of stone and earth; other mining: Bergbau
-      Rubber and plastic products: "Gummi & Kunststoff"
-      Vehicle manufacturing (motor vehicles and transport equipment): Fahrzeugbau
+    carrier_colors:
+      Ambient heat: "#76c7c0"
+      Biomass: "#4daf4a"
+      Coal: "#4d4d4d"
+      District heating: "#e6550d"
+      Electricity: "#377eb8"
+      Fuel oil: "#8c564b"
+      Heat: "#e6550d"
+      Hydrogen: "#1abc9c"
+      Naphtha: "#984ea3"
+      Natural gas: "#9e9e9e"
+      Other fossil: "#7f7f7f"
+      Other RES: "#66c2a5"
+      Waste non-RES: "#c97b7b"
+    carrier_names:
+      Ambient heat: Umweltwärme
+      Biomass: Biomasse
+      Coal: Kohle
+      District heating: Fernwärme
+      Electricity: Strom
+      Fuel oil: Heizöl
+      Heat: Wärme
+      Hydrogen: Wasserstoff
+      Naphtha: Naphtha
+      Natural gas: Erdgas
+      Other fossil: Sonstige fossile
+      Other RES: Sonstige erneuerbare
+      Waste non-RES: Nicht-erneuerbarer Abfall
 
   nice_names:
     OCGT: "Open-Cycle Gas"
