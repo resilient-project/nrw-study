@@ -162,7 +162,7 @@ if __name__ == "__main__":
         )
 
         main_scenario = plotting["main_scenario"]
-        other_scenarios = [s for s in lt_order if s != main_scenario]
+        other_scenarios = [s for s in lt_order if s != main_scenario and s in data.index]
         data_main = data.loc[main_scenario]
 
         # Deltas
