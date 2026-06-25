@@ -210,7 +210,7 @@ if config["foresight"] != "perfect":
             )
         threads: 1
         resources:
-            mem_mb=8000,
+            mem_mb=12000,
         params:
             settings=lambda w: config_provider(
                 "plotting", "balance_map_interactive", w.carrier

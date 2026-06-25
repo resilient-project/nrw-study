@@ -7,7 +7,7 @@
 version: v2026.02.0
 
 remote:
-  ssh: "z3"
+  ssh: "zecm"
   path: "scratch/projects/nrw-study"
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
@@ -184,7 +184,7 @@ clustering:
         y: 43.5014025
 
 solving:
-  mem_mb: 140000
+  mem_mb: 220000
   memory_logging_frequency: 5
   runtime: 25h
   solver_options:
