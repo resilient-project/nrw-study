@@ -957,7 +957,7 @@ rule build_biomass_potentials:
         benchmarks("build_biomass_potentials_s_{clusters}_{planning_horizons}")
     threads: 8
     resources:
-        mem_mb=2000,
+        mem_mb=8000,
     params:
         biomass=config_provider("biomass"),
     message:
