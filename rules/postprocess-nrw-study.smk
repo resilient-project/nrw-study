@@ -334,7 +334,7 @@ rule plot_co2_pipeline_overview:
     input:
         networks=expand(
             NRW_RESULTS + "{run}/networks/base_s_adm___{year}.nc",
-            run=config["plotting"]["nrw-study"]["co2_pipeline_overview"]["run_order"],
+            run=[r for r in config["plotting"]["nrw-study"]["co2_pipeline_overview"]["run_order"] if r in config["run"]["name"]],
             year=config["scenario"]["planning_horizons"],
         ),
     output:
@@ -491,7 +491,7 @@ rule animate_carbon_dioxide_network:
         scripts("animate_carbon_dioxide_network.py")
 
 
-rule plot_balance_map_nrw:
+rule plot_co2_flow_map_nrw:
     input:
         network=RESULTS
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
@@ -504,11 +504,11 @@ rule plot_balance_map_nrw:
         + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.png",
     log:
         RESULTS
-        + "logs/plot_balance_map_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+        + "logs/plot_co2_flow_map_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
     benchmark:
         (
             RESULTS
-            + "benchmarks/plot_balance_map_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+            + "benchmarks/plot_co2_flow_map_nrw/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
         )
     threads: 2
     resources:
@@ -518,7 +518,7 @@ rule plot_balance_map_nrw:
     message:
         "Plotting CO2 flow map NRW for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
     script:
-        scripts("plot_balance_map_nrw.py")
+        scripts("plot_co2_flow_map_nrw.py")
 
 
 rule plot_carbon_dioxide_network_nrw:

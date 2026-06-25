@@ -24,33 +24,33 @@ plotting:
       figsize: (3.5, 2.8)
       dpi: 300
       legend_order:
-      - Other
-      - Waste
-      - Electricity grid
-      - Hydro & RoR
-      - Biomass & -gas
-      - Nuclear
-      - Oil
-      - Coal
+      - Sonstige
+      - Abfall
+      - Stromnetz
+      - Hydro & Laufwasser
+      - Biomasse & -gas
+      - Kernkraft
+      - Öl
+      - Kohle
       - PtH
       - Gas
-      - CHP
+      - KWK
       - Solar
-      - Onshore Wind
-      - Offshore Wind
-      - Battery
-      - Electrolysis
+      - Onshore-Wind
+      - Offshore-Wind
+      - Batterie
+      - Elektrolyse
       - Fischer-Tropsch
       - Methanol
-      - Methanolisation
-      - Ammonia
-      - H$_2$ infra
-      - CO$_2$ infra
+      - Methanolisierung
+      - Ammoniak
+      - H$_2$-Infra
+      - CO$_2$-Infra
       - SMR
       - Sabatier
-      - Point source CC
+      - Punktquellen CC
       - DAC
-      - Load shedding
+      - Lastabwurf
     capacities_overview:
       nice_names:
         oge-grid___Ref___offshore-co2: "1a.Basis"
@@ -69,33 +69,33 @@ plotting:
       figsize: (3.5, 2.8)
       dpi: 300
       legend_order:
-      - Other
-      - Waste
-      - Electricity grid
-      - Hydro & RoR
-      - Biomass & -gas
-      - Nuclear
-      - Oil
-      - Coal
+      - Sonstige
+      - Abfall
+      - Stromnetz
+      - Hydro & Laufwasser
+      - Biomasse & -gas
+      - Kernkraft
+      - Öl
+      - Kohle
       - PtH
       - Gas
-      - CHP
+      - KWK
       - Solar
-      - Onshore Wind
-      - Offshore Wind
-      - Battery
-      - Electrolysis
+      - Onshore-Wind
+      - Offshore-Wind
+      - Batterie
+      - Elektrolyse
       - Fischer-Tropsch
       - Methanol
-      - Methanolisation
-      - Ammonia
-      - H$_2$ infra
-      - CO$_2$ infra
+      - Methanolisierung
+      - Ammoniak
+      - H$_2$-Infra
+      - CO$_2$-Infra
       - SMR
       - Sabatier
-      - Point source CC
+      - Punktquellen CC
       - DAC
-      - Load shedding
+      - Lastabwurf
     capacities_overview_de:
       nice_names:
         oge-grid___Ref___offshore-co2: "1a.Basis"
@@ -114,33 +114,33 @@ plotting:
       figsize: (3.5, 2.8)
       dpi: 300
       legend_order:
-      - Other
-      - Waste
-      - Electricity grid
-      - Hydro & RoR
-      - Biomass & -gas
-      - Nuclear
-      - Oil
-      - Coal
+      - Sonstige
+      - Abfall
+      - Stromnetz
+      - Hydro & Laufwasser
+      - Biomasse & -gas
+      - Kernkraft
+      - Öl
+      - Kohle
       - PtH
       - Gas
-      - CHP
+      - KWK
       - Solar
-      - Onshore Wind
-      - Offshore Wind
-      - Battery
-      - Electrolysis
+      - Onshore-Wind
+      - Offshore-Wind
+      - Batterie
+      - Elektrolyse
       - Fischer-Tropsch
       - Methanol
-      - Methanolisation
-      - Ammonia
-      - H$_2$ infra
-      - CO$_2$ infra
+      - Methanolisierung
+      - Ammoniak
+      - H$_2$-Infra
+      - CO$_2$-Infra
       - SMR
       - Sabatier
-      - Point source CC
+      - Punktquellen CC
       - DAC
-      - Load shedding
+      - Lastabwurf
     co2_pipeline_comparison:
       nice_names:
         oge-grid___Ref___offshore-co2: "1a.Basis"
@@ -189,33 +189,33 @@ plotting:
       figsize: (3.5, 2.8)
       dpi: 300
       legend_order:
-      - Other
-      - Waste
-      - Electricity grid
-      - Hydro & RoR
-      - Biomass & -gas
-      - Nuclear
-      - Oil
-      - Coal
+      - Sonstige
+      - Abfall
+      - Stromnetz
+      - Hydro & Laufwasser
+      - Biomasse & -gas
+      - Kernkraft
+      - Öl
+      - Kohle
       - PtH
       - Gas
-      - CHP
+      - KWK
       - Solar
-      - Onshore Wind
-      - Offshore Wind
-      - Battery
-      - Electrolysis
+      - Onshore-Wind
+      - Offshore-Wind
+      - Batterie
+      - Elektrolyse
       - Fischer-Tropsch
       - Methanol
-      - Methanolisation
-      - Ammonia
-      - H$_2$ infra
-      - CO$_2$ infra
+      - Methanolisierung
+      - Ammoniak
+      - H$_2$-Infra
+      - CO$_2$-Infra
       - SMR
       - Sabatier
-      - Point source CC
+      - Punktquellen CC
       - DAC
-      - Load shedding
+      - Lastabwurf
     ccs_overview:
       nice_names:
         oge-grid___Ref___offshore-co2: "1a.Basis"
@@ -669,12 +669,12 @@ plotting:
     bus_sizes:
     - 3
     - 1
-    flow_linewidth_factor: 10   # MtCO₂/a per point of line width
-    flow_factor: 0.02            # scaling for arrow head size passed to n.plot(link_flow=)
+    flow_linewidth_factor: 0.2  # MtCO₂/a per point of line width
+    flow_factor: 0.04           # scaling for arrow head size passed to n.plot(link_flow=)
     flow_unit: "MtCO₂/a"
     flow_sizes:
     - 50
-    - 10
+    - 20
 
   process_emissions_nrw:
     figsize: (7, 6)
@@ -1120,189 +1120,189 @@ plotting:
     import methanol: '#87d0e6'
 
 grouping:
-  AC: Electricity grid
-  BEV charger: Battery
+  AC: Stromnetz
+  BEV charger: Batterie
   CCGT: Gas
-  CO2: CO$_2$ infra
-  CO2 pipeline: CO$_2$ infra
-  CO2 pipeline short: CO$_2$ infra
+  CO2: CO$_2$-Infra
+  CO2 pipeline: CO$_2$-Infra
+  CO2 pipeline short: CO$_2$-Infra
   DAC: DAC
-  DC: Electricity grid
-  EV battery: Battery
+  DC: Stromnetz
+  EV battery: Batterie
   Fischer-Tropsch: Fischer-Tropsch
-  H2: H$_2$ infra
-  H2 CCGT: H$_2$ infra
-  H2 OCGT: H$_2$ infra
-  H2 Electrolysis: Electrolysis
-  H2 Fuel Cell: H$_2$ infra
-  H2 Store: H$_2$ infra
-  H2 for industry: H$_2$ infra
-  H2 pipeline: H$_2$ infra
-  H2 pipeline (Kernnetz): H$_2$ infra
-  H2 pipeline retrofitted: H$_2$ infra
-  H2 turbine: H$_2$ infra
-  Haber-Bosch: Ammonia
-  HVC to air: Other
-  import H2: H$_2$ imports
+  H2: H$_2$-Infra
+  H2 CCGT: H$_2$-Infra
+  H2 OCGT: H$_2$-Infra
+  H2 Electrolysis: Elektrolyse
+  H2 Fuel Cell: H$_2$-Infra
+  H2 Store: H$_2$-Infra
+  H2 for industry: H$_2$-Infra
+  H2 pipeline: H$_2$-Infra
+  H2 pipeline (Kernnetz): H$_2$-Infra
+  H2 pipeline retrofitted: H$_2$-Infra
+  H2 turbine: H$_2$-Infra
+  Haber-Bosch: Ammoniak
+  HVC to air: Sonstige
+  import H2: H$_2$-Importe
   OCGT: Gas
   OCGT methanol: Methanol
-  PHS: Hydro & RoR
+  PHS: Hydro & Laufwasser
   SMR: SMR
-  SMR CC: Point source CC
+  SMR CC: Punktquellen CC
   Sabatier: Sabatier
-  V2G: Battery
-  agriculture electricity: Other
-  agriculture heat: Other
-  agriculture machinery electric: Other
-  agriculture machinery oil: Other
-  ammonia cracker: Ammonia
-  ammonia store: Ammonia
-  battery: Battery
-  battery charger: Battery
-  battery discharger: Battery
-  biogas: Biomass & -gas
-  biogas to gas: Biomass & -gas
-  biomass to liquid: Biomass & -gas
-  biomass to liquid CC: Point source CC
+  V2G: Batterie
+  agriculture electricity: Sonstige
+  agriculture heat: Sonstige
+  agriculture machinery electric: Sonstige
+  agriculture machinery oil: Sonstige
+  ammonia cracker: Ammoniak
+  ammonia store: Ammoniak
+  battery: Batterie
+  battery charger: Batterie
+  battery discharger: Batterie
+  biogas: Biomasse & -gas
+  biogas to gas: Biomasse & -gas
+  biomass to liquid: Biomasse & -gas
+  biomass to liquid CC: Punktquellen CC
   biomass-to-methanol: Methanol
-  co2: CO$_2$ infra
-  co2 sequestered: CO$_2$ infra
-  co2 stored: CO$_2$ infra
-  coal: Coal
-  coal for industry: Coal
-  electricity: Electricity grid
-  electricity distribution grid: Electricity grid
-  electrobiofuels: Biomass & -gas
+  co2: CO$_2$-Infra
+  co2 sequestered: CO$_2$-Infra
+  co2 stored: CO$_2$-Infra
+  coal: Kohle
+  coal for industry: Kohle
+  electricity: Stromnetz
+  electricity distribution grid: Stromnetz
+  electrobiofuels: Biomasse & -gas
   gas: Gas
   gas compressing: Gas
   gas for industry: Gas
-  gas for industry CC: Point source CC
+  gas for industry CC: Punktquellen CC
   gas pipeline: Gas
   gas pipeline new: Gas
   gas primary: Gas
-  renewable gas: Biomass & -gas
-  home battery: Battery
-  home battery charger: Battery
-  home battery discharger: Battery
-  hydro: Hydro & RoR
-  industry electricity: Electricity grid
+  renewable gas: Biomasse & -gas
+  home battery: Batterie
+  home battery charger: Batterie
+  home battery discharger: Batterie
+  hydro: Hydro & Laufwasser
+  industry electricity: Stromnetz
   industry methanol: Methanol
-  kerosene for aviation: Other # TODO
-  land transport EV: Other # TODO
-  land transport oil: Other # TODO
-  lignite: Coal
-  low voltage: Electricity grid
-  low-temperature heat for industry: Other
+  kerosene for aviation: Sonstige # TODO
+  land transport EV: Sonstige # TODO
+  land transport oil: Sonstige # TODO
+  lignite: Kohle
+  low voltage: Stromnetz
+  low-temperature heat for industry: Sonstige
   methanol: Methanol
-  methanolisation: Methanolisation
-  naphtha for industry: Oil # TODO
-  NH3: Ammonia
-  nuclear: Nuclear
-  offwind-ac: Offshore Wind
-  offwind-dc: Offshore Wind
-  oil: Oil
-  oil primary: Oil
-  oil refining: Oil
-  renewable oil: Biomass & -gas
-  onwind: Onshore Wind
-  process emissions: Other
-  process emissions CC: Point source CC
-  ror: Hydro & RoR
+  methanolisation: Methanolisierung
+  naphtha for industry: Öl # TODO
+  NH3: Ammoniak
+  nuclear: Kernkraft
+  offwind-ac: Offshore-Wind
+  offwind-dc: Offshore-Wind
+  oil: Öl
+  oil primary: Öl
+  oil refining: Öl
+  renewable oil: Biomasse & -gas
+  onwind: Onshore-Wind
+  process emissions: Sonstige
+  process emissions CC: Punktquellen CC
+  ror: Hydro & Laufwasser
   rural air heat pump: PtH
-  rural biomass boiler: Biomass & -gas
+  rural biomass boiler: Biomasse & -gas
   rural gas boiler: Gas
   rural ground heat pump: PtH
-  rural heat: Other
-  rural heat vent: Other
+  rural heat: Sonstige
+  rural heat vent: Sonstige
   rural resistive heater: PtH
   rural solar thermal: Solar
-  rural water tanks: Other
-  rural water tanks charger: Other
-  rural water tanks discharger: Other
+  rural water tanks: Sonstige
+  rural water tanks charger: Sonstige
+  rural water tanks discharger: Sonstige
   shipping methanol: Methanol
-  shipping oil: Oil # TODO
+  shipping oil: Öl # TODO
   solar: Solar
-  solid biomass: Biomass & -gas
-  solid biomass for industry: Biomass & -gas
-  solid biomass for industry CC: Point source CC
+  solid biomass: Biomasse & -gas
+  solid biomass for industry: Biomasse & -gas
+  solid biomass for industry CC: Punktquellen CC
   solar rooftop: Solar
   solar-hsat: Solar
-  uranium: Nuclear
-  urban central CHP: CHP
-  urban central CHP CC: Point source CC
+  uranium: Kernkraft
+  urban central CHP: KWK
+  urban central CHP CC: Punktquellen CC
   urban central air heat pump: PtH
   urban central gas boiler: Gas
-  urban central heat: Other
-  urban central heat vent: Other
+  urban central heat: Sonstige
+  urban central heat vent: Sonstige
   urban central resistive heater: PtH
   urban central solar thermal: Solar
-  urban central solid biomass CHP: Biomass & -gas
-  urban central solid biomass CHP CC: Point source CC
-  urban central water pits: Other
-  urban central water pits charger: Other
-  urban central water pits discharger: Other
-  urban central water tanks: Other
-  urban central water tanks charger: Other
-  urban central water tanks discharger: Other
+  urban central solid biomass CHP: Biomasse & -gas
+  urban central solid biomass CHP CC: Punktquellen CC
+  urban central water pits: Sonstige
+  urban central water pits charger: Sonstige
+  urban central water pits discharger: Sonstige
+  urban central water tanks: Sonstige
+  urban central water tanks charger: Sonstige
+  urban central water tanks discharger: Sonstige
   urban decentral air heat pump: PtH
-  urban decentral biomass boiler: Biomass & -gas
+  urban decentral biomass boiler: Biomasse & -gas
   urban decentral gas boiler: Gas
-  urban decentral heat: Other
-  urban decentral heat vent: Other
+  urban decentral heat: Sonstige
+  urban decentral heat vent: Sonstige
   urban decentral resistive heater: PtH
   urban decentral solar thermal: Solar
-  urban decentral water tanks: Other
-  urban decentral water tanks charger: Other
-  urban decentral water tanks discharger: Other
-  urban central H2 CHP: H$_2$ infra
-  urban central coal CHP: Coal
+  urban decentral water tanks: Sonstige
+  urban decentral water tanks charger: Sonstige
+  urban decentral water tanks discharger: Sonstige
+  urban central H2 CHP: H$_2$-Infra
+  urban central coal CHP: Kohle
   urban central gas CHP: Gas
-  urban central gas CHP CC: Point source CC
-  urban central lignite CHP: Coal
-  urban central oil CHP: Oil
-  load: "Load shedding"
-  rural oil boiler: Other
-  unsustainable biogas: Biomass & -gas
-  unsustainable bioliquids: Biomass & -gas
-  unsustainable solid biomass: Biomass & -gas
-  urban decentral oil boiler: Other
-  waste CHP: Waste
-  waste CHP CC: Point source CC
-  non-sequestered HVC: Other
-  BioSNG: Biomass & -gas
-  BioSNG CC: Point source CC
-  biogas to gas CC: Point source CC
-  oil for industry: Oil
-  Methanol steam reforming CC: Point source CC
-  "": Other
-  "none": Other
+  urban central gas CHP CC: Punktquellen CC
+  urban central lignite CHP: Kohle
+  urban central oil CHP: Öl
+  load: "Lastabwurf"
+  rural oil boiler: Sonstige
+  unsustainable biogas: Biomasse & -gas
+  unsustainable bioliquids: Biomasse & -gas
+  unsustainable solid biomass: Biomasse & -gas
+  urban decentral oil boiler: Sonstige
+  waste CHP: Abfall
+  waste CHP CC: Punktquellen CC
+  non-sequestered HVC: Sonstige
+  BioSNG: Biomasse & -gas
+  BioSNG CC: Punktquellen CC
+  biogas to gas CC: Punktquellen CC
+  oil for industry: Öl
+  Methanol steam reforming CC: Punktquellen CC
+  "": Sonstige
+  "none": Sonstige
 
 group_colors:
-  Ammonia: "#46caf0"
-  Battery: "#ace37f"
-  Biomass & -gas: "#baa741"
-  CHP: "#8a5751"
-  CO$_2$ infra: "#cc99ff"
-  Point source CC: "#f29dae"
-  Coal: "#555555"
+  Ammoniak: "#46caf0"
+  Batterie: "#ace37f"
+  Biomasse & -gas: "#baa741"
+  KWK: "#8a5751"
+  CO$_2$-Infra: "#cc99ff"
+  Punktquellen CC: "#f29dae"
+  Kohle: "#555555"
   DAC: "#ff5270"
-  Electricity grid: "#97ad8c"
-  Electrolysis: "#b3e6ff"
+  Stromnetz: "#97ad8c"
+  Elektrolyse: "#b3e6ff"
   Fischer-Tropsch: "#25c49a"
   Gas: "#e05b09"
-  H$_2$ infra: "#7895b1"
-  H$_2$ imports: "#110d63"
-  Hydro & RoR: "#298c81"
+  H$_2$-Infra: "#7895b1"
+  H$_2$-Importe: "#110d63"
+  Hydro & Laufwasser: "#298c81"
   Methanol: "#57ebc4"
-  Methanolisation: "#57aac1"
-  Nuclear: "#ff8c00"
-  Oil: "#333333"
+  Methanolisierung: "#57aac1"
+  Kernkraft: "#ff8c00"
+  Öl: "#333333"
   PtH: "#dd2e23"
-  Sabatier: "#c44ce6" 
+  Sabatier: "#c44ce6"
   SMR: "#870c71"
   Solar: "#ffe066"
-  Onshore Wind: "#66b5ff"
-  Offshore Wind: "#8895dd"
-  Waste: "#e3d37d"
-  Other: "#bbbbbb"
-  Load shedding: "#00ff00" # only for debugging
+  Onshore-Wind: "#66b5ff"
+  Offshore-Wind: "#8895dd"
+  Abfall: "#e3d37d"
+  Sonstige: "#bbbbbb"
+  Lastabwurf: "#00ff00" # nur zum Debuggen

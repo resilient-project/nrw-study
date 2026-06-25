@@ -146,7 +146,7 @@ def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     link_flow = plot_links["_flow"]
     # Line thickness proportional to absolute net flow; minimum width so zero-flow
     # links remain visible as thin grey lines
-    link_width = link_flow.abs().div(flow_linewidth_factor).clip(lower=0.15)
+    link_width = link_flow.abs().mul(flow_linewidth_factor).clip(lower=0)
 
     plot_network.buses = plot_buses
     plot_network.links = plot_links
@@ -273,7 +273,7 @@ def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     if legend_flow_sizes is not None:
         add_legend_lines(
             ax,
-            [s / flow_linewidth_factor for s in legend_flow_sizes],
+            [s * flow_linewidth_factor for s in legend_flow_sizes],
             [f"{s} {flow_unit}" for s in legend_flow_sizes],
             patch_kw=dict(color="#666", solid_capstyle="round"),
             legend_kw={**br_kw, "bbox_to_anchor": (0.78, 0.02)},
@@ -289,13 +289,13 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_balance_map_nrw",
+            "plot_co2_flow_map_nrw",
             opts="",
             clusters="adm",
             sector_opts="",
             planning_horizons="2045",
             configfiles=["config/config.nrw.yaml"],
-            run="oge-grid___Ref___offshore-co2",
+            run="endo-grid___Ref___offshore-co2",
         )
 
     configure_logging(snakemake)
