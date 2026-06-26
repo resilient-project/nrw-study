@@ -189,7 +189,7 @@ solving:
   runtime: 25h
   solver_options:
     "gurobi-default":
-      threads: 64
+      threads: 32
       NumericFocus: 1
       method: 2
       crossover: 0

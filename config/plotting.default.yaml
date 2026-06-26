@@ -5,13 +5,22 @@
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
 plotting:
+  carrier_german:
+    "co2 sequestered": "CO$_2$-Sequestrierung"
+    "DAC": "Direct Air Capture"
+    "gas for industry CC": "Gas für Industrie"
+    "methanolisation": "Methanisierung"
+    "process emissions CC": "Prozessemissionen"
+    "SMR CC": "Dampfreformierung"
+    "solid biomass for industry CC": "Biomasse für Industrie"
+    "urban central solid biomass CHP CC": "Biomasse-KWK"
   nrw-study:
     costs_overview:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -53,10 +62,10 @@ plotting:
       - Lastabwurf
     capacities_overview:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -98,10 +107,10 @@ plotting:
       - Lastabwurf
     capacities_overview_de:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -143,10 +152,10 @@ plotting:
       - Lastabwurf
     co2_pipeline_comparison:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -155,8 +164,9 @@ plotting:
       font:
         family: sans-serif
         sans-serif: Roboto
-        size: 6
-      figsize: (7, 5)
+        size: 10
+      xticklabel_size: 11
+      figsize: (9, 5)
       dpi: 300
       segment_colors:
         "Offshore (DE)": "#4292c6"
@@ -172,10 +182,10 @@ plotting:
       - "Onshore ⌀40cm (NRW)"
     costs_overview_delta:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off-1a"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off-1a"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on-1a"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b-1a"
+        endo-grid___CCS-Exp__offshore-co2: "2.a-1a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b-1a"
       main_scenario: oge-grid___Ref___offshore-co2
       run_order:
       - oge-grid___Ref___offshore-co2
@@ -216,12 +226,12 @@ plotting:
       - Punktquellen CC
       - DAC
       - Lastabwurf
-    ccs_overview:
+    cc_capacity_utilisation:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -230,12 +240,12 @@ plotting:
       font:
         family: sans-serif
         sans-serif: Roboto
-        size: 6
-      figsize: (3.5, 2.8)
+        size: 10
+      figsize: (9, 5)
       dpi: 300
       legend_order:
-      - SMR CC
       - DAC
+      - SMR CC
       - gas for industry CC
       - process emissions CC
       - solid biomass for industry CC
@@ -243,10 +253,10 @@ plotting:
       - urban central solid biomass CHP CC
     co2_pipeline_overview:
       nice_names:
-        oge-grid___Ref___offshore-co2: "1a.Basis"
-        endo-grid___Ref___offshore-co2: "1b.Basis.endo.off"
-        endo-grid___CCS-Exp__offshore-co2: "2a.CCS+.endo.off"
-        endo-grid___CCS-Exp__offshore+onshore-co2: "2b.CCS+.endo.off+on"
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
       run_order:
       - oge-grid___Ref___offshore-co2
       - endo-grid___Ref___offshore-co2
@@ -255,7 +265,8 @@ plotting:
       font:
         family: sans-serif
         sans-serif: Roboto
-        size: 6
+        size: 8
+        subsize: 7
       figsize: (3.5, 2.8)
       dpi: 300
       delta_ymin: -30
@@ -641,7 +652,7 @@ plotting:
     branch_unit_conversion: 3198
     branch_unit: "x ⌀70cm"
     include_lengths: true
-    lengths_bar_ylim: 6000
+    lengths_bar_ylim: 4000
     gif_frame_duration: 700
     lengths_bar_colors:
       "CO2 pipeline": "#525252"
@@ -651,16 +662,30 @@ plotting:
   carbon_dioxide_network_nrw:
     unit: Mtpa
     unit_conversion: 1_000_000
-    bus_factor: 0.00525
+    bus_factor: 0.003
     bus_sizes:
     - 3
     - 1
-    branch_factor: 2.5
+    branch_factor: 0.002
     branch_sizes:
-    - 4048
+    - 3036
     - 1012
     branch_unit_conversion: 1012
     branch_unit: "x ⌀40cm"
+
+  carbon_dioxide_network_nrw_oge:
+    unit: Mtpa
+    unit_conversion: 1_000_000
+    bus_factor: 0.003
+    bus_sizes:
+    - 3
+    - 1
+    branch_factor: 0.0005
+    branch_sizes:
+    - 6072
+    - 2024
+    branch_unit_conversion: 1012
+    branch_unit: "x ⌀40cm Äq."
 
   co2_flow_map_nrw:
     unit: Mtpa
@@ -826,8 +851,8 @@ plotting:
     allam: '#B98F76'
     gas for industry co2 to atmosphere: '#692e0a'
     gas for industry co2 to stored: '#8a3400'
-    gas for industry: '#853403'
-    gas for industry CC: '#692e0a'
+    gas for industry: '#e07810'
+    gas for industry CC: '#b55d00'
     gas pipeline: '#ebbca0'
     gas pipeline new: '#a87c62'
     # oil
@@ -867,12 +892,12 @@ plotting:
     municipal solid waste: '#91ba41'
     solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
-    solid biomass for industry: '#7a6d26'
-    solid biomass for industry CC: '#47411c'
+    solid biomass for industry: '#2d8a4e'
+    solid biomass for industry CC: '#1a5e35'
     solid biomass for industry co2 from atmosphere: '#736412'
     solid biomass for industry co2 to stored: '#47411c'
-    urban central solid biomass CHP: '#9d9042'
-    urban central solid biomass CHP CC: '#6c5d28'
+    urban central solid biomass CHP: '#74c476'
+    urban central solid biomass CHP CC: '#4da84f'
     biomass boiler: '#8A9A5B'
     residential rural biomass boiler: '#a1a066'
     residential urban decentral biomass boiler: '#b0b87b'
@@ -1023,7 +1048,7 @@ plotting:
     hydrogen: '#bf13a0'
     retrofitted H2 boiler: '#e5a0d9'
     SMR: '#870c71'
-    SMR CC: '#4f1745'
+    SMR CC: '#5c2d91'
     H2 liquefaction: '#d647bd'
     hydrogen storage: '#bf13a0'
     H2 Store: '#bf13a0'
