@@ -267,7 +267,7 @@ if __name__ == "__main__":
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         fig.savefig(snakemake.output.map, bbox_inches="tight")
-        fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=dpi)
+        fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
 
     plt.show()
     plt.close(fig)

@@ -218,3 +218,4 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     fig.savefig(snakemake.output.sankey, bbox_inches="tight")
+    fig.savefig(snakemake.output.png, dpi=150, bbox_inches="tight")
