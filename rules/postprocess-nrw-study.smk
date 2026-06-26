@@ -213,8 +213,6 @@ rule plot_industry_sankey_forecast_all:
             for run_name in config["run"]["name"]
             if run_name in FORECAST_INDUSTRY_CFG["scenario_mapping"]
         ]
-    log:
-        RESULTS + "logs/plot_industry_sankey_forecast_all.log"
     message:
         "Plotting industry sankey diagrams for all forecast scenarios and planning horizons"
 
@@ -854,7 +852,6 @@ rule plot_nrw_study:
         rules.plot_co2_pipeline_comparison.output.plot,
         rules.plot_carbon_dioxide_network_all.input,
         rules.plot_carbon_dioxide_network_nrw_all.input,
-        rules.plot_carbon_dioxide_network_nrw_oge_all.input,
         expand(
             RESULTS
             + "nrw-study/co2_pipeline_length_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",

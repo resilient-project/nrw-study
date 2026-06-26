@@ -17,16 +17,24 @@ authors:
     given-names: Khaled
     orcid: https://orcid.org/0000-0001-5056-0717
     affiliation: Fraunhofer ISI
+  - family-names: Norpoth
+    given-names: Katharina Norpoth
+    affiliation: NRW.Energy4Climate
+  - family-names: Franken
+    given-names: Lukas
+    orcid: https://orcid.org/0000-0002-9096-4115
+    affiliation: TU Berlin
+  - family-names: Rieth-Menze
+    given-names: Iris
+    affiliation: NRW.Energy4Climate
+  - family-names: Lütz
+    given-names: Luna
+    orcid: https://orcid.org/0009-0009-9805-7577
+    affiliation: Fraunhofer ISI
   - family-names: Fleiter
     given-names: Tobias
     orcid: https://orcid.org/0000-0003-0526-3558
     affiliation: Fraunhofer ISI
-  - family-names: Norpoth
-    given-names: Katharina Norpoth
-    affiliation: NRW.Energy4Climate
-  - family-names: Rieth-Menze
-    given-names: Iris
-    affiliation: NRW.Energy4Climate
   - family-names: Bäcker
     given-names: Annika
     affiliation: NRW.Energy4Climate
@@ -38,7 +46,3 @@ authors:
     given-names: Tom
     orcid: https://orcid.org/0000-0001-5898-1911
     affiliation: TU Berlin
-  - family-names: Lütz
-    given-names: Luna
-    orcid: https://orcid.org/0009-0009-9805-7577
-    affiliation: Fraunhofer ISI
