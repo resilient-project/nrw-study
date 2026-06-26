@@ -164,6 +164,7 @@ rule plot_industry_sankey_pypsa_eur:
         ratios=resources("industry_sector_ratios_{planning_horizons}.csv"),
     output:
         sankey=RESULTS + "nrw-study/industry_sankey_pypsa_eur_{planning_horizons}.pdf",
+        png=RESULTS + "nrw-study/industry_sankey_pypsa_eur_{planning_horizons}.png",
     params:
         country="DE",
     log:
@@ -184,7 +185,8 @@ rule plot_industry_sankey_forecast:
         mapping="data/forecast_industry/mapping.csv",
         demand="data/forecast_industry/{forecast_scenario}/energy_demand.csv",
     output:
-        sankey=RESULTS+"nrw-study/industry_sankey_forecast_{forecast_scenario}_{year}.pdf"
+        sankey=RESULTS+"nrw-study/industry_sankey_forecast_{forecast_scenario}_{year}.pdf",
+        png=RESULTS+"nrw-study/industry_sankey_forecast_{forecast_scenario}_{year}.png"
     log:
         RESULTS
         + "logs/plot_industry_sankey_forecast_{forecast_scenario}_{year}.log"
@@ -227,6 +229,7 @@ rule plot_costs_overview:
         ),
     output:
         plot=NRW_RESULTS + "nrw-study-summary/costs_overview.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/costs_overview.png",
     log:
         NRW_RESULTS + "logs/plot_costs_overview.log",
     benchmark:
@@ -258,6 +261,7 @@ rule plot_capacities_overview:
         )[0],
     output:
         plot=NRW_RESULTS + "nrw-study-summary/capacities_overview.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/capacities_overview.png",
     log:
         NRW_RESULTS + "logs/plot_capacities_overview.log",
     benchmark:
@@ -289,6 +293,7 @@ rule plot_capacities_overview_de:
         )[0],
     output:
         plot=NRW_RESULTS + "nrw-study-summary/capacities_overview_de.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/capacities_overview_de.png",
     log:
         NRW_RESULTS + "logs/plot_capacities_overview_de.log",
     benchmark:
@@ -302,7 +307,7 @@ rule plot_capacities_overview_de:
         scripts("plot_capacities_overview.py")
 
 
-rule plot_ccs_installed_capacity:
+rule plot_cc_capacity_utilisation:
     input:
         networks=expand(
             RESULTS
@@ -311,22 +316,27 @@ rule plot_ccs_installed_capacity:
             **config["scenario"],
         ),
     output:
-        eu=NRW_RESULTS + "nrw-study-summary/ccs_co2_capture_capacity_eu.pdf",
-        de=NRW_RESULTS + "nrw-study-summary/ccs_co2_capture_capacity_de.pdf",
-        nrw=NRW_RESULTS + "nrw-study-summary/ccs_co2_capture_capacity_nrw.pdf",
+        eu=NRW_RESULTS + "nrw-study-summary/cc_capacity_utilisation_eu.pdf",
+        de=NRW_RESULTS + "nrw-study-summary/cc_capacity_utilisation_de.pdf",
+        nrw=NRW_RESULTS + "nrw-study-summary/cc_capacity_utilisation_nrw.pdf",
+        eu_png=NRW_RESULTS + "nrw-study-summary/cc_capacity_utilisation_eu.png",
+        de_png=NRW_RESULTS + "nrw-study-summary/cc_capacity_utilisation_de.png",
+        nrw_png=NRW_RESULTS + "nrw-study-summary/cc_capacity_utilisation_nrw.png",
     params:
-        plotting_fig=config_provider("plotting", "nrw-study", "ccs_overview"),
+        plotting_fig=config_provider("plotting", "nrw-study", "cc_capacity_utilisation"),
+        carrier_german=config["plotting"]["carrier_german"],
     log:
-        NRW_RESULTS + "logs/plot_ccs_installed_capacity.log",
+        NRW_RESULTS + "logs/plot_cc_capacity_utilisation.log",
     benchmark:
-        NRW_RESULTS + "benchmark/plot_ccs_installed_capacity",
+        NRW_RESULTS + "benchmark/plot_cc_capacity_utilisation",
     threads: 1
     resources:
         mem_mb=4000,
     message:
-        "Plotting optimized CCS capture capacities across all NRW scenarios"
+        "Plotting optimized CC capture capacities and utilisation across all NRW scenarios"
     script:
-        scripts("plot_ccs_installed_capacity.py")
+        scripts("plot_cc_capacity_utilisation.py")
+
 
 rule plot_co2_pipeline_overview:
     params:
@@ -341,6 +351,9 @@ rule plot_co2_pipeline_overview:
         eu=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_eu.png",
         de=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_de.png",
         nrw=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_nrw.png",
+        eu_pdf=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_eu.pdf",
+        de_pdf=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_de.pdf",
+        nrw_pdf=NRW_RESULTS + "nrw-study-summary/co2_pipeline_capacity_nrw.pdf",
     log:
         NRW_RESULTS + "logs/plot_co2_pipeline_overview.log",
     benchmark:
@@ -364,6 +377,7 @@ rule plot_costs_overview_delta:
         ),
     output:
         plot=NRW_RESULTS + "nrw-study-summary/costs_overview_delta.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/costs_overview_delta.png",
     log:
         NRW_RESULTS + "logs/plot_costs_overview_delta.log",
     benchmark:
@@ -434,6 +448,48 @@ rule plot_carbon_dioxide_network:
         scripts("plot_carbon_dioxide_network.py")
 
 
+rule plot_carbon_dioxide_network_all:
+    input:
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
+
+
+rule plot_carbon_dioxide_network_nrw_oge_all:
+    input:
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_oge_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
+
+
+rule plot_carbon_dioxide_network_nrw_all:
+    input:
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
+        rules.plot_carbon_dioxide_network_nrw_oge_all.input
+        if config["transmission"]["carbon_dioxide"]["projects"]["enable"]
+        else [],
+
+
 rule plot_co2_pipeline_comparison:
     params:
         plotting_fig=config_provider("plotting", "nrw-study", "co2_pipeline_comparison"),
@@ -448,6 +504,7 @@ rule plot_co2_pipeline_comparison:
         ),
     output:
         plot=NRW_RESULTS + "nrw-study-summary/co2_pipeline_comparison.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/co2_pipeline_comparison.png",
     log:
         NRW_RESULTS + "logs/plot_co2_pipeline_comparison.log",
     benchmark:
@@ -497,6 +554,12 @@ rule plot_co2_flow_map_nrw:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
+        co2_projects=resources(
+            "transmission/carbon_dioxide_projects/co2_links_s_{clusters}_{opts}.csv"
+        ),
+        co2_projects_geom=resources(
+            "transmission/carbon_dioxide_projects/original_projects_s_{clusters}_{opts}.geojson"
+        ),
     output:
         map=RESULTS
         + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.pdf",
@@ -515,6 +578,7 @@ rule plot_co2_flow_map_nrw:
         mem_mb=10000,
     params:
         plotting=config_provider("plotting"),
+        co2_projects_enable=config_provider("transmission", "carbon_dioxide", "projects", "enable"),
     message:
         "Plotting CO2 flow map NRW for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
     script:
@@ -549,6 +613,39 @@ rule plot_carbon_dioxide_network_nrw:
         "Plotting NRW carbon dioxide network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
     script:
         scripts("plot_carbon_dioxide_network_nrw.py")
+
+
+rule plot_carbon_dioxide_network_nrw_oge:
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+        co2_projects_geom=resources(
+            "transmission/carbon_dioxide_projects/original_projects_s_{clusters}_{opts}.geojson"
+        ),
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_oge_{planning_horizons}.pdf",
+        png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_oge_{planning_horizons}.png",
+    log:
+        RESULTS
+        + "logs/plot_carbon_dioxide_network_nrw_oge/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/plot_carbon_dioxide_network_nrw_oge/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 2
+    resources:
+        mem_mb=10000,
+    params:
+        plotting=config_provider("plotting"),
+    message:
+        "Plotting NRW OGE carbon dioxide network for {wildcards.clusters} clusters, {wildcards.opts} electric options, {wildcards.sector_opts} sector options and {wildcards.planning_horizons} planning horizons"
+    script:
+        scripts("plot_carbon_dioxide_network_nrw_oge.py")
 
 
 rule plot_process_emissions_nrw:
@@ -751,28 +848,13 @@ rule plot_nrw_study:
         rules.plot_costs_overview.output.plot,
         rules.plot_capacities_overview.output.plot,
         rules.plot_capacities_overview_de.output.plot,
-        rules.plot_ccs_installed_capacity.output,
+        rules.plot_cc_capacity_utilisation.output,
         rules.plot_co2_pipeline_overview.output,
         rules.plot_costs_overview_delta.output.plot,
         rules.plot_co2_pipeline_comparison.output.plot,
-        expand(
-            RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_{planning_horizons}.pdf",
-            run=config["run"]["name"],
-            clusters=config["scenario"]["clusters"],
-            opts=config["scenario"]["opts"],
-            sector_opts=config["scenario"]["sector_opts"],
-            planning_horizons=config["scenario"]["planning_horizons"],
-        ),
-        expand(
-            RESULTS
-            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_{planning_horizons}.pdf",
-            run=config["run"]["name"],
-            clusters=config["scenario"]["clusters"],
-            opts=config["scenario"]["opts"],
-            sector_opts=config["scenario"]["sector_opts"],
-            planning_horizons=config["scenario"]["planning_horizons"],
-        ),
+        rules.plot_carbon_dioxide_network_all.input,
+        rules.plot_carbon_dioxide_network_nrw_all.input,
+        rules.plot_carbon_dioxide_network_nrw_oge_all.input,
         expand(
             RESULTS
             + "nrw-study/co2_pipeline_length_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
