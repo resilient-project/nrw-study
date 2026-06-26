@@ -1982,6 +1982,9 @@ rule build_carbon_dioxide_projects:
         co2_stores=resources(
             "transmission/carbon_dioxide_projects/co2_stores_s_{clusters}_{opts}.csv"
         ),
+        original_projects=resources(
+            "transmission/carbon_dioxide_projects/original_projects_s_{clusters}_{opts}.geojson"
+        ),
     log:
         logs("build_carbon_dioxide_projects_{clusters}_{opts}.log"),
     benchmark:

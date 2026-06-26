@@ -563,7 +563,7 @@ if __name__ == "__main__":
             "build_carbon_dioxide_projects",
             clusters="adm",
             opts="",
-            run="test-offshore-only",
+            run="oge-grid___Ref___offshore-co2",
             configfiles=["config/config.nrw.yaml"],
         )
 
@@ -751,6 +751,8 @@ if __name__ == "__main__":
         regions_offshore,
     )
 
+    original_projects = pipelines[["Name", "geometry", "length", "bus0", "bus1"]].copy()
+
     ### Clean up
     # Drop rows that are na in bus0 or bus1
     pipelines = pipelines.dropna(subset=["bus0", "bus1"])
@@ -832,11 +834,31 @@ if __name__ == "__main__":
     stores = stores.rename(columns={"label": "id"})
     stores.set_index("id", inplace=True)
 
+    # Step 1: spatial join to find which cleaned pipeline id each original segment overlaps
+    pipelines_ids = pipelines.reset_index()[["id", "geometry"]]
+    joined = gpd.sjoin(
+        original_projects,
+        pipelines_ids,
+        how="left",
+        predicate="intersects",
+    )
+    # Keep first match per original row in case multiple pipelines intersect
+    joined = joined[~joined.index.duplicated(keep="first")]
+    original_projects["id"] = joined["id"]
+
+    # Step 2: within each Name group, propagate the id to rows that didn't get one
+    original_projects["id"] = original_projects.groupby("Name")["id"].transform(
+        lambda x: x.ffill().bfill()
+    )
+    # Drop nas
+    original_projects = original_projects.dropna(subset=["id"])
+
     # Export
     buses_co2_offshore.to_csv(snakemake.output.co2_buses_offshore, index=True)
     pipelines.to_csv(snakemake.output.co2_links, index=True)
     stores.to_csv(snakemake.output.co2_stores, index=True)
-
+    original_projects.to_file(snakemake.output.original_projects, index=True, driver="GeoJSON")
+    
     # # Debugging
     # map = regions_onshore.explore()
     # map = regions_offshore.explore(m=map, color = "lightblue")
