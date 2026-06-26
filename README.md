@@ -3,9 +3,10 @@ SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pyps
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
-# NRW Industrial Decarbonisation Study (RESILIENT Project)
+# Industrial decarbonisation study
+### North Rhine-Westphalia (NRW) | RESILIENT-Projekt & IN4climate CO2-Sprint
 
-This repository contains the model code and configuration for a case study on industrial decarbonisation in North Rhine-Westphalia (NRW), Germany, conducted within the **RESILIENT** project.
+This repository contains the model code and configuration for a case study on industrial decarbonisation in North Rhine-Westphalia (NRW), Germany, conducted within the [**RESILIENT project**](https://resilient-project.github.io/).
 
 ## Background
 
