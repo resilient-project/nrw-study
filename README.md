@@ -27,10 +27,10 @@ Modelling is based on **PyPSA-Eur** and **FORECAST**, adapted and extended for N
 
 | ID  | Name | CO₂ Grid | FORECAST Scenario |
 |-----|------|----------|-------------------|
-| 1.a | `oge-grid___Ref___offshore-co2` | Hard-to-Abate & PCI-PMI Projekte (HtA & PCI)
-| 1.b | `endo-grid___Ref___offshore-co2` | Hard-to-Abate & endogener Pipelineausbau (HtA & ePA)
-| 2.a | `endo-grid___CCS-Exp__offshore-co2` | Hard-to-Abate+ & endogener Pipelineausbau (HtA+ & ePA)
-| 2.b | `endo-grid___CCS-Exp__offshore+onshore-co2` | Hard-to-Abate+ & Onshore-Speicherung (HtA+ & OS)
+| 1.a | `oge-grid___Ref___offshore-co2` | Hard-to-Abate & PCI-PMI Projekte (HtA & PCI) | Orientierungsszenario Strom |
+| 1.b | `endo-grid___Ref___offshore-co2` | Hard-to-Abate & endogener Pipelineausbau (HtA & ePA) | Orientierungsszenario Strom |
+| 2.a | `endo-grid___CCS-Exp__offshore-co2` | Hard-to-Abate+ & endogener Pipelineausbau (HtA+ & ePA) | Ausweitung CCS |
+| 2.b | `endo-grid___CCS-Exp__offshore+onshore-co2` | Hard-to-Abate+ & Onshore-Speicherung (HtA+ & OS) | Ausweitung CCS |
 
 ## Overview & Excerpt of Visualisations
 
