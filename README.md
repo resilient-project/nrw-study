@@ -3,6 +3,57 @@ SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pyps
 SPDX-License-Identifier: CC-BY-4.0
 -->
 
+# NRW Industrial Decarbonisation Study (RESILIENT Project)
+
+This repository contains the model code and configuration for a case study on industrial decarbonisation in North Rhine-Westphalia (NRW), Germany, conducted within the **RESILIENT** project.
+
+## Background
+
+The RESILIENT project includes one (+1) case study on industrial decarbonisation in Germany. This case study for NRW is carried out jointly by **TU Berlin**, **Fraunhofer ISI**, and **IN4climate**.
+
+Modelling is based on **PyPSA-Eur** and **FORECAST**, adapted and extended for NRW:
+
+- Soft-linking between PyPSA-Eur and FORECAST (industry data from FORECAST → PyPSA-Eur)
+- High regional resolution: NRW at NUTS3 level (first of its kind for PyPSA-Eur)
+- Functional extensions for CO₂ capture, transport, and storage
+
+## Study Objectives
+
+- Analyse the stepwise build-up of a CO₂ pipeline network in NRW and Germany, and its utilisation over time
+- Evaluate proposed CO₂ pipeline projects compared to endogenous network expansion
+- Provide modelling results, presentation slides, and workshop discussion; policy brief coordinated by IN4climate
+
+## Scenarios
+
+| ID  | Name | CO₂ Grid | FORECAST Scenario |
+|-----|------|----------|-------------------|
+| 1.a | `oge-grid___Ref___offshore-co2` | Hard-to-Abate & PCI-PMI Projekte (HtA & PCI)
+| 1.b | `endo-grid___Ref___offshore-co2` | Hard-to-Abate & endogener Pipelineausbau (HtA & ePA)
+| 2.a | `endo-grid___CCS-Exp__offshore-co2` | Hard-to-Abate+ & endogener Pipelineausbau (HtA+ & ePA)
+| 2.b | `endo-grid___CCS-Exp__offshore+onshore-co2` | Hard-to-Abate+ & Onshore-Speicherung (HtA+ & OS)
+
+## Overview & Excerpt of Visualisations
+
+### Industry Sankey — Hard-to-Abate (FORECAST Orientierungsszenario Strom)
+
+Energy and CO₂ flows through NRW industry sectors in 2045 under the reference scenario (1.b).
+
+![Industry Sankey – Orientierungsszenario Strom 2045](doc/img/nrw/sankey_Orientierungsszenario_Strom_2045.png)
+
+### CO₂ Network — Scenario 1.b, 2045
+
+CO₂ pipeline network across Germany in 2045 under scenario 1.b. HtA & EPA:
+
+![CO₂ Network Germany – Scenario 1.b 2045](doc/img/nrw/co2_network_germany_1b_2045.png)
+
+CO₂ pipeline network zoomed into NRW:
+
+![CO₂ Network NRW – Scenario 1.b 2045](doc/img/nrw/co2_network_nrw_1b_2045.png)
+
+---
+
+# PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
+
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/pypsa/pypsa-eur?include_prereleases)](https://github.com/PyPSA/pypsa-eur/releases)
 [![Documentation](https://readthedocs.org/projects/pypsa-eur/badge/?version=latest)](https://pypsa-eur.readthedocs.io/en/latest/?badge=latest)
 [![Test workflows](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml/badge.svg)](https://github.com/pypsa/pypsa-eur/actions/workflows/test.yaml)
@@ -12,8 +63,6 @@ SPDX-License-Identifier: CC-BY-4.0
 [![Snakemake](https://img.shields.io/badge/snakemake-≥9-brightgreen.svg?style=flat)](https://snakemake.readthedocs.io)
 [![Discord](https://img.shields.io/discord/911692131440148490?logo=discord)](https://discord.gg/AnuJBk23FU)
 [![REUSE status](https://api.reuse.software/badge/github.com/pypsa/pypsa-eur)](https://api.reuse.software/info/github.com/pypsa/pypsa-eur)
-
-# PyPSA-Eur: A Sector-Coupled Open Optimisation Model of the European Energy System
 
 PyPSA-Eur is an open model dataset of the European energy system at the
 transmission network level that covers the full ENTSO-E area and all energy sectors, including transport, heating, biomass, industry, and agriculture.
