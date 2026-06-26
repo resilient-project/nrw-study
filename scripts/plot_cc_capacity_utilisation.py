@@ -382,7 +382,7 @@ def plot_scope(
     fig.legend(
         handles=circle_handles,
         loc="upper right",
-        bbox_to_anchor=(0.72, 0.0),
+        bbox_to_anchor=(0.84, 0.0),
         ncol=1,
         fontsize=fontsize,
         frameon=False,
