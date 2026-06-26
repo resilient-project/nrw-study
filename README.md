@@ -38,17 +38,23 @@ Modelling is based on **PyPSA-Eur** and **FORECAST**, adapted and extended for N
 
 Energy and CO₂ flows through NRW industry sectors in 2045 under the reference scenario (1.b).
 
-![Industry Sankey – Orientierungsszenario Strom 2045](doc/img/nrw/sankey_Orientierungsszenario_Strom_2045.png)
+<p align="center">
+  <img src="doc/img/nrw/sankey_Orientierungsszenario_Strom_2045.png" alt="Industry Sankey – Orientierungsszenario Strom 2045">
+</p>
 
 ### CO₂ Network — Scenario 1.b, 2045
 
 CO₂ pipeline network across Germany in 2045 under scenario 1.b. HtA & EPA:
 
-![CO₂ Network Germany – Scenario 1.b 2045](doc/img/nrw/co2_network_germany_1b_2045.png)
+<p align="center">
+  <img src="doc/img/nrw/co2_network_germany_1b_2045.png" alt="CO₂ Network Germany – Scenario 1.b 2045">
+</p>
 
 CO₂ pipeline network zoomed into NRW:
 
-![CO₂ Network NRW – Scenario 1.b 2045](doc/img/nrw/co2_network_nrw_1b_2045.png)
+<p align="center">
+  <img src="doc/img/nrw/co2_network_nrw_1b_2045.png" alt="CO₂ Network NRW – Scenario 1.b 2045">
+</p>
 
 ---
 
