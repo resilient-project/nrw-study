@@ -7,10 +7,11 @@ Creates a map of the optimised carbon dioxide network, storage and sequestration
 
 import cartopy.crs as ccrs
 import geopandas as gpd
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import pandas as pd
 import pypsa
-from matplotlib.gridspec import GridSpec
 from packaging.version import Version, parse
 from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
 from pypsa.statistics import get_transmission_carriers
@@ -20,19 +21,10 @@ from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
-# Carrier name translations (English → German) for Supply/Consumption legends
-CARRIER_NAMES_DE: dict[str, str] = {
-    "co2 sequestered": "CO$_2$-Sequestrierung",
-    "DAC": "Direct Air Capture",
-    "gas for industry CC": "Gas für Industrie",
-    "methanolisation": "Methanisierung",
-    "process emissions CC": "Prozessemissionen",
-    "SMR CC": "Dampfreformierung",
-    "solid biomass for industry CC": "Biomasse für Industrie",
-    "urban central gas CHP CC": "Gas-KWK",
-    "urban central solid biomass CHP CC": "Biomasse-KWK",
-}
+FIGURE_SIZE = (4.5, 7)  # (width, height) in inches
+BAR_INSET = [0.80, 0.02, 0.18, 0.61]  # [x0, y0, width, height] in axes-fraction
 
+# Carrier name translations (English → German) for Supply/Consumption legends
 
 def load_projection(plotting_params: dict) -> ccrs.CRS:
     """Instantiate the cartopy CRS defined in plotting_params['projection']."""
@@ -93,6 +85,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         "CO2 pipeline": tech_colors["CO2 pipeline"],
         "CO2 pipeline short": tech_colors["CO2 pipeline short"],
     }
+    dark_short = "#2c4f7a"  # dark matte blue for Überlappung Planprojekte
     is_reversed = plot_network.links.get(
         "reversed", pd.Series(False, index=plot_network.links.index)
     ).fillna(False)
@@ -113,7 +106,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
     link_width = plot_links.p_nom_opt.div(linewidth_factor)
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
+        fig, ax = plt.subplots(figsize=FIGURE_SIZE, subplot_kw={"projection": proj})
     else:
         fig = ax.get_figure()
 
@@ -129,7 +122,9 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         bus_size=bus_size * bus_size_factor,
         bus_color=colors,
         bus_split_circle=True,
-        link_color=plot_links.carrier.map(link_colors),
+        link_color=plot_links.carrier.map(link_colors).where(
+            plot_links.index.str.startswith("CO2 pipeline"), dark_short
+        ),
         link_width=link_width,
         branch_components=["Link"],
         ax=ax,
@@ -146,6 +141,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         frameon=False,
         alignment="left",
         title_fontproperties={"weight": "bold"},
+        handlelength=1.1,
     )
 
     pad = 0.05
@@ -168,27 +164,32 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         | {c for c in common_carriers if get_total_abs(c, 1) < get_total_abs(c, -1)}
     )
 
-    add_legend_patches(
+    carrier_german = snakemake.params.plotting.get("carrier_german", {})
+    abscheidung_leg = add_legend_patches(
         ax,
         n.carriers.color[supp_carriers],
-        [CARRIER_NAMES_DE.get(c, c) for c in supp_carriers],
+        [carrier_german.get(c, c) for c in supp_carriers],
         legend_kw={
             "bbox_to_anchor": (0, -pad),
             "ncol": 1,
             "title": "CO$_2$-Abscheidung",
             **legend_kw,
+            "handlelength": 0.8,
+            "handleheight": 0.8,
         },
     )
 
-    add_legend_patches(
+    nutzung_leg = add_legend_patches(
         ax,
         n.carriers.color[cons_carriers],
-        [CARRIER_NAMES_DE.get(c, c) for c in cons_carriers],
+        [carrier_german.get(c, c) for c in cons_carriers],
         legend_kw={
-            "bbox_to_anchor": (0.7, -pad),
+            "bbox_to_anchor": (0.5, -pad),
             "ncol": 1,
             "title": "Nutzung",
             **legend_kw,
+            "handlelength": 0.8,
+            "handleheight": 0.8,
         },
     )
 
@@ -217,27 +218,49 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
             ax,
             [s / linewidth_factor for s in legend_branch_sizes],
             [
-                f"{s / branch_unit_conversion} {branch_unit}"
+                f"{s / branch_unit_conversion:.0f} {branch_unit}"
                 for s in legend_branch_sizes
             ],
-            patch_kw=dict(color="lightgrey", solid_capstyle="round"),
-            legend_kw={"bbox_to_anchor": (0.45, 1), **legend_kw},
+            patch_kw=dict(color=tech_colors["CO2 pipeline"], solid_capstyle="round"),
+            legend_kw={"bbox_to_anchor": (0, 0.11), **legend_kw},
         )
 
     ax.set_facecolor("white")
 
+    # Überlappung Planprojekte — always shown below CO₂-Abscheidung (bottom left)
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    abscheidung_bottom_ax = ax.transAxes.inverted().transform(
+        abscheidung_leg.get_window_extent(renderer).min
+    )[1]
+    ueberlappung_leg = ax.legend(
+        handles=[Line2D([0], [0], color=dark_short, linewidth=2, solid_capstyle="round")],
+        labels=["Überlappung\nPlanprojekte"],
+        bbox_to_anchor=(0, abscheidung_bottom_ax - 0.02),
+        **legend_kw,
+    )
+    ax.add_artist(ueberlappung_leg)
+
     # Pipeline-length bar legend (shown when include_lengths is enabled)
     if settings.get("include_lengths", False):
         length_colors = settings.get("lengths_bar_colors", {})
+        # Position Durchmesser right below Nutzung by measuring its bounding box
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        nutzung_bottom_ax = ax.transAxes.inverted().transform(
+            nutzung_leg.get_window_extent(renderer).min
+        )[1]
         add_legend_patches(
             ax,
             list(length_colors.values()),
             ["Onshore ⌀70cm", "Onshore ⌀40cm", "Offshore ⌀70cm"],
             legend_kw={
-                "bbox_to_anchor": (0.7, -0.4),
+                "bbox_to_anchor": (0.5, nutzung_bottom_ax - 0.02),
                 "ncol": 1,
                 "title": "Durchmesser",
                 **legend_kw,
+                "handlelength": 0.8,
+                "handleheight": 0.8,
             },
         )
 
@@ -273,25 +296,18 @@ if __name__ == "__main__":
     # [lon_min, lon_max, lat_min, lat_max]
     # West: Dublin (~-6.3°), East: eastern Poland (~24.0°),
     # South: Corsica (~41.5°), North: Tromsø (~70.0°)
-    map_opts["boundaries"] = europe_bounds # [-9.5, 24.0, 41.5, 70.0]
+    map_opts["boundaries"] = [-8.8, 26.0, 38.7, 67.0]
 
     proj = load_projection(snakemake.params.plotting)
 
     settings = snakemake.params.plotting["carbon_dioxide_network"]
     include_lengths = settings.get("include_lengths", False)
-    # Use declared input if present, otherwise derive from the network path
-    lengths_path = getattr(snakemake.input, "lengths", None) or (
-        snakemake.input.network
-        .replace("/networks/base_s_", "/nrw-study/co2_pipeline_length_base_s_")
-        .replace(".nc", ".csv")
-    )
+    lengths_path = snakemake.input.lengths
 
     fig, map_ax = plot_co2_map(n)
 
     if include_lengths:
-        # Inset stacked bar on the lower-right corner of the map
-        # [x0, y0, width, height] in axes-fraction coordinates
-        bar_ax = map_ax.inset_axes([0.80, 0.02, 0.18, 0.41])
+        bar_ax = map_ax.inset_axes(BAR_INSET)
 
         lengths_df = pd.read_csv(lengths_path)
 
@@ -301,15 +317,14 @@ if __name__ == "__main__":
                 (lengths_df["terrain"] == "onshore")
                 & lengths_df["region"].isin(["DE", "DEA"])
             ]
-            .pivot_table(index="region", columns="carrier", values="length_km", fill_value=0)
+            .pivot_table(index="region", columns="carrier", values="length_km", aggfunc="sum", fill_value=0)
             .rename(columns={"CO2 pipeline": "⌀70cm", "CO2 pipeline short": "⌀40cm"})
             .rename(index={"DEA": "NRW"})
         )
-        # Offshore: sum DE + DEA, CO2 pipeline only — stacked on top of DE
+        # Offshore: sum DE + DEA, all carriers
         offshore_km = lengths_df[
             (lengths_df["terrain"] == "offshore")
             & lengths_df["region"].isin(["DE", "DEA"])
-            & (lengths_df["carrier"] == "CO2 pipeline")
         ]["length_km"].sum()
 
         onshore_pivot["Offshore"] = 0.0
@@ -334,9 +349,10 @@ if __name__ == "__main__":
         bar_ax.set_xticklabels(bar_data.index, rotation=0, fontsize=8)
         bar_ax.set_yticks([])
         bar_ax.grid(False)
-        bar_ax.patch.set_alpha(0.3)
+        bar_ax.patch.set_alpha(0.0)
         for spine in bar_ax.spines.values():
             spine.set_visible(False)
+
 
     fig.savefig(snakemake.output.map, bbox_inches="tight")
     fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)

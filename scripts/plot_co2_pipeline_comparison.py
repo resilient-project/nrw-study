@@ -51,7 +51,10 @@ def build_segment_table(data: pd.DataFrame, metric: str) -> pd.DataFrame:
 
 
 def plot_metric(axes, seg_table, planning_horizons, run_order, nice_names,
-                segment_order, segment_colors, ylabel, fontsize, show_xlabels=True):
+                segment_order, segment_colors, ylabel, fontsize,
+                xticklabel_size=None, show_xlabels=True):
+    if xticklabel_size is None:
+        xticklabel_size = fontsize
     ymax = 0
     plot_data = {}
     for i, ph in enumerate(planning_horizons):
@@ -72,7 +75,7 @@ def plot_metric(axes, seg_table, planning_horizons, run_order, nice_names,
 
         ax.set_xlabel(ph if show_xlabels else "", fontsize=fontsize)
         if show_xlabels:
-            ax.set_xticklabels(data.index, rotation=90, fontsize=fontsize)
+            ax.set_xticklabels(data.index, rotation=0, fontsize=xticklabel_size)
         else:
             ax.tick_params(labelbottom=False)
         ax.grid(False)
@@ -92,7 +95,7 @@ def plot_metric(axes, seg_table, planning_horizons, run_order, nice_names,
         totals = plot_data[ph][plot_data[ph] > 0].sum(axis=1)
         for j, total in enumerate(totals):
             if total > 0:
-                axes[i].text(j, total, f"{total:.1f}", ha="center", va="bottom",
+                axes[i].text(j, total + ymax * 0.04, f"{total:.0f}", ha="center", va="bottom",
                              fontsize=fontsize)
 
 
@@ -111,6 +114,7 @@ if __name__ == "__main__":
     plotting = snakemake.params.plotting_fig
     font = plotting["font"]
     fontsize = font["size"]
+    xticklabel_size = plotting.get("xticklabel_size", fontsize)
     figsize = ast.literal_eval(plotting["figsize"])
     dpi = plotting["dpi"]
     run_order = plotting["run_order"]
@@ -135,11 +139,11 @@ if __name__ == "__main__":
     plt.rc("font", **font)
 
     plot_metric(axes[0], vol_table, planning_horizons, run_order, nice_names,
-                segment_order, segment_colors, "Transportvolumen (Gtpa·km)", fontsize,
-                show_xlabels=False)
+                segment_order, segment_colors, "Transportkapazitäten (Gtpa·km)", fontsize,
+                xticklabel_size=xticklabel_size, show_xlabels=False)
     plot_metric(axes[1], len_table, planning_horizons, run_order, nice_names,
-                segment_order, segment_colors, "Länge (km)", fontsize,
-                show_xlabels=True)
+                segment_order, segment_colors, "Pipelinelängen (km)", fontsize,
+                xticklabel_size=xticklabel_size, show_xlabels=True)
 
     handles = [
         plt.Rectangle((0, 0), 1, 1, color=segment_colors[s], label=s)
@@ -152,11 +156,12 @@ if __name__ == "__main__":
         ncol=len(segment_order),
         fontsize=fontsize,
         frameon=False,
-        handlelength=1,
-        handleheight=1.1,
+        handlelength=0.8,
+        handleheight=0.8,
     )
 
     fig.subplots_adjust(wspace=0.05, hspace=0.5)
 
     fig.savefig(snakemake.output.plot, dpi=dpi, bbox_inches="tight")
+    fig.savefig(snakemake.output.png, dpi=150, bbox_inches="tight")
     plt.close(fig)

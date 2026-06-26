@@ -337,6 +337,7 @@ def save_empty_plot(output_path, scope, figsize, dpi):
     ax.set_axis_off()
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=dpi, bbox_inches="tight")
+    fig.savefig(Path(output_path).with_suffix('.pdf'), bbox_inches="tight")
     plt.close()
 
 
@@ -396,7 +397,7 @@ def plot_pipeline_scope(
         sharey=True,
         tight_layout=True,
     )
-    plt.rc("font", **font)
+    plt.rc("font", **{k: v for k, v in font.items() if k != "subsize"})
 
     for i, planning_horizon in enumerate(planning_horizons):
         ax = np.atleast_1d(axes)[i]
@@ -531,6 +532,7 @@ def plot_pipeline_scope(
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output_path, dpi=dpi, bbox_inches="tight")
+    fig.savefig(Path(output_path).with_suffix('.pdf'), bbox_inches="tight")
     plt.close()
     logger.info(f"Saved: {output_path}")
 
@@ -561,10 +563,10 @@ if __name__ == "__main__":
     tech_colors = config["plotting"]["tech_colors"]
 
     figsize = _as_tuple(plotting["figsize"])
-    fontsize = plotting["font"]["size"]
-    subfontsize = fontsize
-    dpi = plotting["dpi"]
     font = plotting["font"]
+    fontsize = font["size"]
+    subfontsize = font.get("subsize", fontsize)
+    dpi = plotting["dpi"]
 
     planning_horizons = config["scenario"]["planning_horizons"]
     lt_order = [col for col in plotting["run_order"]]
@@ -577,10 +579,7 @@ if __name__ == "__main__":
     results_dir = Path("results/nrw")
     scope_outputs = get_scope_outputs(snakemake)
 
-    try:
-        input_networks = list(snakemake.input.networks)
-    except AttributeError:
-        input_networks = list(snakemake.input)
+    input_networks = list(snakemake.input.networks)
 
     file_map = find_network_files(
         results_dir, lt_order, planning_horizons, input_networks

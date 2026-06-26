@@ -12,7 +12,9 @@ import textwrap
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import geopandas as gpd
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import pandas as pd
 import pypsa
 from packaging.version import Version, parse
@@ -24,6 +26,8 @@ from scripts._helpers import configure_logging, retry, set_scenario_config
 from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
+
+FIGURE_SIZE = (4.5, 7)  # (width, height) in inches
 
 # Bounding box for NRW (DEA): [lon_min, lon_max, lat_min, lat_max]
 NRW_BOUNDS = [5.75, 9.55, 50.2, 52.65]
@@ -37,19 +41,6 @@ NEIGHBOUR_LABELS = [
     (7.75, 52.55, "NIEDERSACHSEN"),
 ]
 
-# Carrier name translations (English → German) for Supply/Consumption legends
-CARRIER_NAMES_DE: dict[str, str] = {
-    "co2 sequestered": "CO$_2$-Sequestrierung",
-    "DAC": "Direct Air Capture",
-    "gas for industry CC": "Gas für Industrie",
-    "methanolisation": "Methanisierung",
-    "process emissions CC": "Prozessemissionen",
-    "SMR CC": "Dampfreformierung",
-    "solid biomass for industry CC": "Feste Biomasse für Industrie",
-    "urban central gas CHP CC": "Städtische Gas-KWK",
-    "urban central solid biomass CHP CC": "Städtische Biomasse-KWK",
-
-}
 
 # City reference data — kept for optional future use
 # NRW_CITIES = pd.DataFrame(
@@ -87,7 +78,9 @@ def load_projection(plotting_params: dict) -> ccrs.CRS:
 
 
 @retry
-def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
+def plot_co2_map(
+    n: pypsa.Network, bus_size_factor: float, linewidth_factor: float
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot the optimised CO2 network zoomed into NRW (DEA region)."""
     plot_network = n.copy()
     assign_locations(plot_network)
@@ -95,9 +88,7 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     tech_colors = snakemake.params.plotting["tech_colors"]
     settings = snakemake.params.plotting["carbon_dioxide_network_nrw"]
 
-    bus_size_factor = settings["bus_factor"]
     unit_conversion = settings["unit_conversion"]
-    linewidth_factor = 2e3
 
     bus_carrier = "co2 stored"
     transmission_carriers = get_transmission_carriers(
@@ -135,6 +126,7 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         "CO2 pipeline": tech_colors["CO2 pipeline"],
         "CO2 pipeline short": tech_colors["CO2 pipeline short"],
     }
+    dark_short = "#2c4f7a"  # dark matte blue for Überlappung Planprojekte
     is_reversed = plot_network.links.get(
         "reversed", pd.Series(False, index=plot_network.links.index)
     ).fillna(False)
@@ -152,9 +144,9 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     plot_network.buses = plot_buses
     plot_network.links = plot_links
 
-    link_width = plot_links.p_nom_opt.div(linewidth_factor)
+    link_width = plot_links.p_nom_opt.mul(linewidth_factor)
 
-    fig, ax = plt.subplots(figsize=(7, 6), subplot_kw={"projection": proj})
+    fig, ax = plt.subplots(figsize=FIGURE_SIZE, subplot_kw={"projection": proj})
 
     # Grey background for regions outside NRW/DEA
     non_dea = regions[~regions.index.str.startswith("DEA")].to_crs(proj.proj4_init)
@@ -201,7 +193,9 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         bus_color=colors,
         bus_alpha=0.9,
         bus_split_circle=True,
-        link_color=plot_links.carrier.map(link_colors),
+        link_color=plot_links.carrier.map(link_colors).where(
+            plot_links.index.str.startswith("CO2 pipeline"), dark_short
+        ),
         link_width=link_width,
         branch_components=["Link"],
         ax=ax,
@@ -218,9 +212,10 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         frameon=False,
         alignment="left",
         title_fontproperties={"weight": "bold"},
+        handlelength=1.1,
     )
 
-    pad = 0.02
+    pad = 0.05
     n.carriers.loc["", "color"] = "None"
 
     pos_carriers = bus_size[bus_size > 0].index.unique("carrier")
@@ -240,27 +235,32 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         | {c for c in common_carriers if get_total_abs(c, 1) < get_total_abs(c, -1)}
     )
 
+    carrier_german = snakemake.params.plotting.get("carrier_german", {})
     add_legend_patches(
         ax,
         n.carriers.color[supp_carriers],
-        [CARRIER_NAMES_DE.get(c, c) for c in supp_carriers],
+        [carrier_german.get(c, c) for c in supp_carriers],
         legend_kw={
             "bbox_to_anchor": (0, -pad),
             "ncol": 1,
-            "title": "Erzeugung (CO$_2$-Abscheidung)",
+            "title": "CO$_2$-Abscheidung",
             **legend_kw,
+            "handlelength": 0.8,
+            "handleheight": 0.8,
         },
     )
 
-    add_legend_patches(
+    nutzung_leg = add_legend_patches(
         ax,
         n.carriers.color[cons_carriers],
-        [CARRIER_NAMES_DE.get(c, c) for c in cons_carriers],
+        [carrier_german.get(c, c) for c in cons_carriers],
         legend_kw={
             "bbox_to_anchor": (0.5, -pad),
             "ncol": 1,
             "title": "Nutzung",
             **legend_kw,
+            "handlelength": 0.8,
+            "handleheight": 0.8,
         },
     )
 
@@ -269,7 +269,6 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     branch_unit = settings["branch_unit"]
     branch_unit_conversion = settings["branch_unit_conversion"]
 
-    br_kw = {**legend_kw, "loc": "lower right", "bbox_to_anchor": (0.99, 0.02)}
     if legend_bus_size is not None:
         add_legend_semicircles(
             ax,
@@ -279,23 +278,41 @@ def plot_co2_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
             ],
             [f"{s} {carrier_unit}" for s in legend_bus_size],
             patch_kw={"color": "#666"},
-            legend_kw=br_kw,
+            legend_kw={
+                "bbox_to_anchor": (0.56, -0.015),
+                **legend_kw,
+                "loc": "lower center",
+            },
         )
 
     legend_branch_sizes = settings["branch_sizes"]
     if legend_branch_sizes is not None:
         add_legend_lines(
             ax,
-            [s / linewidth_factor for s in legend_branch_sizes],
+            [s * linewidth_factor for s in legend_branch_sizes],
             [
-                f"{s / branch_unit_conversion} {branch_unit}"
+                f"{s / branch_unit_conversion:.0f} {branch_unit}"
                 for s in legend_branch_sizes
             ],
-            patch_kw=dict(color="#666", solid_capstyle="round"),
-            legend_kw={**br_kw, "bbox_to_anchor": (0.78, 0.02)},
+            patch_kw=dict(color=tech_colors["CO2 pipeline"], solid_capstyle="round"),
+            legend_kw={"bbox_to_anchor": (0.96, -0.015), **legend_kw, "loc": "lower right"},
         )
 
     ax.set_facecolor("white")
+
+    # Überlappung Planprojekte — below Nutzung (bottom right)
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    nutzung_bottom_ax = ax.transAxes.inverted().transform(
+        nutzung_leg.get_window_extent(renderer).min
+    )[1]
+    ueberlappung_leg = ax.legend(
+        handles=[Line2D([0], [0], color=dark_short, linewidth=2, solid_capstyle="round")],
+        labels=["Überlappung\nPlanprojekte"],
+        bbox_to_anchor=(0.5, nutzung_bottom_ax - 0.005),
+        **legend_kw,
+    )
+    ax.add_artist(ueberlappung_leg)
 
     return fig, ax
 
@@ -325,8 +342,14 @@ if __name__ == "__main__":
     map_opts["boundaries"] = NRW_BOUNDS
     map_opts.pop("geomap_colors", None)  # replaced by explicit geomap_color=False below
 
+    settings = snakemake.params.plotting["carbon_dioxide_network_nrw"]
+
     proj = ccrs.Mercator()
-    fig, ax = plot_co2_map(n)
+    fig, ax = plot_co2_map(
+        n,
+        bus_size_factor=settings["bus_factor"],
+        linewidth_factor=settings["branch_factor"],
+    )
 
     # Overlay DEA (NRW) administrative boundaries
     dea_regions = regions[regions.index.str.startswith("DEA")].to_crs(proj.proj4_init)

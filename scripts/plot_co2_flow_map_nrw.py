@@ -19,10 +19,12 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import pypsa
+from matplotlib.collections import LineCollection
 from packaging.version import Version, parse
 from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicircles
 from pypsa.statistics import get_transmission_carriers
 from shapely.geometry import MultiPolygon, Polygon
+from shapely import wkt
 
 from scripts._helpers import configure_logging, retry, set_scenario_config
 from scripts.make_summary import assign_locations
@@ -39,25 +41,41 @@ NEIGHBOUR_LABELS = [
     (7.75, 52.55, "NIEDERSACHSEN"),
 ]
 
-CARRIER_NAMES_DE: dict[str, str] = {
-    "co2 sequestered": "CO$_2$-Sequestrierung",
-    "DAC": "Direct Air Capture",
-    "gas for industry CC": "Gas für Industrie",
-    "methanolisation": "Methanisierung",
-    "process emissions CC": "Prozessemissionen",
-    "SMR CC": "Dampfreformierung",
-    "solid biomass for industry CC": "Feste Biomasse für Industrie",
-    "urban central gas CHP CC": "Städtische Gas-KWK",
-    "urban central solid biomass CHP CC": "Städtische Biomasse-KWK",
-}
 
 
 def _clean_nuts3_name(name: str) -> str:
     return re.sub(r",\s*Kreisfreie\s+Stadt$", "", name).strip()
 
 
+def _draw_co2_project_links(ax, plot_links, link_width, link_colors_map, co2_projects_geom):
+    """Draw co2_projects_geom segments styled with the solved network's link widths and colors."""
+    pc = ccrs.PlateCarree()
+    segments, widths, colors = [], [], []
+    for _, row in co2_projects_geom.to_crs("EPSG:4326").iterrows():
+        link_id = row.get("id")
+        geom = row.geometry
+        if geom is None or geom.is_empty or link_id not in plot_links.index:
+            continue
+        lw = link_width.get(link_id, 0.0)
+        color = link_colors_map.get(plot_links.loc[link_id, "carrier"], "#888888")
+        parts = [geom] if geom.geom_type == "LineString" else list(geom.geoms)
+        for part in parts:
+            segments.append([proj.transform_point(x, y, pc) for x, y in part.coords])
+            widths.append(lw)
+            colors.append(color)
+    if segments:
+        ax.add_collection(LineCollection(
+            segments, linewidths=widths, colors=colors, capstyle="round", zorder=5,
+        ))
+
+
 @retry
-def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
+def plot_co2_flow_map(
+    n: pypsa.Network,
+    co2_projects: gpd.GeoDataFrame | None = None,
+    co2_projects_geom: gpd.GeoDataFrame | None = None,
+    co2_projects_enable: bool = False,
+) -> tuple[plt.Figure, plt.Axes]:
     """Plot net annual CO₂ pipeline flows with directional arrows for NRW."""
     plot_network = n.copy()
     assign_locations(plot_network)
@@ -133,6 +151,9 @@ def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
 
     # Assign flow to each forward link; aggregate parallel links sharing the same bus pair
     plot_links["_flow"] = link_flow_series.reindex(plot_links.index).fillna(0)
+    # Per-link widths before dedup — used for co2_projects_geom geometry drawing
+    plot_links_all = plot_links.copy()
+    individual_link_widths = plot_links_all["_flow"].abs().mul(flow_linewidth_factor).clip(lower=0)
     summed_cap = plot_links.groupby(["bus0", "bus1"])["p_nom_opt"].sum()
     summed_flow = plot_links.groupby(["bus0", "bus1"])["_flow"].sum()
     plot_links = plot_links.drop_duplicates(subset=["bus0", "bus1"]).copy()
@@ -181,20 +202,37 @@ def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         facecolor="#c6dbef", edgecolor="#6baed6", linewidth=0.3, zorder=3,
     )
 
-    plot_network.plot(
-        geomap=True,
-        geomap_color=False,
-        bus_size=bus_size * bus_size_factor,
-        bus_color=colors,
-        bus_alpha=0.9,
-        bus_split_circle=True,
-        link_color=plot_links.carrier.map(link_colors),
-        link_width=link_width,
-        link_flow=link_flow * flow_factor,
-        branch_components=["Link"],
-        ax=ax,
-        **map_opts,
-    )
+    if co2_projects_enable:
+        # Suppress pypsa's straight bus-to-bus lines; draw real geometries below
+        plot_network.plot(
+            geomap=True,
+            geomap_color=False,
+            bus_size=bus_size * bus_size_factor,
+            bus_color=colors,
+            bus_alpha=0.9,
+            bus_split_circle=True,
+            branch_components=[],
+            ax=ax,
+            **map_opts,
+        )
+    else:
+        plot_network.plot(
+            geomap=True,
+            geomap_color=False,
+            bus_size=bus_size * bus_size_factor,
+            bus_color=colors,
+            bus_alpha=0.9,
+            bus_split_circle=True,
+            link_color=plot_links.carrier.map(link_colors),
+            link_width=link_width,
+            link_flow=link_flow * flow_factor,
+            branch_components=["Link"],
+            ax=ax,
+            **map_opts,
+        )
+
+    if co2_projects_enable and co2_projects_geom is not None:
+        _draw_co2_project_links(ax, plot_links_all, individual_link_widths, link_colors, co2_projects_geom)
 
     ax_collections = ax.collections
     for col in ax_collections:
@@ -228,10 +266,11 @@ def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
         | {c for c in common_carriers if get_total_abs(c, 1) < get_total_abs(c, -1)}
     )
 
+    carrier_german = snakemake.params.plotting.get("carrier_german", {})
     add_legend_patches(
         ax,
         n.carriers.color[supp_carriers],
-        [CARRIER_NAMES_DE.get(c, c) for c in supp_carriers],
+        [carrier_german.get(c, c) for c in supp_carriers],
         legend_kw={
             "bbox_to_anchor": (0, -pad),
             "ncol": 1,
@@ -243,7 +282,7 @@ def plot_co2_flow_map(n: pypsa.Network) -> tuple[plt.Figure, plt.Axes]:
     add_legend_patches(
         ax,
         n.carriers.color[cons_carriers],
-        [CARRIER_NAMES_DE.get(c, c) for c in cons_carriers],
+        [carrier_german.get(c, c) for c in cons_carriers],
         legend_kw={
             "bbox_to_anchor": (0.5, -pad),
             "ncol": 1,
@@ -293,24 +332,35 @@ if __name__ == "__main__":
             opts="",
             clusters="adm",
             sector_opts="",
-            planning_horizons="2045",
+            planning_horizons="2040",
             configfiles=["config/config.nrw.yaml"],
-            run="endo-grid___Ref___offshore-co2",
+            run="oge-grid___Ref___offshore-co2",
         )
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
     n = pypsa.Network(snakemake.input.network)
-
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
+    co2_projects = pd.read_csv(snakemake.input.co2_projects, index_col=0)
+    co2_projects["geometry"] = co2_projects["geometry"].apply(wkt.loads)
+    co2_projects = gpd.GeoDataFrame(co2_projects, geometry="geometry", crs="EPSG:3035").to_crs("EPSG:4326")
+
+    # Original project geometry    
+    co2_projects_geom = gpd.read_file(snakemake.input.co2_projects_geom, crs="EPSG:4326")
+    co2_projects_enable = True # False # snakemake.params.co2_projects_enable
 
     map_opts = snakemake.params.plotting["map"]
     map_opts["boundaries"] = NRW_BOUNDS
     map_opts.pop("geomap_colors", None)
 
     proj = ccrs.Mercator()
-    fig, ax = plot_co2_flow_map(n)
+    fig, ax = plot_co2_flow_map(
+        n,
+        co2_projects=co2_projects if co2_projects_enable else None,
+        co2_projects_geom=co2_projects_geom if co2_projects_enable else None,
+        co2_projects_enable=co2_projects_enable,
+    )
 
     # Overlay DEA (NRW) administrative boundaries
     dea_regions = regions[regions.index.str.startswith("DEA")].to_crs(proj.proj4_init)
