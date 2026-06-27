@@ -348,7 +348,7 @@ if __name__ == "__main__":
 
     # Original project geometry    
     co2_projects_geom = gpd.read_file(snakemake.input.co2_projects_geom, crs="EPSG:4326")
-    co2_projects_enable = True # False # snakemake.params.co2_projects_enable
+    co2_projects_enable = snakemake.params.co2_projects_enable
 
     map_opts = snakemake.params.plotting["map"]
     map_opts["boundaries"] = NRW_BOUNDS

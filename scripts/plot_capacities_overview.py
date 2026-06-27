@@ -16,6 +16,8 @@ from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
+NOISE_THRESHOLD_MW = 1e-3
+
 
 def import_csvs(
     df: pd.DataFrame,
@@ -49,7 +51,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_capacities_overview",
+            "plot_capacities_overview_de",
             configfiles=["config/config.nrw.yaml"],
         )
 
@@ -78,8 +80,29 @@ if __name__ == "__main__":
     lt_order = [col for col in plotting["run_order"]]
     lt_order_nice_names = plotting["nice_names"]
 
-    carrier_groups = config["grouping"]
+    carrier_groups = dict(config["grouping"])
     group_colors = config["group_colors"]
+
+    if plotting.get("aggregate_industry_emissions", False):
+        aggregate_label = plotting.get("aggregate_label", "Emissionen Industrie")
+        carrier_groups["gas for industry CC"] = aggregate_label
+        carrier_groups["process emissions CC"] = aggregate_label
+        aggregate_color = plotting.get("aggregate_color")
+        if aggregate_color:
+            group_colors = dict(group_colors)
+            group_colors[aggregate_label] = aggregate_color
+
+    for carrier, group in plotting.get("carrier_group_overrides", {}).items():
+        carrier_groups[carrier] = group
+
+    group_merge = plotting.get("group_merge", {})
+    if group_merge:
+        carrier_groups = {k: group_merge.get(v, v) for k, v in carrier_groups.items()}
+
+    group_merge_colors = plotting.get("group_merge_colors", {})
+    if group_merge_colors:
+        group_colors = dict(group_colors)
+        group_colors.update(group_merge_colors)
 
     caps = pd.DataFrame()
     caps["path"] = snakemake.input.capacities
@@ -106,6 +129,10 @@ if __name__ == "__main__":
     mask = pd.MultiIndex.from_arrays([caps["component"], caps["carrier"]]).isin(valid_pairs)
     caps = caps[mask]
 
+    h2_infra = caps[caps["group"] == "H$_2$-Infrastruktur"][["component", "carrier"]].drop_duplicates()
+    if not h2_infra.empty:
+        logger.info("Carriers in H$_2$-Infrastruktur:\n%s", h2_infra.to_string(index=False))
+
     # Drop AC, DC transmission
     caps = caps[~caps["component"].isin(["Line"])]
     caps = caps[~caps["carrier"].isin(["DC", "electricity distribution grid"])]
@@ -114,6 +141,7 @@ if __name__ == "__main__":
         value=("value", "sum"),
     ).div(1e3)  # MW to GW
     caps.reset_index(inplace=True)
+    caps.loc[caps["value"].abs() < NOISE_THRESHOLD_MW, "value"] = 0.0
 
     caps["nice_name"] = caps["name"].map(plotting["nice_names"])
 
@@ -155,6 +183,7 @@ if __name__ == "__main__":
 
         data = data.reindex([name for name in lt_order if name in data.index])
         data = data.rename(index=lt_order_nice_names)
+        data = data.loc[:, (data.abs() > 0).any()]
 
         data.plot(
             kind="bar",
@@ -167,13 +196,13 @@ if __name__ == "__main__":
         ax.legend().remove()
 
         ax.set_xlabel(f"{planning_horizon}", fontsize=fontsize)
-        ax.set_ylabel(f"Capacities (GW)", fontsize=fontsize)
+        ax.set_ylabel("Installierte Erzeugungsleistung (GW)", fontsize=fontsize)
 
         ax.set_ylim(ymin, ymax * 1.1)
 
         ax.set_xticklabels(
             data.index,
-            rotation=90,
+            rotation=0,
             fontsize=subfontsize,
         )
 
@@ -199,17 +228,18 @@ if __name__ == "__main__":
     for ax in axes:
         ax.tick_params(axis="y", labelsize=subfontsize)
 
+    active_groups = set(caps[caps["value"].abs() > 0]["group"].dropna().unique())
     handles = [
         plt.Rectangle((0, 0), 1, 1, color=group_colors[c], label=c)
-        for c in legend_order if c in list(data.columns)
+        for c in legend_order[::-1]
+        if c in group_colors and c in active_groups
     ]
-    handles = handles[::-1]
 
     legend = fig.legend(
         handles=handles,
         loc="upper left",
-        bbox_to_anchor=(x_anchor + xpad, 0.055),
-        ncol=ncol,
+        bbox_to_anchor=(x_anchor + xpad, -0.02),
+        ncol=3,
         fontsize=subfontsize,
         title="",
         title_fontsize=subfontsize,

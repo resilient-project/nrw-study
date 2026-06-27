@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Save as: scripts/plot_co2_pipeline_overview.py
+# Save as: scripts/plot_co2_pipeline_utilisation_k.py
 
 # SPDX-FileCopyrightText: Contributors to PyPSA-Eur <https://github.com/pypsa/pypsa-eur>
 #
@@ -179,7 +179,7 @@ def get_scope_outputs(snakemake):
             break
 
     if stem in {
-        "co2_pipeline_overview",
+        "co2_pipeline_utilisation_k",
         "co2_pipeline_capacity_overview",
     }:
         stem = "co2_pipeline_capacity"
@@ -546,7 +546,7 @@ if __name__ == "__main__":
         from scripts._helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "plot_co2_pipeline_overview",
+            "plot_co2_pipeline_utilisation_k",
             configfiles=["config/config.nrw.yaml"],
         )
 

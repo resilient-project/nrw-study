@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
+MIN_CAPACITY_MW = 1e-5   # raw installed capacity threshold [MW]; links below this are solver noise
+
 CC_CARRIERS = [
     "SMR CC",
     "DAC",
@@ -121,6 +123,7 @@ def build_tables(
     ph_set = {str(ph) for ph in planning_horizons}
     cap: dict[str, list] = {s: [] for s in scopes}
     disp: dict[str, list] = {s: [] for s in scopes}
+    seen: set[tuple] = set()
 
     for path in paths:
         run = path.split("/")[-3]
@@ -128,6 +131,10 @@ def build_tables(
         year = m.group(1) if m else None
         if run not in run_set or year not in ph_set:
             continue
+        if (run, year) in seen:
+            logger.warning("Duplicate network for run=%s year=%s; skipping %s", run, year, path)
+            continue
+        seen.add((run, year))
         n = pypsa.Network(path)
         carriers = _cc_carriers(n)
         links = n.links[
@@ -137,13 +144,13 @@ def build_tables(
         if links.empty:
             continue
 
-        cap_col = "p_nom_opt" if links["p_nom_opt"].abs().sum() > 1e-3 else "p_nom"
+        cap_col = "p_nom_opt" if links["p_nom_opt"].abs().sum() > MIN_CAPACITY_MW else "p_nom"
+        links = links[links[cap_col].abs() >= MIN_CAPACITY_MW]
+        if links.empty:
+            continue
         links["_cap"]  = _capacity_Mt(links, cap_col)
         links["_disp"] = _dispatch_Mt(n, links)
-
-        # Drop solver-noise links: real CC installations are orders of magnitude
-        # larger than the ~1e-4 MW artifacts the solver leaves at every extendable link.
-        links = links[links["_cap"] > 1e-3]  # < 1 ktCO₂/a → noise
+        links = links[links["_cap"] > 0]
         if links.empty:
             continue
 
@@ -197,7 +204,7 @@ def plot_scope(
         figsize=figsize, dpi=dpi,
         sharey="row",
         sharex="col",
-        gridspec_kw={"height_ratios": [1, 1]},
+        gridspec_kw={"height_ratios": [9, 11]},
         squeeze=False,
     )
     plt.rc("font", **font)
@@ -231,6 +238,7 @@ def plot_scope(
             pivot.plot(
                 kind="bar", stacked=True, ax=ax_bar, width=0.8,
                 color=[_color(c, tech_colors) for c in pivot.columns],
+                edgecolor="none",
                 legend=False,
             )
         ax_bar.set_xlabel(ph_str, fontsize=fontsize)
@@ -239,8 +247,10 @@ def plot_scope(
         ax_bar.tick_params(axis="y", labelsize=fontsize)
         ax_bar.grid(False)
         ax_bar.axhline(0, color="black", lw=0.5)
-        for spine in ax_bar.spines.values():
-            spine.set_linewidth(0.5)
+        ax_bar.spines["top"].set_visible(False)
+        ax_bar.spines["right"].set_visible(False)
+        ax_bar.spines["left"].set_linewidth(0.5)
+        ax_bar.spines["bottom"].set_linewidth(0.5)
         if i == 0:
             ax_bar.set_ylabel("CO₂-Abscheideleistung (Mtpa)", fontsize=fontsize)
             ax_bar.yaxis.set_label_coords(-0.20, 0.5)
@@ -253,10 +263,12 @@ def plot_scope(
         ax_dot.tick_params(labelbottom=False)
         ax_dot.tick_params(axis="y", labelsize=fontsize)
         ax_dot.grid(False)
-        for spine in ax_dot.spines.values():
-            spine.set_linewidth(0.5)
+        ax_dot.spines["top"].set_visible(False)
+        ax_dot.spines["right"].set_visible(False)
+        ax_dot.spines["left"].set_linewidth(0.5)
+        ax_dot.spines["bottom"].set_linewidth(0.5)
         if i == 0:
-            ax_dot.set_ylabel("Auslastung (%)", fontsize=fontsize)
+            ax_dot.set_ylabel("Jährl. Auslastung (%)", fontsize=fontsize)
             ax_dot.yaxis.set_label_coords(-0.20, 0.5)
         else:
             ax_dot.yaxis.set_visible(False)
@@ -277,18 +289,24 @@ def plot_scope(
                 continue
             disp_links = disp_df[(disp_df.planning_horizon == ph_str) & (disp_df.name == run)]
             disp_by_link = (
-                disp_links.set_index("link")["value"]
+                disp_links.groupby("link")["value"].sum()
                 if not disp_links.empty else pd.Series(dtype=float)
             )
+            # Carriers whose total for this run is too small to produce a visible bar
+            # are excluded from the scatter too, to keep both plots consistent.
+            carrier_totals = cap_links.groupby("carrier")["value"].sum()
+            visible_carriers = set(carrier_totals[carrier_totals >= ymax * 0.005].index)
+
             # Collect valid points for this run × year
-            pts_util, pts_size, pts_color, pts_carrier = [], [], [], []
+            pts_util, pts_cap, pts_size, pts_color, pts_carrier = [], [], [], [], []
             for row in cap_links.itertuples():
                 cap_c = row.value
-                if cap_c <= 0:
+                if cap_c <= 0 or row.carrier not in visible_carriers:
                     continue
                 disp_c = float(disp_by_link.get(row.link, 0.0))
                 pts_util.append(disp_c / cap_c * 100)
-                pts_size.append(max(cap_c / cap_max * 400, 20))
+                pts_cap.append(cap_c)
+                pts_size.append(cap_c / cap_max * 400)
                 pts_color.append(_color(row.carrier, tech_colors))
                 pts_carrier.append(row.carrier)
 
@@ -318,22 +336,17 @@ def plot_scope(
                 linewidths=0,
             )
 
-            # Median per carrier: circle the actual dot closest to the median,
-            # using its jitter x-offset so the ring sits on top of the dot.
+            # Capacity-weighted average per carrier
             carriers_arr = np.array(pts_carrier)
-            sizes_arr = np.array(pts_size)
+            caps_arr = np.array(pts_cap)
             for carrier in dict.fromkeys(pts_carrier):
                 mask = carriers_arr == carrier
                 grp_utils = utils[mask]
-                grp_jitters = jitters[mask]
-                grp_sizes = sizes_arr[mask]
-                med = float(np.median(grp_utils))
-                closest = int(np.argmin(np.abs(grp_utils - med)))
-                med_x = float(j + grp_jitters[closest])
-                ring_size = max(float(grp_sizes[closest]) * 1.5, 60)
+                grp_caps = caps_arr[mask]
+                w_avg = float(np.average(grp_utils, weights=grp_caps))
                 color = _color(carrier, tech_colors)
                 ax_dot.scatter(
-                    med_x, med,
+                    j, w_avg,
                     s=80,
                     marker="X",
                     facecolors="white",
@@ -343,9 +356,10 @@ def plot_scope(
                     clip_on=False,
                 )
                 ax_dot.annotate(
-                    f"{round(med)}%",
-                    xy=(min(med_x + 0.25, j + 0.45), med),
+                    f"{round(w_avg)}",
+                    xy=(j - 0.18, w_avg),
                     fontsize=fontsize,
+                    ha="right",
                     va="center",
                     color=color,
                     zorder=9,
@@ -362,6 +376,15 @@ def plot_scope(
                        label=carrier_german.get(c, c))
         for c in leg_carriers[::-1]
     ]
+    # Median X marker appended last so it lands at the bottom of the final column
+    agg_color = _color(leg_carriers[-1], tech_colors) if leg_carriers else "#503530"
+    carrier_handles.append(
+        plt.scatter(
+            [], [], s=80, marker="X",
+            facecolors="white", edgecolors=agg_color,
+            linewidths=0.8, label="Gew. Durchschnitt",
+        )
+    )
     fig.legend(
         handles=carrier_handles,
         loc="upper left",
@@ -372,17 +395,17 @@ def plot_scope(
         handlelength=0.8,
         handleheight=0.8,
     )
-    ref1 = max(1, round(cap_max / 4))
+    ref1 = max(1, round(cap_max / 4/3))
     ref2 = 2 * ref1
     circle_handles = [
-        plt.scatter([], [], s=max(ref / cap_max * 400, 20), color="dimgrey", alpha=0.6,
-                    label=f"{ref} MtCO₂/a")
+        plt.scatter([], [], s=ref / cap_max * 400, color="dimgrey", alpha=0.6,
+                    label=f"{ref} Mtpa")
         for ref in [ref1, ref2]
     ]
     fig.legend(
         handles=circle_handles,
         loc="upper right",
-        bbox_to_anchor=(0.84, 0.0),
+        bbox_to_anchor=(0.77, 0.0),
         ncol=1,
         fontsize=fontsize,
         frameon=False,
@@ -449,6 +472,22 @@ if __name__ == "__main__":
         planning_horizons,
         scopes,
     )
+
+    if plotting.get("aggregate_industry_emissions", False):
+        aggregate_label = plotting.get("aggregate_label", "Emissionen Industrie")
+        aggregate_color = plotting.get("aggregate_color")
+        if aggregate_color:
+            tech_colors = dict(tech_colors)
+            tech_colors[aggregate_label] = aggregate_color
+        industry_carriers = {"gas for industry CC", "process emissions CC"}
+        rename_map = {c: aggregate_label for c in industry_carriers}
+        for scope_data in [cap_by_scope, disp_by_scope]:
+            for scope in scopes:
+                df = scope_data[scope]
+                if not df.empty:
+                    scope_data[scope] = df.assign(
+                        carrier=df["carrier"].replace(rename_map)
+                    )
 
     for scope in scopes:
         pdf, png = outputs[scope]

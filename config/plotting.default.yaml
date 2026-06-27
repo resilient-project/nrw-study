@@ -9,6 +9,7 @@ plotting:
     "co2 sequestered": "CO$_2$-Sequestrierung"
     "DAC": "Direct Air Capture"
     "gas for industry CC": "Gas für Industrie"
+    "Industrie CO$_2$-Abscheidung": "Emissionen Industrie"
     "methanolisation": "Methanisierung"
     "process emissions CC": "Prozessemissionen"
     "SMR CC": "Dampfreformierung"
@@ -16,6 +17,9 @@ plotting:
     "urban central solid biomass CHP CC": "Biomasse-KWK"
   nrw-study:
     costs_overview:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b"
@@ -35,7 +39,7 @@ plotting:
       legend_order:
       - Sonstige
       - Abfall
-      - Stromnetz
+      - Übertragungsnetz Strom
       - Hydro & Laufwasser
       - Biomasse & -gas
       - Kernkraft
@@ -53,14 +57,18 @@ plotting:
       - Methanol
       - Methanolisierung
       - Ammoniak
-      - H$_2$-Infra
-      - CO$_2$-Infra
+      - H$_2$-Infrastruktur
+      - CO$_2$-Infrastruktur
       - SMR
       - Sabatier
       - Punktquellen CC
+      - Industrie CO$_2$-Abscheidung
       - DAC
       - Lastabwurf
     capacities_overview:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b"
@@ -80,7 +88,7 @@ plotting:
       legend_order:
       - Sonstige
       - Abfall
-      - Stromnetz
+      - Übertragungsnetz Strom
       - Hydro & Laufwasser
       - Biomasse & -gas
       - Kernkraft
@@ -98,14 +106,18 @@ plotting:
       - Methanol
       - Methanolisierung
       - Ammoniak
-      - H$_2$-Infra
-      - CO$_2$-Infra
+      - H$_2$-Infrastruktur
+      - CO$_2$-Infrastruktur
       - SMR
       - Sabatier
       - Punktquellen CC
+      - Industrie CO$_2$-Abscheidung
       - DAC
       - Lastabwurf
     capacities_overview_de:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b"
@@ -125,32 +137,49 @@ plotting:
       legend_order:
       - Sonstige
       - Abfall
-      - Stromnetz
+      - Übertragungsnetz Strom
       - Hydro & Laufwasser
-      - Biomasse & -gas
       - Kernkraft
       - Öl
       - Kohle
+      - Biomasse & Gas
       - PtH
-      - Gas
       - KWK
-      - Solar
       - Onshore-Wind
       - Offshore-Wind
+      - Solar
       - Batterie
       - Elektrolyse
       - Fischer-Tropsch
       - Methanol
-      - Methanolisierung
-      - Ammoniak
-      - H$_2$-Infra
-      - CO$_2$-Infra
-      - SMR
+      - Ammoniak (Haber-Bosch)
+      - CO$_2$-Infrastruktur
       - Sabatier
-      - Punktquellen CC
+      - Industrie CO$_2$-Abscheidung
       - DAC
       - Lastabwurf
+      carrier_group_overrides:
+        solid biomass for industry CC: Biomasse & -gas
+        urban central solid biomass CHP CC: Biomasse & -gas
+        urban central gas CHP CC: Gas
+        urban central CHP CC: KWK
+        waste CHP CC: Abfall
+        Methanol steam reforming CC: Methanol
+        BioSNG CC: Biomasse & -gas
+        biogas to gas CC: Biomasse & -gas
+        biomass to liquid CC: Biomasse & -gas
+      group_merge:
+        Gas: Biomasse & Gas
+        Biomasse & -gas: Biomasse & Gas
+        Ammoniak: Ammoniak (Haber-Bosch)
+        Methanolisierung: Methanol
+        SMR: Sonstige
+      group_merge_colors:
+        Biomasse & Gas: "#baa741"
+        Ammoniak (Haber-Bosch): "#1a5276"
     co2_pipeline_comparison:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b"
@@ -170,17 +199,94 @@ plotting:
       dpi: 300
       segment_colors:
         "Offshore (DE)": "#4292c6"
-        "Onshore ⌀70cm (DE)": "#525252"
-        "Onshore ⌀40cm (DE)": "#969696"
-        "Onshore ⌀70cm (NRW)": "#e6550d"
-        "Onshore ⌀40cm (NRW)": "#fdae6b"
+        "Onshore DN700 (DE)": "#ffbf2b"
+        "Onshore DN400 (DE)": "#e05b09"
+        "Onshore DN700 (NRW)": "#ffbf2b"
+        "Onshore DN400 (NRW)": "#e05b09"
       segment_order:
-      - "Onshore ⌀70cm (DE)"
-      - "Onshore ⌀40cm (DE)"
+      - "Onshore DN700 (DE)"
+      - "Onshore DN700 (NRW)"
+      - "Onshore DN400 (DE)"
+      - "Onshore DN400 (NRW)"
       - "Offshore (DE)"
-      - "Onshore ⌀70cm (NRW)"
-      - "Onshore ⌀40cm (NRW)"
+    costs_overview_stacked:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
+      main_scenario: oge-grid___Ref___offshore-co2
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 8
+      figsize: (8.5, 5)
+      dpi: 300
+      legend_order:
+      - Sonstige
+      - Abfall
+      - Übertragungsnetz Strom
+      - Therm. KW
+      - Hydro & Laufwasser
+      - Biomasse
+      - PtH
+      - KWK
+      - Solar
+      - Wind
+      - Batterie
+      - Elektrolyse
+      - Fischer-Tropsch
+      - Methanol
+      - Ammoniak (Haber-Bosch)
+      - H$_2$-Infrastruktur
+      - CO$_2$-Infrastruktur
+      - Sabatier
+      - Industrie CO$_2$-Abscheidung
+      - DAC
+      - Lastabwurf
+      group_exceptions:
+      - DAC
+      - CO$_2$-Infrastruktur
+      # Re-map individual CC carriers into their parent groups (dissolves Punktquellen CC).
+      carrier_group_overrides:
+        solid biomass for industry CC: Biomasse & -gas
+        urban central solid biomass CHP CC: Biomasse & -gas
+        urban central gas CHP CC: Gas
+        urban central CHP CC: KWK
+        waste CHP CC: Abfall
+        Methanol steam reforming CC: Methanol
+        BioSNG CC: Biomasse & -gas
+        biogas to gas CC: Biomasse & -gas
+        biomass to liquid CC: Biomasse & -gas
+      # Second-level merge: collapse groups into fewer super-groups.
+      group_merge:
+        Öl: Therm. KW
+        Gas: Therm. KW
+        Kohle: Therm. KW
+        Kernkraft: Therm. KW
+        Biomasse & -gas: Biomasse
+        Onshore-Wind: Wind
+        Offshore-Wind: Wind
+        Ammoniak: Ammoniak (Haber-Bosch)
+        Methanolisierung: Methanol
+        SMR: Sonstige
+      group_merge_colors:
+        Therm. KW: "#5a5a5a"
+        Biomasse: "#baa741"
+        Wind: "#6895dd"
+        Ammoniak (Haber-Bosch): "#1a5276"
     costs_overview_delta:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b-1a"
@@ -201,7 +307,7 @@ plotting:
       legend_order:
       - Sonstige
       - Abfall
-      - Stromnetz
+      - Übertragungsnetz Strom
       - Hydro & Laufwasser
       - Biomasse & -gas
       - Kernkraft
@@ -219,14 +325,18 @@ plotting:
       - Methanol
       - Methanolisierung
       - Ammoniak
-      - H$_2$-Infra
-      - CO$_2$-Infra
+      - H$_2$-Infrastruktur
+      - CO$_2$-Infrastruktur
       - SMR
       - Sabatier
       - Punktquellen CC
+      - Industrie CO$_2$-Abscheidung
       - DAC
       - Lastabwurf
     cc_capacity_utilisation:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b"
@@ -241,17 +351,15 @@ plotting:
         family: sans-serif
         sans-serif: Roboto
         size: 10
-      figsize: (9, 5)
+      figsize: (9.5, 5)
       dpi: 300
       legend_order:
       - DAC
       - SMR CC
-      - gas for industry CC
-      - process emissions CC
-      - solid biomass for industry CC
-      - urban central gas CHP CC
       - urban central solid biomass CHP CC
-    co2_pipeline_overview:
+      - solid biomass for industry CC
+      - Industrie CO$_2$-Abscheidung
+    co2_pipeline_utilisation_k:
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"
         endo-grid___Ref___offshore-co2: "1.b"
@@ -269,11 +377,31 @@ plotting:
         subsize: 7
       figsize: (3.5, 2.8)
       dpi: 300
-      delta_ymin: -30
-      delta_ymax: 80
       legend_order:
         - CO2 trunk pipeline
         - CO2 feeder pipeline
+    co2_pipeline_utilisation_dashboard:
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 10
+      xticklabel_size: 11
+      figsize: (9, 5)
+      dpi: 300
+      pipe_cat_colors:
+        DN700:    "#ffbf2b"
+        DN400:    "#e05b09"
+        Offshore: "#4292c6"
   enable_heat_source_maps: false
 
   map:
@@ -639,6 +767,20 @@ plotting:
       tooltip: true
 
   carbon_dioxide_network:
+    aggregate_industry_emissions: true
+    aggregate_label: "Industrie CO$_2$-Abscheidung"
+    aggregate_color: '#503530'
+    legend_order:
+    - Industrie CO$_2$-Abscheidung
+    - solid biomass for industry CC
+    - urban central solid biomass CHP CC
+    - SMR CC
+    - DAC
+    legend_order_nutzung:
+    - methanolisation
+    - Fischer-Tropsch
+    - Sabatier
+    - co2 sequestered
     unit: Mtpa
     unit_conversion: 1_000_000
     bus_factor: 0.015
@@ -650,7 +792,7 @@ plotting:
     - 6396
     - 3198
     branch_unit_conversion: 3198
-    branch_unit: "x ⌀70cm"
+    branch_unit: "x DN700"
     include_lengths: true
     lengths_bar_ylim: 4000
     gif_frame_duration: 700
@@ -671,7 +813,7 @@ plotting:
     - 3036
     - 1012
     branch_unit_conversion: 1012
-    branch_unit: "x ⌀40cm"
+    branch_unit: "x DN400"
 
   carbon_dioxide_network_nrw_oge:
     unit: Mtpa
@@ -685,7 +827,7 @@ plotting:
     - 6072
     - 2024
     branch_unit_conversion: 1012
-    branch_unit: "x ⌀40cm Äq."
+    branch_unit: "x DN400 Äq."
 
   co2_flow_map_nrw:
     unit: Mtpa
@@ -1062,10 +1204,10 @@ plotting:
     H2 Electrolysis: '#ff29d9'
     H2 electrolysis: '#ff29d9'
     # ammonia
-    NH3: '#46caf0'
-    ammonia: '#46caf0'
-    ammonia store: '#00ace0'
-    ammonia cracker: '#87d0e6'
+    NH3: '#1a5276'
+    ammonia: '#1a5276'
+    ammonia store: '#2471a3'
+    ammonia cracker: '#5499c9'
     Haber-Bosch: '#076987'
     # syngas
     Sabatier: '#9850ad'
@@ -1103,7 +1245,7 @@ plotting:
     CO2 pipeline: '#f5627f'
     CO2 pipeline short: '#f5627f'
     # emissions
-    process emissions CC: '#000000'
+    process emissions CC: '#503530'
     process emissions: '#222222'
     process emissions to stored: '#444444'
     process emissions to atmosphere: '#888888'
@@ -1143,29 +1285,30 @@ plotting:
     import NH3: '#e2ed74'
     import oil: '#93eda2'
     import methanol: '#87d0e6'
+    Industrie CO$_2$-Abscheidung: '#503530'
 
 grouping:
-  AC: Stromnetz
+  AC: Übertragungsnetz Strom
   BEV charger: Batterie
   CCGT: Gas
-  CO2: CO$_2$-Infra
-  CO2 pipeline: CO$_2$-Infra
-  CO2 pipeline short: CO$_2$-Infra
+  CO2: CO$_2$-Infrastruktur
+  CO2 pipeline: CO$_2$-Infrastruktur
+  CO2 pipeline short: CO$_2$-Infrastruktur
   DAC: DAC
-  DC: Stromnetz
+  DC: Übertragungsnetz Strom
   EV battery: Batterie
   Fischer-Tropsch: Fischer-Tropsch
-  H2: H$_2$-Infra
-  H2 CCGT: H$_2$-Infra
-  H2 OCGT: H$_2$-Infra
+  H2: H$_2$-Infrastruktur
+  H2 CCGT: H$_2$-Infrastruktur
+  H2 OCGT: H$_2$-Infrastruktur
   H2 Electrolysis: Elektrolyse
-  H2 Fuel Cell: H$_2$-Infra
-  H2 Store: H$_2$-Infra
-  H2 for industry: H$_2$-Infra
-  H2 pipeline: H$_2$-Infra
-  H2 pipeline (Kernnetz): H$_2$-Infra
-  H2 pipeline retrofitted: H$_2$-Infra
-  H2 turbine: H$_2$-Infra
+  H2 Fuel Cell: H$_2$-Infrastruktur
+  H2 Store: H$_2$-Infrastruktur
+  H2 for industry: H$_2$-Infrastruktur
+  H2 pipeline: H$_2$-Infrastruktur
+  H2 pipeline (Kernnetz): H$_2$-Infrastruktur
+  H2 pipeline retrofitted: H$_2$-Infrastruktur
+  H2 turbine: H$_2$-Infrastruktur
   Haber-Bosch: Ammoniak
   HVC to air: Sonstige
   import H2: H$_2$-Importe
@@ -1173,7 +1316,7 @@ grouping:
   OCGT methanol: Methanol
   PHS: Hydro & Laufwasser
   SMR: SMR
-  SMR CC: Punktquellen CC
+  SMR CC: CO$_2$-Infrastruktur
   Sabatier: Sabatier
   V2G: Batterie
   agriculture electricity: Sonstige
@@ -1190,13 +1333,13 @@ grouping:
   biomass to liquid: Biomasse & -gas
   biomass to liquid CC: Punktquellen CC
   biomass-to-methanol: Methanol
-  co2: CO$_2$-Infra
-  co2 sequestered: CO$_2$-Infra
-  co2 stored: CO$_2$-Infra
+  co2: CO$_2$-Infrastruktur
+  co2 sequestered: CO$_2$-Infrastruktur
+  co2 stored: CO$_2$-Infrastruktur
   coal: Kohle
   coal for industry: Kohle
-  electricity: Stromnetz
-  electricity distribution grid: Stromnetz
+  electricity: Übertragungsnetz Strom
+  electricity distribution grid: Übertragungsnetz Strom
   electrobiofuels: Biomasse & -gas
   gas: Gas
   gas compressing: Gas
@@ -1210,13 +1353,13 @@ grouping:
   home battery charger: Batterie
   home battery discharger: Batterie
   hydro: Hydro & Laufwasser
-  industry electricity: Stromnetz
+  industry electricity: Übertragungsnetz Strom
   industry methanol: Methanol
   kerosene for aviation: Sonstige # TODO
   land transport EV: Sonstige # TODO
   land transport oil: Sonstige # TODO
   lignite: Kohle
-  low voltage: Stromnetz
+  low voltage: Übertragungsnetz Strom
   low-temperature heat for industry: Sonstige
   methanol: Methanol
   methanolisation: Methanolisierung
@@ -1279,7 +1422,7 @@ grouping:
   urban decentral water tanks: Sonstige
   urban decentral water tanks charger: Sonstige
   urban decentral water tanks discharger: Sonstige
-  urban central H2 CHP: H$_2$-Infra
+  urban central H2 CHP: H$_2$-Infrastruktur
   urban central coal CHP: Kohle
   urban central gas CHP: Gas
   urban central gas CHP CC: Punktquellen CC
@@ -1303,19 +1446,20 @@ grouping:
   "none": Sonstige
 
 group_colors:
-  Ammoniak: "#46caf0"
+  Ammoniak: "#1a5276"
   Batterie: "#ace37f"
   Biomasse & -gas: "#baa741"
   KWK: "#8a5751"
-  CO$_2$-Infra: "#cc99ff"
+  CO$_2$-Infrastruktur: "#cc99ff"
   Punktquellen CC: "#f29dae"
+  Industrie CO$_2$-Abscheidung: "#503530"
   Kohle: "#555555"
   DAC: "#ff5270"
-  Stromnetz: "#97ad8c"
+  Übertragungsnetz Strom: "#97ad8c"
   Elektrolyse: "#b3e6ff"
   Fischer-Tropsch: "#25c49a"
   Gas: "#e05b09"
-  H$_2$-Infra: "#7895b1"
+  H$_2$-Infrastruktur: "#7895b1"
   H$_2$-Importe: "#110d63"
   Hydro & Laufwasser: "#298c81"
   Methanol: "#57ebc4"

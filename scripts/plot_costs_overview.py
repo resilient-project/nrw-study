@@ -15,6 +15,8 @@ from scripts._helpers import configure_logging, set_scenario_config
 
 logger = logging.getLogger(__name__)
 
+NOISE_THRESHOLD_BN_EUR = 1e-4
+
 
 def import_csvs(
     df: pd.DataFrame,
@@ -92,8 +94,17 @@ if __name__ == "__main__":
     #     plotting["nice_names"][col] for col in plotting["run_order"]
     # ]
 
-    carrier_groups = config["grouping"]
+    carrier_groups = dict(config["grouping"])
     group_colors = config["group_colors"]
+
+    if plotting.get("aggregate_industry_emissions", False):
+        aggregate_label = plotting.get("aggregate_label", "Emissionen Industrie")
+        carrier_groups["gas for industry CC"] = aggregate_label
+        carrier_groups["process emissions CC"] = aggregate_label
+        aggregate_color = plotting.get("aggregate_color")
+        if aggregate_color:
+            group_colors = dict(group_colors)
+            group_colors[aggregate_label] = aggregate_color
 
     # Create df of all runs (rows)
     costs = pd.DataFrame()
@@ -105,15 +116,12 @@ if __name__ == "__main__":
     costs["group"] = costs["carrier"].map(carrier_groups)
     costs["group_color"] = costs["group"].map(group_colors)
     
-    # to_drop = costs.index[(costs.value.abs()<10)] # Drop small values
-    # costs = costs.drop(to_drop, axis=0)
-    # costs.reset_index(drop=True, inplace=True)
-
     # Group by group
     costs = costs.groupby(["planning_horizon", "group", "name", "group_color"], observed=True).agg(
         value=("value", "sum"),
     ).div(1e9) # EUR to bn. EUR p.a.
     costs.reset_index(inplace=True)
+    costs.loc[costs["value"].abs() < NOISE_THRESHOLD_BN_EUR, "value"] = 0.0
 
     # Nice names for lt_run
     costs["nice_name"] = costs["name"].map(plotting["nice_names"])

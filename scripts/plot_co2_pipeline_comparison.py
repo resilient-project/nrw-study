@@ -14,16 +14,17 @@ import re
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.patches import Patch
 
 from scripts._helpers import configure_logging, set_scenario_config
 
 # Each segment: (label, terrain, list-of-regions, carrier-or-None)
 SEGMENTS = [
     ("Offshore (DE)",       "offshore", ["DE", "DEA"], None),
-    ("Onshore ⌀70cm (DE)", "onshore",  ["DE"],        "CO2 pipeline"),
-    ("Onshore ⌀40cm (DE)", "onshore",  ["DE"],        "CO2 pipeline short"),
-    ("Onshore ⌀70cm (NRW)","onshore",  ["DEA"],       "CO2 pipeline"),
-    ("Onshore ⌀40cm (NRW)","onshore",  ["DEA"],       "CO2 pipeline short"),
+    ("Onshore DN700 (DE)", "onshore",  ["DE"],        "CO2 pipeline"),
+    ("Onshore DN400 (DE)", "onshore",  ["DE"],        "CO2 pipeline short"),
+    ("Onshore DN700 (NRW)","onshore",  ["DEA"],       "CO2 pipeline"),
+    ("Onshore DN400 (NRW)","onshore",  ["DEA"],       "CO2 pipeline short"),
 ]
 
 
@@ -69,8 +70,17 @@ def plot_metric(axes, seg_table, planning_horizons, run_order, nice_names,
         data.plot(
             kind="bar", stacked=True, ax=ax, width=0.8,
             color=[segment_colors[s] for s in data.columns],
+            edgecolor="none",
             legend=False,
         )
+        n_bars = len(data)
+        nrw_cols = [j for j, col in enumerate(data.columns) if "(NRW)" in col]
+        for col_idx in nrw_cols:
+            for bar_idx in range(n_bars):
+                patch = ax.patches[col_idx * n_bars + bar_idx]
+                patch.set_hatch("//////")
+                patch.set_edgecolor("white")
+                patch.set_linewidth(0)
         ymax = max(ymax, data[data > 0].sum(axis=1).max())
 
         ax.set_xlabel(ph if show_xlabels else "", fontsize=fontsize)
@@ -80,8 +90,10 @@ def plot_metric(axes, seg_table, planning_horizons, run_order, nice_names,
             ax.tick_params(labelbottom=False)
         ax.grid(False)
         ax.axhline(0, color="black", lw=0.5)
-        for spine in ax.spines.values():
-            spine.set_linewidth(0.5)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_linewidth(0.5)
+        ax.spines["bottom"].set_linewidth(0.5)
 
         if i == 0:
             ax.set_ylabel(ylabel, fontsize=fontsize)
@@ -127,7 +139,7 @@ if __name__ == "__main__":
 
     data = load_csvs(snakemake.input.csvs)
 
-    vol_table = build_segment_table(data, "volume_mtpakm") / 1000  # Mtpa·km → Gtpa·km
+    vol_table = build_segment_table(data, "volume_mtpakm") / 1e6  # Mtpa·km → Mtpa·Mkm
     len_table = build_segment_table(data, "length_km")
 
     fig, axes = plt.subplots(
@@ -135,25 +147,38 @@ if __name__ == "__main__":
         figsize=figsize, dpi=dpi,
         sharey="row",
         tight_layout=True,
+        gridspec_kw={"height_ratios": [1.022, 1]},
     )
     plt.rc("font", **font)
+    plt.rcParams["hatch.linewidth"] = 0.8
 
     plot_metric(axes[0], vol_table, planning_horizons, run_order, nice_names,
-                segment_order, segment_colors, "Transportkapazitäten (Gtpa·km)", fontsize,
+                segment_order, segment_colors, "Transportleist. (Mtpa·Mkm)", fontsize,
                 xticklabel_size=xticklabel_size, show_xlabels=False)
     plot_metric(axes[1], len_table, planning_horizons, run_order, nice_names,
                 segment_order, segment_colors, "Pipelinelängen (km)", fontsize,
                 xticklabel_size=xticklabel_size, show_xlabels=True)
+    fig.align_ylabels([axes[0, 0], axes[1, 0]])
 
+    DE_LEGEND = {
+        "Offshore (DE)": "Offshore",
+        "Onshore DN700 (DE)": "Onshore DN700",
+        "Onshore DN400 (DE)": "Onshore DN400",
+    }
+    de_segments = [s for s in segment_order if s in DE_LEGEND]
     handles = [
-        plt.Rectangle((0, 0), 1, 1, color=segment_colors[s], label=s)
-        for s in segment_order[::-1]
+        Patch(facecolor=segment_colors[s], label=DE_LEGEND[s])
+        for s in de_segments[::-1]
     ]
+    handles.append(
+        Patch(facecolor=segment_colors["Onshore DN400 (NRW)"], hatch="//////",
+              edgecolor="white", label="NRW")
+    )
     fig.legend(
         handles=handles,
         loc="upper center",
         bbox_to_anchor=(0.5, 0.01),
-        ncol=len(segment_order),
+        ncol=len(handles),
         fontsize=fontsize,
         frameon=False,
         handlelength=0.8,
@@ -163,5 +188,5 @@ if __name__ == "__main__":
     fig.subplots_adjust(wspace=0.05, hspace=0.5)
 
     fig.savefig(snakemake.output.plot, dpi=dpi, bbox_inches="tight")
-    fig.savefig(snakemake.output.png, dpi=150, bbox_inches="tight")
+    fig.savefig(snakemake.output.png, dpi=300, bbox_inches="tight")
     plt.close(fig)

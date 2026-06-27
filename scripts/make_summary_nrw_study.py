@@ -5,12 +5,17 @@
 Calculates CO2 pipeline lengths per country and terrain (onshore/offshore)
 for the NRW study, clipped by the respective region shapes.
 
-Output columns: country, terrain, carrier, length_km
+Output columns: region, terrain, carrier, volume_mtpakm, length_km
+
+Length is computed as haversine distance (bus0 → bus1) multiplied by
+length_factor from config, then scaled by the fraction of the pipeline
+geometry that falls within each clipped region.
 """
 
 import geopandas as gpd
 import pandas as pd
 import pypsa
+from pypsa.geo import haversine_pts
 from shapely.geometry import LineString
 
 from scripts._helpers import configure_logging, set_scenario_config
@@ -20,6 +25,7 @@ def co2_pipeline_lengths(
     n: pypsa.Network,
     regions_onshore: gpd.GeoDataFrame,
     regions_offshore: gpd.GeoDataFrame,
+    length_factor: float = 1.0,
 ) -> pd.DataFrame:
     co2_carriers = ["CO2 pipeline", "CO2 pipeline short"]
     is_reversed = n.links.get("reversed", pd.Series(False, index=n.links.index)).fillna(False)
@@ -28,7 +34,7 @@ def co2_pipeline_lengths(
     ].copy()
 
     if pipe_links.empty:
-        return pd.DataFrame(columns=["country", "terrain", "carrier", "length_km", "volume_mtpakm"])
+        return pd.DataFrame(columns=["region", "terrain", "carrier", "length_km", "volume_mtpakm"])
 
     pipe_links["geometry"] = [
         LineString([
@@ -37,8 +43,19 @@ def co2_pipeline_lengths(
         ])
         for _, row in pipe_links.iterrows()
     ]
-    # p_nom_opt is kept so volume can be allocated proportionally to clipped length
-    pipes_gdf = gpd.GeoDataFrame(pipe_links[["carrier", "p_nom_opt", "geometry"]], crs="EPSG:4326")
+
+    # Haversine distances as the reference length (same formula as prepare_sector_network)
+    pipe_links["haversine_km"] = haversine_pts(
+        n.buses.loc[pipe_links["bus0"].values, ["x", "y"]].values,
+        n.buses.loc[pipe_links["bus1"].values, ["x", "y"]].values,
+    )
+
+    pipes_gdf = gpd.GeoDataFrame(
+        pipe_links[["carrier", "p_nom_opt", "haversine_km", "geometry"]], crs="EPSG:4326"
+    )
+    # Full projected lengths for computing clip fractions
+    pipes_gdf_m = pipes_gdf.to_crs("EPSG:3035")
+    pipes_gdf_m["full_length_m"] = pipes_gdf_m.geometry.length
 
     records = []
     for terrain, regions in [("onshore", regions_onshore), ("offshore", regions_offshore)]:
@@ -54,7 +71,15 @@ def co2_pipeline_lengths(
             if clipped.empty:
                 continue
             clipped_m = clipped.to_crs("EPSG:3035")
-            clipped_m["length_km"] = clipped_m.geometry.length / 1000
+            # Proportion of each pipe that falls within this region (geometric)
+            clip_frac = (
+                clipped_m.geometry.length
+                / pipes_gdf_m.loc[clipped_m.index, "full_length_m"]
+            ).clip(0, 1)
+            # Apply haversine × fraction × length_factor
+            clipped_m["length_km"] = (
+                pipes_gdf.loc[clipped_m.index, "haversine_km"] * clip_frac * length_factor
+            )
             clipped_m["volume_mtpakm"] = clipped_m["length_km"] * clipped_m["p_nom_opt"]
             for carrier, grp in clipped_m.groupby("carrier"):
                 records.append({
@@ -94,5 +119,8 @@ if __name__ == "__main__":
     regions_onshore = gpd.read_file(snakemake.input.regions_onshore).set_index("name")
     regions_offshore = gpd.read_file(snakemake.input.regions_offshore).set_index("name")
 
-    df = co2_pipeline_lengths(n, regions_onshore, regions_offshore)
+    df = co2_pipeline_lengths(
+        n, regions_onshore, regions_offshore,
+        length_factor=snakemake.params.length_factor or 1.25,
+    )
     df.to_csv(snakemake.output.co2_pipeline_length, index=False)
