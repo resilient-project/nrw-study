@@ -173,19 +173,42 @@ def _build_udc(
     links: pd.DataFrame,
     cap_Mt_h: float,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Weighted utilisation duration curve using snapshot weights."""
+    """Weighted utilisation duration curve using snapshot weights.
+
+    Flow is the sum of |p0| for all forward links plus |p0| of their
+    '-reversed' siblings (reverse-direction throughput).  Capacity uses
+    only the forward links so each physical pipe is counted once.
+    """
     _empty = (np.array([0.0, 1.0]), np.array([0.0, 0.0]))
     if links.empty or cap_Mt_h <= 0:
         return _empty
     if not hasattr(n, "links_t") or "p0" not in n.links_t or n.links_t.p0.empty:
         return _empty
-    valid = links.index.intersection(n.links_t.p0.columns)
-    if valid.empty:
+
+    p0_cols = n.links_t.p0.columns
+
+    # Forward links that have time-series data
+    valid_fwd = links.index.intersection(p0_cols)
+    if valid_fwd.empty:
         return _empty
 
-    weights     = n.snapshot_weightings.generators
-    w_sum       = float(weights.sum())
-    agg         = n.links_t.p0[valid].abs().sum(axis=1)
+    # Reversed siblings: same index with '-reversed' suffix, if present
+    rev_candidates = pd.Index([f"{idx}-reversed" for idx in valid_fwd])
+    valid_rev = rev_candidates.intersection(p0_cols)
+
+    # Build flow time-series: forward + reverse, aligned on snapshots
+    flow_cols = valid_fwd.union(valid_rev)
+    agg = n.links_t.p0[flow_cols].abs().sum(axis=1)
+
+    # Snapshot weights — aligned by index (same snapshot index as p0)
+    weights = n.snapshot_weightings.generators.reindex(agg.index)
+    if weights.isna().any():
+        raise ValueError(
+            "Snapshot weightings could not be aligned with p0 index; "
+            "check network snapshot consistency."
+        )
+    w_sum = float(weights.sum())
+
     order       = np.argsort(-agg.values)
     sorted_flow = agg.values[order] / 1e6
     sorted_w    = weights.values[order]

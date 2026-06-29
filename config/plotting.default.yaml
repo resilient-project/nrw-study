@@ -798,7 +798,7 @@ plotting:
     branch_unit_conversion: 3198
     branch_unit: "x DN700"
     include_lengths: true
-    lengths_bar_ylim: 4000
+    lengths_bar_ylim: 5000
     gif_frame_duration: 700
     lengths_bar_colors:
       "CO2 pipeline": "#525252"
