@@ -4,4 +4,7 @@
 
 # See https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles
 
+configfile:
+  - config/config.nrw.yaml
+
 logger: pypsa
