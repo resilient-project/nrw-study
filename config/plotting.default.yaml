@@ -363,6 +363,39 @@ plotting:
       - urban central solid biomass CHP CC
       - solid biomass for industry CC
       - Industrie CO$_2$-Abscheidung
+    cc_cost_dashboard:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 10
+      figsize: (9, 4)
+      dpi: 300
+      legend_order:
+      - DAC
+      - SMR CC
+      - urban central solid biomass CHP CC
+      - solid biomass for industry CC
+      - Industrie CO$_2$-Abscheidung
+      cost_colors:
+        capex:     "#1f4e79"
+        opex:      "#f4a261"
+        energy:    "#2a9d8f"
+        transport: "#457b9d"
+        seq_base:  "#a8dadc"
+        seq_scar:  "#e63946"
     co2_pipeline_utilisation_k:
       nice_names:
         oge-grid___Ref___offshore-co2: "1.a"

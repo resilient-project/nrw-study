@@ -343,6 +343,33 @@ rule plot_cc_capacity_utilisation:
         scripts("plot_cc_capacity_utilisation.py")
 
 
+rule plot_cc_cost_dashboard:
+    input:
+        networks=expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            run=config["run"]["name"],
+            **config["scenario"],
+        ),
+    output:
+        pdf=NRW_RESULTS + "nrw-study-summary/cc_cost_dashboard.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/cc_cost_dashboard.png",
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "cc_cost_dashboard"),
+        carrier_german=config["plotting"]["carrier_german"],
+    log:
+        NRW_RESULTS + "logs/plot_cc_cost_dashboard.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_cc_cost_dashboard",
+    threads: 1
+    resources:
+        mem_mb=8000,
+    message:
+        "Plotting CCS cost decomposition dashboard (capture / transport / sequestration)"
+    script:
+        scripts("plot_cc_cost_dashboard.py")
+
+
 rule plot_co2_pipeline_utilisation_k:
     params:
         plotting_fig=config_provider("plotting", "nrw-study", "co2_pipeline_utilisation_k"),
@@ -936,6 +963,7 @@ rule plot_nrw_study:
         rules.plot_capacities_overview.output.plot,
         rules.plot_capacities_overview_de.output.plot,
         rules.plot_cc_capacity_utilisation.output,
+        rules.plot_cc_cost_dashboard.output,
         rules.plot_co2_pipeline_utilisation_k.output,
         rules.plot_co2_pipeline_utilisation_dashboard.output,
         rules.plot_costs_overview_stacked.output.plot,
