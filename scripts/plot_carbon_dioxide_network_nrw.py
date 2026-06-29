@@ -110,6 +110,22 @@ def plot_co2_map(
     n.carriers.update({"color": tech_colors})
     carrier_colors = n.carriers.color.copy().replace("", "grey")
 
+    if settings.get("aggregate_industry_emissions", False):
+        _agg_label = settings.get("aggregate_label", "Emissionen Industrie")
+        _agg_color = settings.get("aggregate_color", tech_colors.get("process emissions CC", "#000000"))
+        _industry_cc = {"gas for industry CC", "process emissions CC"}
+        _rename = {c: _agg_label for c in _industry_cc}
+        _new_carriers = bus_size.index.get_level_values("carrier").map(
+            lambda c: _rename.get(c, c)
+        )
+        bus_size.index = pd.MultiIndex.from_arrays(
+            [bus_size.index.get_level_values("bus"), _new_carriers],
+            names=["bus", "carrier"],
+        )
+        bus_size = bus_size.groupby(level=["bus", "carrier"]).sum()
+        carrier_colors[_agg_label] = _agg_color
+        n.carriers.loc[_agg_label, "color"] = _agg_color
+
     colors = (
         bus_size.index.get_level_values("carrier")
         .unique()
@@ -226,13 +242,21 @@ def plot_co2_map(
         values = bus_size.loc[:, carrier]
         return values[values * sign > 0].abs().sum()
 
-    supp_carriers = sorted(
+    _supp_set = (
         set(pos_carriers) - set(common_carriers)
         | {c for c in common_carriers if get_total_abs(c, 1) >= get_total_abs(c, -1)}
     )
-    cons_carriers = sorted(
+    _legend_order = settings.get("legend_order", [])
+    supp_carriers = [c for c in _legend_order if c in _supp_set] + sorted(
+        _supp_set - set(_legend_order)
+    )
+    _cons_set = (
         set(neg_carriers) - set(common_carriers)
         | {c for c in common_carriers if get_total_abs(c, 1) < get_total_abs(c, -1)}
+    )
+    _legend_order_nutzung = settings.get("legend_order_nutzung", [])
+    cons_carriers = [c for c in _legend_order_nutzung if c in _cons_set] + sorted(
+        _cons_set - set(_legend_order_nutzung)
     )
 
     carrier_german = snakemake.params.plotting.get("carrier_german", {})
@@ -308,7 +332,7 @@ def plot_co2_map(
     )[1]
     ueberlappung_leg = ax.legend(
         handles=[Line2D([0], [0], color=dark_short, linewidth=2, solid_capstyle="round")],
-        labels=["Überlappung\nPlanprojekte"],
+        labels=["PCI-PMI Projekte"],
         bbox_to_anchor=(0.5, nutzung_bottom_ax - 0.005),
         **legend_kw,
     )

@@ -806,6 +806,20 @@ plotting:
       "Offshore": "#4292c6"
 
   carbon_dioxide_network_nrw:
+    aggregate_industry_emissions: true
+    aggregate_label: "Industrie CO$_2$-Abscheidung"
+    aggregate_color: '#503530'
+    legend_order:
+    - Industrie CO$_2$-Abscheidung
+    - solid biomass for industry CC
+    - urban central solid biomass CHP CC
+    - SMR CC
+    - DAC
+    legend_order_nutzung:
+    - methanolisation
+    - Fischer-Tropsch
+    - Sabatier
+    - co2 sequestered
     unit: Mtpa
     unit_conversion: 1_000_000
     bus_factor: 0.003
@@ -820,6 +834,20 @@ plotting:
     branch_unit: "x DN400"
 
   carbon_dioxide_network_nrw_oge:
+    aggregate_industry_emissions: true
+    aggregate_label: "Industrie CO$_2$-Abscheidung"
+    aggregate_color: '#503530'
+    legend_order:
+    - Industrie CO$_2$-Abscheidung
+    - solid biomass for industry CC
+    - urban central solid biomass CHP CC
+    - SMR CC
+    - DAC
+    legend_order_nutzung:
+    - methanolisation
+    - Fischer-Tropsch
+    - Sabatier
+    - co2 sequestered
     unit: Mtpa
     unit_conversion: 1_000_000
     bus_factor: 0.003
