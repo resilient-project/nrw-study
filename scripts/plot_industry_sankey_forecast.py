@@ -11,6 +11,48 @@ from matplotlib.path import Path
 
 from scripts._helpers import configure_logging
 
+DE_TRANSLATION = {
+    # Energy carriers (left column)
+    "Waste non-RES": "Abfall (fossil)",
+    "Other fossil": "Sonstige fossile",
+    "Other RES": "Sonstige erneuerbare",
+    "Natural gas": "Erdgas",
+    "Hydrogen": "Wasserstoff",
+    "Fuel oil": "Heizöl",
+    "Electricity": "Strom",
+    "District heating": "Fernwärme",
+    "Heat": "Wärme",
+    "Coal": "Kohle",
+    "Biomass": "Biomasse",
+    "Ambient heat": "Umweltwärme",
+    # Applications (middle column)
+    "Space heating": "Raumwärme",
+    "Space cooling": "Raumkühlung",
+    "Raw material (feedstock) demand": "Rohstoffbedarf (Feedstock)",
+    "Process heat (steam)": "Prozesswärme (Dampf)",
+    "Process heat (industrial furnaces)": "Prozesswärme (Industrieöfen)",
+    "Process cooling": "Prozesskühlung",
+    "Mechanical and other electricity use": "Mechanische und sonst. Stromanwendungen",
+    "Energy balance calibration": "Kalibrierung Energiebilanz",
+    "Electrolysis (aluminium smelting)": "Elektrolyse (Aluminium)",
+    "Carbon capture and storage": "CO₂-Abscheidung (Energiebedarf)",
+    # Industrial sectors (right column)
+    "Vehicle manufacturing (motor vehicles and transport equipment)": "Fahrzeugbau",
+    "Rubber and plastic products": "Gummi- und Kunststoffwaren",
+    "Quarrying of stone and earth; other mining": "Steine und Erden; Bergbau",
+    "Processing of stone and earth (non-metallic mineral processing)": "Nichtmet. Mineralverarbeitung",
+    "Paper industry": "Papierindustrie",
+    "Other economic sectors": "Sonstige Wirtschaft",
+    "Other chemical industry": "Sonstige Chemieindustrie",
+    "Non-ferrous metals and foundries": "Nichteisenmetalle und Gießereien",
+    "Machinery and equipment (mechanical engineering)": "Maschinenbau",
+    "Glass and ceramics": "Glas und Keramik",
+    "Food and tobacco": "Lebensmittel und Tabak",
+    "Fabricated metal products (metalworking)": "Metallerzeugnisse",
+    "Basic chemicals": "Grundchemikalien",
+    "Basic metals (metal production)": "Metallerzeugung",
+}
+
 COLOR_MAPPING = {
     # --- Energy carriers (left column) ---
     "Waste non-RES": "#c97b7b",
@@ -59,6 +101,32 @@ nice_labels = {
 }
 
 
+def compute_column_max_h(demand_df, year):
+    """Return the maximum visual height across all three sankey columns for one scenario."""
+    link1 = demand_df.groupby(["Energy_carrier", "Application"])[year].sum().reset_index()
+    link1.columns = ["source", "target", "value"]
+    link1 = link1[link1["value"] > 0]
+    link2 = demand_df.groupby(["Application", "Subsector"])[year].sum().reset_index()
+    link2.columns = ["source", "target", "value"]
+    link2 = link2[link2["value"] > 0]
+
+    l0_vals = link1.groupby("source")["value"].sum()
+    l1_in = link1.groupby("target")["value"].sum()
+    l1_out = link2.groupby("source")["value"].sum()
+    l1_nodes = sorted(pd.concat([link1["target"], link2["source"]]).unique())
+    l1_vals = pd.Series({n: max(l1_in.get(n, 0), l1_out.get(n, 0)) for n in l1_nodes})
+    l2_vals = link2.groupby("target")["value"].sum()
+
+    col_max = 0
+    for vals in [l0_vals, l1_vals, l2_vals]:
+        vals = vals[vals > 0]
+        n = len(vals)
+        total = float(vals.sum())
+        gap = total * 0.02 if n > 1 else 0
+        col_max = max(col_max, total + gap * n)
+    return col_max
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from scripts._helpers import mock_snakemake
@@ -71,6 +139,9 @@ if __name__ == "__main__":
             run="oge-grid___Ref___offshore-co2",
         )
     configure_logging(snakemake)
+
+    de_translation = getattr(snakemake.params, "de_translation", False)
+    scenario_nice_names = getattr(snakemake.params, "scenario_nice_names", {}) or {}
 
     mapping_file = snakemake.input.mapping
     demand_file = snakemake.input.demand
@@ -116,6 +187,11 @@ if __name__ == "__main__":
             COLOR_MAPPING[node] = color_list[color_idx % len(color_list)]
             color_idx += 1
 
+    def get_label(node):
+        if de_translation:
+            return DE_TRANSLATION.get(node, node.strip())
+        return nice_labels.get(node, node)
+
     def calc_y(nodes, values_dict):
         pos = {}
         y = 0
@@ -138,26 +214,33 @@ if __name__ == "__main__":
     pos0, max_y0 = calc_y(l0_nodes, l0_vals)
     pos1, max_y1 = calc_y(l1_nodes, l1_vals)
     pos2, max_y2 = calc_y(l2_nodes, l2_vals)
-    max_h = max(max_y0, max_y1, max_y2)
 
-    fig, ax = plt.subplots(figsize=(20, 10))
+    # Compute global max across all scenarios so the scale bar is consistent
+    global_max_h = max(max_y0, max_y1, max_y2)
+    for f in snakemake.input.all_demands:
+        df = pd.read_csv(f)
+        if year in df.columns:
+            global_max_h = max(global_max_h, compute_column_max_h(df, year))
+    max_h = global_max_h
+
+    fig, ax = plt.subplots(figsize=(22, 14))
     x0, x1, x2 = 0, 1, 2
     width = 0.05
 
     def draw_nodes(pos, x, align):
         for node, (y, h) in pos.items():
             color = COLOR_MAPPING.get(node, "#cccccc")
-            print_label = nice_labels.get(node, node)
+            print_label = get_label(node)
             ax.bar(x, h, width=width, bottom=y, align="center", color=color, edgecolor="black", alpha=0.8)
             if align == "right":
-                ax.text(x - 0.04, y + h / 2, print_label, ha="right", va="center", fontsize=10)
+                ax.text(x - 0.04, y + h / 2, print_label, ha="right", va="center", fontsize=14)
             elif align == "center":
                 ax.text(
-                    x, y + h / 2, print_label, ha="center", va="center", fontsize=10,
+                    x, y + h / 2, print_label, ha="center", va="center", fontsize=14,
                     bbox=dict(facecolor="white", alpha=0.7, edgecolor="none", pad=1),
                 )
             elif align == "left":
-                ax.text(x + 0.04, y + h / 2, print_label, ha="left", va="center", fontsize=10)
+                ax.text(x + 0.04, y + h / 2, print_label, ha="left", va="center", fontsize=14)
 
     def draw_links(links, pos_src, pos_tgt, x_src, x_tgt, width, color_by="source"):
         y_offsets_src = {n: 0.0 for n in pos_src}
@@ -202,26 +285,42 @@ if __name__ == "__main__":
         magnitude *= 5
     elif max_h / magnitude > 8:
         magnitude *= 2
+    magnitude = int(round(magnitude / 2))
 
-    magnitude /= 2
+    ax.set_ylim(-max_h * 0.1, max_h * 1.05)
 
-    ax.set_ylim(-max_h * 0.25, max_h * 1.05)
-    legend_y = -max_h * 0.2
+    # Scale bar – bottom right, outside the sankey columns
+    legend_x = x2 + 0.35
+    legend_y = -max_h * 0.02          # scale bar sits just below y=0
+
+    total_twh = int(round(demand_df[demand_df[year] > 0][year].sum()))
+    ax.text(
+        legend_x + 0.025, legend_y + magnitude + max_h * 0.02,
+        f"∑ {total_twh} TWh",
+        ha="center", va="bottom", fontsize=17, fontweight="bold", clip_on=False,
+    )
     ax.add_patch(
         patches.Rectangle(
-            (x1 - 0.05, legend_y), 0.05, magnitude,
+            (legend_x, legend_y), 0.05, magnitude,
             facecolor="gray", edgecolor="black", alpha=0.6, clip_on=False,
         )
     )
     ax.text(
-        x1 + 0.06, legend_y + magnitude / 2, f" {magnitude} TWh",
-        ha="left", va="center", fontsize=12, fontweight="bold", clip_on=False,
+        legend_x + 0.07, legend_y + magnitude / 2,
+        f"{magnitude} TWh",
+        ha="left", va="center", fontsize=14, fontweight="bold", clip_on=False,
     )
 
     ax.set_xlim(x0 - 0.5, x2 + 0.5)
     ax.axis("off")
-    ax.set_title(f"FORECAST scenario: {forecast_scenario}, {year}", fontsize=16, fontweight="bold")
+    scenario_display = scenario_nice_names.get(forecast_scenario, forecast_scenario)
+    if de_translation:
+        ax.set_title(f"Szenario: {scenario_display}, {year}", fontsize=18, fontweight="bold", pad=3)
+    else:
+        ax.set_title(
+            f"FORECAST scenario: {scenario_display}, {year}", fontsize=18, fontweight="bold", pad=3
+        )
 
-    plt.tight_layout()
-    plt.savefig(output_file, bbox_inches="tight")
-    plt.savefig(snakemake.output.png, dpi=150, bbox_inches="tight")
+    plt.tight_layout(pad=0.2)
+    plt.savefig(output_file, bbox_inches="tight", pad_inches=0.05)
+    plt.savefig(snakemake.output.png, dpi=150, bbox_inches="tight", pad_inches=0.05, transparent=True)

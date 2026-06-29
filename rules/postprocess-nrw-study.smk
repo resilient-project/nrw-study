@@ -184,6 +184,10 @@ rule plot_industry_sankey_forecast:
     input:
         mapping="data/forecast_industry/mapping.csv",
         demand="data/forecast_industry/{forecast_scenario}/energy_demand.csv",
+        all_demands=expand(
+            "data/forecast_industry/{scenario}/energy_demand.csv",
+            scenario=list(set(FORECAST_INDUSTRY_CFG["scenario_mapping"].values())),
+        ),
     output:
         sankey=RESULTS+"nrw-study/industry_sankey_forecast_{forecast_scenario}_{year}.pdf",
         png=RESULTS+"nrw-study/industry_sankey_forecast_{forecast_scenario}_{year}.png"
@@ -195,6 +199,9 @@ rule plot_industry_sankey_forecast:
     threads: 1
     resources:
         mem_mb=4000,
+    params:
+        de_translation=config_provider("plotting", "nrw-study", "de_translation"),
+        scenario_nice_names=config_provider("plotting", "nrw-study", "scenario_nice_names"),
     message:
         "Plotting industry sankey diagram for {wildcards.forecast_scenario}, {wildcards.year}"
     script:

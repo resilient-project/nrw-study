@@ -16,6 +16,10 @@ plotting:
     "solid biomass for industry CC": "Biomasse für Industrie"
     "urban central solid biomass CHP CC": "Biomasse-KWK"
   nrw-study:
+    de_translation: true
+    scenario_nice_names:
+      Industrie-CCS: "Hard-to-Abate+ (HtA+)"
+      Orientierungsszenario_Strom: "Hard-to-Abate (HtA)"
     costs_overview:
       aggregate_industry_emissions: true
       aggregate_label: "Industrie CO$_2$-Abscheidung"
@@ -871,8 +875,8 @@ plotting:
     # Set show_scenario_year: true to activate the label, then these names apply
     # Disable renaming by removing or leaving scenario_display_names empty
     scenario_display_names:
-      Orientierungsszenario_Strom: "HtA"
-      Industrie-CCS: "HtA+"
+      Orientierungsszenario_Strom: "Hard-to-Abate (HtA)"
+      Industrie-CCS: "Hard-to-Abate+ (HtA+)"
 
   process_energy_demand_nrw:
     figsize: (7, 6)
