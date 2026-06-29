@@ -556,6 +556,57 @@ rule plot_carbon_dioxide_network:
         scripts("plot_carbon_dioxide_network.py")
 
 
+rule plot_co2_delaunay_graph:
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        sequestration=resources("co2_sequestration_potentials.geojson"),
+    output:
+        europe_seq_map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_seq_{planning_horizons}.pdf",
+        europe_seq_png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_seq_{planning_horizons}.png",
+        europe_map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_delaunay_{planning_horizons}.pdf",
+        europe_png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_delaunay_{planning_horizons}.png",
+        nrw_map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_delaunay_nrw_{planning_horizons}.pdf",
+        nrw_png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_delaunay_nrw_{planning_horizons}.png",
+    log:
+        RESULTS
+        + "logs/plot_co2_delaunay_graph/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    benchmark:
+        (
+            RESULTS
+            + "benchmarks/plot_co2_delaunay_graph/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}"
+        )
+    threads: 2
+    resources:
+        mem_mb=8000,
+    params:
+        plotting=config_provider("plotting"),
+    message:
+        "Plotting CO2 Delaunay graph for {wildcards.clusters} clusters, {wildcards.planning_horizons}"
+    script:
+        scripts("plot_co2_delaunay_graph.py")
+
+
+rule plot_co2_delaunay_graph_all:
+    input:
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_delaunay_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
+
+
 rule plot_carbon_dioxide_network_all:
     input:
         expand(
@@ -972,6 +1023,7 @@ rule plot_nrw_study:
         rules.plot_carbon_dioxide_network_all.input,
         rules.plot_carbon_dioxide_network_nrw_all.input,
         rules.plot_co2_flow_map_nrw_all.input,
+        rules.plot_co2_delaunay_graph_all.input,
         rules.make_summary_nrw_study_all.input,
         expand(
             RESULTS
