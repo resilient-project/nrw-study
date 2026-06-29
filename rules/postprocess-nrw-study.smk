@@ -635,12 +635,6 @@ rule plot_co2_flow_map_nrw:
         + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
         regions=resources("regions_onshore_base_s_{clusters}.geojson"),
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        co2_projects=resources(
-            "transmission/carbon_dioxide_projects/co2_links_s_{clusters}_{opts}.csv"
-        ),
-        co2_projects_geom=resources(
-            "transmission/carbon_dioxide_projects/original_projects_s_{clusters}_{opts}.geojson"
-        ),
     output:
         map=RESULTS
         + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.pdf",
@@ -659,11 +653,23 @@ rule plot_co2_flow_map_nrw:
         mem_mb=10000,
     params:
         plotting=config_provider("plotting"),
-        co2_projects_enable=config_provider("transmission", "carbon_dioxide", "projects", "enable"),
     message:
         "Plotting CO2 flow map NRW for {wildcards.clusters} clusters, {wildcards.opts}, {wildcards.sector_opts}, {wildcards.planning_horizons}"
     script:
         scripts("plot_co2_flow_map_nrw.py")
+
+
+rule plot_co2_flow_map_nrw_all:
+    input:
+        expand(
+            RESULTS
+            + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}.pdf",
+            run=config["run"]["name"],
+            clusters=config["scenario"]["clusters"],
+            opts=config["scenario"]["opts"],
+            sector_opts=config["scenario"]["sector_opts"],
+            planning_horizons=config["scenario"]["planning_horizons"],
+        ),
 
 
 rule plot_carbon_dioxide_network_nrw:
@@ -937,6 +943,7 @@ rule plot_nrw_study:
         rules.plot_co2_pipeline_comparison.output.plot,
         rules.plot_carbon_dioxide_network_all.input,
         rules.plot_carbon_dioxide_network_nrw_all.input,
+        rules.plot_co2_flow_map_nrw_all.input,
         rules.make_summary_nrw_study_all.input,
         expand(
             RESULTS

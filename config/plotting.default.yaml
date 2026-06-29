@@ -859,21 +859,44 @@ plotting:
     - 6072
     - 2024
     branch_unit_conversion: 1012
-    branch_unit: "x DN400 Äq."
+    branch_unit: "x DN400"
+
+  co2_delaunay_graph:
+    run: endo-grid___CCS-Exp__offshore+onshore-co2
+    planning_horizons: 2035
+    co2_pipeline_color: "#f5627f"
+    co2_pipeline_short_color: "#c084fc"
+    linewidth: 1.5
+    sequestration_color: "#4a1870"
+    sequestration_alpha: 0.4
 
   co2_flow_map_nrw:
+    aggregate_industry_emissions: true
+    aggregate_label: "Industrie CO$_2$-Abscheidung"
+    aggregate_color: '#503530'
+    legend_order:
+    - Industrie CO$_2$-Abscheidung
+    - solid biomass for industry CC
+    - urban central solid biomass CHP CC
+    - SMR CC
+    - DAC
+    legend_order_nutzung:
+    - methanolisation
+    - Fischer-Tropsch
+    - Sabatier
+    - co2 sequestered
     unit: Mtpa
     unit_conversion: 1_000_000
-    bus_factor: 0.00525
+    bus_factor: 0.003
     bus_sizes:
     - 3
     - 1
     flow_linewidth_factor: 0.2  # MtCO₂/a per point of line width
     flow_factor: 0.04           # scaling for arrow head size passed to n.plot(link_flow=)
-    flow_unit: "MtCO₂/a"
+    flow_unit: "Mtpa"
     flow_sizes:
-    - 50
-    - 20
+    - 30
+    - 10
 
   process_emissions_nrw:
     figsize: (7, 6)
