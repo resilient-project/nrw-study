@@ -439,6 +439,51 @@ plotting:
         DN700:    "#ffbf2b"
         DN400:    "#e05b09"
         Offshore: "#4292c6"
+    co2_transit_nrw:
+      aggregate_industry_emissions: true
+      aggregate_label: "Industrie CO$_2$-Abscheidung"
+      aggregate_color: '#503530'
+      nice_names:
+        oge-grid___Ref___offshore-co2: "1.a"
+        endo-grid___Ref___offshore-co2: "1.b"
+        endo-grid___CCS-Exp__offshore-co2: "2.a"
+        endo-grid___CCS-Exp__offshore+onshore-co2: "2.b"
+      run_order:
+      - oge-grid___Ref___offshore-co2
+      - endo-grid___Ref___offshore-co2
+      - endo-grid___CCS-Exp__offshore-co2
+      - endo-grid___CCS-Exp__offshore+onshore-co2
+      font:
+        family: sans-serif
+        sans-serif: Roboto
+        size: 10
+      figsize: (10, 4.5)
+      dpi: 300
+      # buses whose location starts with this prefix form the region (NUTS-1 DEA = NRW)
+      region_prefix: DEA
+      # NUTS-1 (DE) or country code of the node on the far side of an NRW border pipeline
+      neighbour_names:
+        NL: Niederlande
+        BE: Belgien
+        LU: Luxemburg
+        FR: Frankreich
+        DK: Dänemark
+        CH: Schweiz
+        DE1: Baden-Württemberg
+        DE2: Bayern
+        DE3: Berlin
+        DE4: Brandenburg
+        DE5: Bremen
+        DE6: Hamburg
+        DE7: Hessen
+        DE8: Mecklenburg-Vorpommern
+        DE9: Niedersachsen
+        DEB: Rheinland-Pfalz
+        DEC: Saarland
+        DED: Sachsen
+        DEE: Sachsen-Anhalt
+        DEF: Schleswig-Holstein
+        DEG: Thüringen
   enable_heat_source_maps: false
 
   map:

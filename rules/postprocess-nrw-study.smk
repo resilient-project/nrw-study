@@ -436,6 +436,41 @@ rule plot_co2_pipeline_utilisation_dashboard:
         scripts("plot_co2_pipeline_utilisation_dashboard.py")
 
 
+rule plot_co2_transit_nrw:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "co2_transit_nrw"),
+        tech_colors=config["plotting"]["tech_colors"],
+        carrier_german=config["plotting"]["carrier_german"],
+    input:
+        networks=expand(
+            RESULTS
+            + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+            run=[r for r in config["plotting"]["nrw-study"]["co2_transit_nrw"]["run_order"] if r in config["run"]["name"]],
+            **config["scenario"],
+        ),
+    output:
+        summary=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw.csv",
+        od=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw_od.csv",
+        dashboard=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw_dashboard.pdf",
+        dashboard_png=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw_dashboard.png",
+        sankey=expand(
+            NRW_RESULTS + "nrw-study-summary/co2_transit_nrw_sankey/co2_transit_nrw_sankey_{run}_{year}.png",
+            run=[r for r in config["plotting"]["nrw-study"]["co2_transit_nrw"]["run_order"] if r in config["run"]["name"]],
+            year=config["scenario"]["planning_horizons"],
+        ),
+    log:
+        NRW_RESULTS + "logs/plot_co2_transit_nrw.log",
+    benchmark:
+        NRW_RESULTS + "benchmark/plot_co2_transit_nrw"
+    threads: 1
+    resources:
+        mem_mb=6000,
+    message:
+        "Deriving CO2 transit through NRW (bounds + flow tracing) across all NRW scenarios"
+    script:
+        scripts("plot_co2_transit_nrw.py")
+
+
 rule plot_costs_overview_stacked:
     params:
         plotting_fig=config_provider("plotting", "nrw-study", "costs_overview_stacked"),
@@ -1017,6 +1052,7 @@ rule plot_nrw_study:
         rules.plot_cc_cost_dashboard.output,
         rules.plot_co2_pipeline_utilisation_k.output,
         rules.plot_co2_pipeline_utilisation_dashboard.output,
+        rules.plot_co2_transit_nrw.output,
         rules.plot_costs_overview_stacked.output.plot,
         rules.plot_costs_overview_delta.output.plot,
         rules.plot_co2_pipeline_comparison.output.plot,
