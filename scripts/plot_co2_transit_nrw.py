@@ -46,6 +46,7 @@ import pypsa
 from matplotlib.path import Path as MplPath
 
 from scripts._helpers import configure_logging, set_scenario_config
+from scripts._poster import get_poster, merge_settings, translate_figure
 
 logger = logging.getLogger(__name__)
 
@@ -295,6 +296,8 @@ def plot_dashboard(
     dpi,
     out_pdf,
     out_png,
+    poster=None,
+    legend_ncol=4,
 ):
     """
     One bar per scenario splitting all CO₂ crossing the NRW border into
@@ -404,19 +407,20 @@ def plot_dashboard(
         handles=handles,
         loc="upper left",
         bbox_to_anchor=(0.06, 0.02),
-        ncol=4,
+        ncol=legend_ncol,
         fontsize=fontsize,
         frameon=False,
         handlelength=0.9,
     )
     fig.text(
         0.06,
-        -0.06,
+        -0.06 - 0.09 * (-(-4 // legend_ncol) - 1),
         "Prozentwert: Transitanteil an CO$_2$-Importmenge",
         fontsize=fontsize - 2,
         color="#555555",
     )
     fig.subplots_adjust(left=0.09, right=0.98, top=0.95, bottom=0.2, wspace=0.08)
+    translate_figure(fig, poster)
     fig.savefig(out_pdf, bbox_inches="tight")
     fig.savefig(out_png, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -629,7 +633,8 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
-    settings = snakemake.params.plotting_fig
+    poster = get_poster(snakemake)
+    settings = merge_settings(snakemake.params.plotting_fig, poster, "co2_transit_nrw")
     tech_colors = snakemake.params.tech_colors
     carrier_german = snakemake.params.carrier_german
     planning_horizons = snakemake.config["scenario"]["planning_horizons"]
@@ -654,16 +659,21 @@ if __name__ == "__main__":
     }
     labels = {**carrier_german, "co2 stored": "Zwischenspeicher"}
 
-    summary, od = build_tables(
-        snakemake.input.networks,
-        run_order,
-        planning_horizons,
-        settings["neighbour_names"],
-        rename,
-        settings.get("region_prefix", REGION_PREFIX),
-    )
-    summary.to_csv(snakemake.output.summary, index=False)
-    od.to_csv(snakemake.output.od, index=False)
+    if "summary" in snakemake.input.keys():
+        # poster variant: re-plot from the existing summary, no network reads
+        summary = pd.read_csv(snakemake.input.summary, dtype={"planning_horizon": str})
+        od = None
+    else:
+        summary, od = build_tables(
+            snakemake.input.networks,
+            run_order,
+            planning_horizons,
+            settings["neighbour_names"],
+            rename,
+            settings.get("region_prefix", REGION_PREFIX),
+        )
+        summary.to_csv(snakemake.output.summary, index=False)
+        od.to_csv(snakemake.output.od, index=False)
 
     plot_dashboard(
         summary,
@@ -675,9 +685,11 @@ if __name__ == "__main__":
         settings["dpi"],
         snakemake.output.dashboard,
         snakemake.output.dashboard_png,
+        poster,
+        settings.get("legend_ncol", 4),
     )
 
-    for out in snakemake.output.sankey:
+    for out in snakemake.output.get("sankey", []):
         run, year = re.search(
             r"co2_transit_nrw_sankey_(.+)_(\d{4})\.png$", Path(out).name
         ).groups()

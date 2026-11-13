@@ -1122,3 +1122,123 @@ rule plot_nrw_study:
         ),
     message:
         "Plotting all NRW study outputs"
+
+
+# ---------------------------------------------------------------------------
+# Poster variants: English labels and larger fonts (plotting: nrw-study: poster).
+# Same scripts as the regular rules, outputs carry a "_poster" suffix so the
+# regular figures are not touched. Only re-plot from existing results.
+# ---------------------------------------------------------------------------
+
+
+rule plot_co2_transit_nrw_poster:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "co2_transit_nrw"),
+        tech_colors=config["plotting"]["tech_colors"],
+        carrier_german=config["plotting"]["carrier_german"],
+        poster=config_provider("plotting", "nrw-study", "poster"),
+    input:
+        summary=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw.csv",
+    output:
+        dashboard=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw_dashboard_poster.pdf",
+        dashboard_png=NRW_RESULTS + "nrw-study-summary/co2_transit_nrw_dashboard_poster.png",
+    log:
+        NRW_RESULTS + "logs/plot_co2_transit_nrw_poster.log",
+    threads: 1
+    resources:
+        mem_mb=2000,
+    script:
+        scripts("plot_co2_transit_nrw.py")
+
+
+rule plot_costs_overview_stacked_poster:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "costs_overview_stacked"),
+        poster=config_provider("plotting", "nrw-study", "poster"),
+    input:
+        costs=expand(
+            RESULTS + "csvs/costs.csv",
+            run=config["run"]["name"],
+        ),
+    output:
+        plot=NRW_RESULTS + "nrw-study-summary/costs_overview_stacked_poster.pdf",
+        png=NRW_RESULTS + "nrw-study-summary/costs_overview_stacked_poster.png",
+    log:
+        NRW_RESULTS + "logs/plot_costs_overview_stacked_poster.log",
+    threads: 1
+    resources:
+        mem_mb=4000,
+    script:
+        scripts("plot_costs_overview_stacked.py")
+
+
+rule plot_co2_pipeline_utilisation_dashboard_poster:
+    params:
+        plotting_fig=config_provider("plotting", "nrw-study", "co2_pipeline_utilisation_dashboard"),
+        poster=config_provider("plotting", "nrw-study", "poster"),
+    input:
+        networks=rules.plot_co2_pipeline_utilisation_dashboard.input.networks,
+        csvs=rules.plot_co2_pipeline_utilisation_dashboard.input.csvs,
+    output:
+        de=NRW_RESULTS + "nrw-study-summary/co2_pipeline_utilisation_dashboard_de_poster.pdf",
+        de_png=NRW_RESULTS + "nrw-study-summary/co2_pipeline_utilisation_dashboard_de_poster.png",
+    log:
+        NRW_RESULTS + "logs/plot_co2_pipeline_utilisation_dashboard_poster.log",
+    threads: 1
+    resources:
+        mem_mb=6000,
+    script:
+        scripts("plot_co2_pipeline_utilisation_dashboard.py")
+
+
+rule plot_carbon_dioxide_network_poster:
+    params:
+        plotting=config_provider("plotting"),
+        poster=config_provider("plotting", "nrw-study", "poster"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        lengths=RESULTS
+        + "nrw-study/co2_pipeline_length_base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.csv",
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_{planning_horizons}_poster.pdf",
+        png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_{planning_horizons}_poster.png",
+        legend=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_legend_{planning_horizons}_poster.pdf",
+        legend_png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_legend_{planning_horizons}_poster.png",
+    log:
+        RESULTS
+        + "logs/plot_carbon_dioxide_network_poster/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    threads: 2
+    resources:
+        mem_mb=10000,
+    script:
+        scripts("plot_carbon_dioxide_network.py")
+
+
+rule plot_carbon_dioxide_network_nrw_poster:
+    params:
+        plotting=config_provider("plotting"),
+        poster=config_provider("plotting", "nrw-study", "poster"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_{planning_horizons}_poster.pdf",
+        png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_network_nrw_{planning_horizons}_poster.png",
+    log:
+        RESULTS
+        + "logs/plot_carbon_dioxide_network_nrw_poster/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    threads: 2
+    resources:
+        mem_mb=10000,
+    script:
+        scripts("plot_carbon_dioxide_network_nrw.py")

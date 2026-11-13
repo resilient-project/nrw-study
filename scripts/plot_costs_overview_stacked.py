@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from scripts._helpers import configure_logging, set_scenario_config
+from scripts._poster import get_poster, merge_settings, translate_figure
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,8 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     config = snakemake.config
-    plotting = snakemake.params.plotting_fig
+    poster = get_poster(snakemake)
+    plotting = merge_settings(snakemake.params.plotting_fig, poster, "costs_overview_stacked")
     tech_colors = config["plotting"]["tech_colors"]
 
     figsize = ast.literal_eval(plotting["figsize"])
@@ -244,7 +246,8 @@ if __name__ == "__main__":
     legend._legend_box.align = "left"
 
     plt.tight_layout()
-    fig.subplots_adjust(left=0.30, hspace=0.05, wspace=0.05)
+    fig.subplots_adjust(left=plotting.get("legend_left", 0.30), hspace=0.05, wspace=0.05)
 
+    translate_figure(fig, poster)
     fig.savefig(snakemake.output.plot, dpi=dpi, bbox_inches="tight")
     fig.savefig(snakemake.output.png, dpi=150, bbox_inches="tight")

@@ -35,6 +35,7 @@ import pandas as pd
 import pypsa
 
 from scripts._helpers import configure_logging, set_scenario_config
+from scripts._poster import get_poster, merge_settings, translate_figure
 
 logger = logging.getLogger(__name__)
 
@@ -302,6 +303,7 @@ def plot_dashboard(
     fontsize: float,
     xticklabel_size: float,
     pipe_cat_colors: dict,
+    poster: dict | None = None,
 ) -> None:
     if not udc_data and not bar_data:
         _save_empty(output_pdf, output_png, scope, figsize, dpi)
@@ -441,6 +443,7 @@ def plot_dashboard(
     )
 
     fig.subplots_adjust(wspace=0.05, hspace=0.5)
+    translate_figure(fig, poster)
 
     for out in (output_pdf, output_png):
         Path(out).parent.mkdir(parents=True, exist_ok=True)
@@ -465,7 +468,10 @@ if __name__ == "__main__":
     set_scenario_config(snakemake)
 
     config   = snakemake.config
-    plotting = snakemake.params.plotting_fig
+    poster   = get_poster(snakemake)
+    plotting = merge_settings(
+        snakemake.params.plotting_fig, poster, "co2_pipeline_utilisation_dashboard"
+    )
 
     font              = plotting["font"]
     fontsize          = font["size"]
@@ -477,12 +483,13 @@ if __name__ == "__main__":
     pipe_cat_colors   = plotting["pipe_cat_colors"]
     planning_horizons = config["scenario"]["planning_horizons"]
 
-    scopes  = ["eu", "de", "nrw"]
+    # poster rules may only request a subset of the scopes
     outputs = {
-        "eu":  (snakemake.output.eu,  snakemake.output.eu_png),
-        "de":  (snakemake.output.de,  snakemake.output.de_png),
-        "nrw": (snakemake.output.nrw, snakemake.output.nrw_png),
+        scope: (snakemake.output[scope], snakemake.output[f"{scope}_png"])
+        for scope in ["eu", "de", "nrw"]
+        if scope in snakemake.output.keys()
     }
+    scopes = list(outputs)
 
     bar_by_scope = build_bar_data(
         list(snakemake.input.csvs),
@@ -514,4 +521,5 @@ if __name__ == "__main__":
             fontsize,
             xticklabel_size,
             pipe_cat_colors,
+            poster,
         )

@@ -17,11 +17,16 @@ from pypsa.plot import add_legend_lines, add_legend_patches, add_legend_semicirc
 from pypsa.statistics import get_transmission_carriers
 
 from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts._poster import get_poster, save_split, translate_figure
 from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
 FIGURE_SIZE = (4.5, 7)  # (width, height) in inches
+FONT_SCALE = 1.0  # scales explicit font sizes (poster variant)
+# poster variant: x anchors (axes fraction) to lay the legends out side by side,
+# keys: capture, use, pci, pipelines; empty = default stacked layout
+LEGEND_X = {}
 BAR_INSET = [0.80, 0.02, 0.18, 0.61]  # [x0, y0, width, height] in axes-fraction
 
 # Carrier name translations (English → German) for Supply/Consumption legends
@@ -194,7 +199,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         n.carriers.color[supp_carriers],
         [carrier_german.get(c, c) for c in supp_carriers],
         legend_kw={
-            "bbox_to_anchor": (0, -pad),
+            "bbox_to_anchor": (LEGEND_X.get("capture", 0), -pad),
             "ncol": 1,
             "title": "CO$_2$-Abscheidung",
             **legend_kw,
@@ -208,7 +213,7 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
         n.carriers.color[cons_carriers],
         [carrier_german.get(c, c) for c in cons_carriers],
         legend_kw={
-            "bbox_to_anchor": (0.5, -pad),
+            "bbox_to_anchor": (LEGEND_X.get("use", 0.5), -pad),
             "ncol": 1,
             "title": "Nutzung",
             **legend_kw,
@@ -260,7 +265,11 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
     ueberlappung_leg = ax.legend(
         handles=[Line2D([0], [0], color=dark_short, linewidth=2, solid_capstyle="round")],
         labels=["PCI-PMI Projekte"],
-        bbox_to_anchor=(0, abscheidung_bottom_ax - 0.02),
+        bbox_to_anchor=(
+            (LEGEND_X["pci"], -pad)
+            if "pci" in LEGEND_X
+            else (0, abscheidung_bottom_ax - 0.02)
+        ),
         **legend_kw,
     )
     ax.add_artist(ueberlappung_leg)
@@ -279,7 +288,11 @@ def plot_co2_map(n: pypsa.Network, ax=None) -> tuple[plt.Figure, plt.Axes]:
             list(length_colors.values()),
             ["Onshore DN700", "Onshore DN400", "Offshore DN700"],
             legend_kw={
-                "bbox_to_anchor": (0.5, nutzung_bottom_ax - 0.02),
+                "bbox_to_anchor": (
+                    (LEGEND_X["pipelines"], -pad)
+                    if "pipelines" in LEGEND_X
+                    else (0.5, nutzung_bottom_ax - 0.02)
+                ),
                 "ncol": 1,
                 "title": "Pipelines",
                 **legend_kw,
@@ -307,6 +320,16 @@ if __name__ == "__main__":
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)
+
+    poster = get_poster(snakemake)
+    if poster:
+        poster_fig = poster.get("carbon_dioxide_network", {})
+        FIGURE_SIZE = tuple(poster_fig.get("figsize", FIGURE_SIZE))
+        FONT_SCALE = poster_fig.get("font_scale", FONT_SCALE)
+        LEGEND_X = poster_fig.get("legend_x", LEGEND_X)
+        plt.rcParams["font.size"] = plt.rcParams["font.size"] * FONT_SCALE
+        # fixed axes position, so legend anchors (axes fraction) are predictable
+        plt.rcParams["figure.autolayout"] = False
 
     n = pypsa.Network(snakemake.input.network)
 
@@ -365,12 +388,12 @@ if __name__ == "__main__":
         totals = bar_data.sum(axis=1)
         for i, total in enumerate(totals):
             prefix = "+" if i == 1 else ""
-            bar_ax.text(i, total, f"{prefix}{total:.0f}\nkm", ha="center", va="bottom", fontsize=8, clip_on=False)
+            bar_ax.text(i, total, f"{prefix}{total:.0f}\nkm", ha="center", va="bottom", fontsize=8 * FONT_SCALE, clip_on=False)
         bar_ax.set_ylim(0, ylim_max)
         bar_ax.set_xlabel("")
         bar_ax.set_ylabel("")
-        bar_ax.tick_params(labelsize=6)
-        bar_ax.set_xticklabels(bar_data.index, rotation=0, fontsize=8)
+        bar_ax.tick_params(labelsize=6 * FONT_SCALE)
+        bar_ax.set_xticklabels(bar_data.index, rotation=0, fontsize=8 * FONT_SCALE)
         bar_ax.set_yticks([])
         bar_ax.grid(False)
         bar_ax.patch.set_alpha(0.0)
@@ -378,6 +401,11 @@ if __name__ == "__main__":
             spine.set_visible(False)
 
 
-    fig.savefig(snakemake.output.map, bbox_inches="tight")
-    fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
+    translate_figure(fig, poster)
+    if "legend" in snakemake.output.keys():
+        # poster: map and legend as separate files
+        save_split(fig, map_ax, snakemake.output)
+    else:
+        fig.savefig(snakemake.output.map, bbox_inches="tight")
+        fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
     plt.close(fig)

@@ -17,6 +17,48 @@ plotting:
     "urban central solid biomass CHP CC": "Biomasse-KWK"
   nrw-study:
     de_translation: true
+    # Poster variants (rules *_poster): English labels and larger fonts for an
+    # A0 poster column (~25 cm wide). Outputs get a "_poster" suffix; the regular
+    # figures are left untouched. Per-figure keys override the figure settings.
+    poster:
+      language: en
+      co2_transit_nrw:
+        font:
+          size: 12
+        figsize: (8, 4.6)
+        legend_ncol: 2
+      costs_overview_stacked:
+        font:
+          size: 12
+        figsize: (8, 6)
+        legend_left: 0.42
+      co2_pipeline_utilisation_dashboard:
+        font:
+          size: 12
+        xticklabel_size: 12
+        figsize: (7, 4.8)
+      carbon_dioxide_network:
+        figsize: [4.5, 7]
+        font_scale: 1.3
+        # legends side by side, saved to a separate (shared) legend file
+        legend_x:
+          capture: 0.0
+          use: 0.62
+          pipelines: 1.2
+          pci: 1.8
+      carbon_dioxide_network_nrw:
+        figsize: [4.5, 7]
+        font_scale: 1.3
+        label_scale: 1.0
+        size_legend_x: 0.42
+        hide_legend: true
+      # shorter English labels so the map legends fit side by side
+      translations:
+        "Emissionen Industrie": "Industry"
+        "Biomasse für Industrie": "Industrial biomass"
+        "Dampfreformierung": "SMR"
+        "Direct Air Capture": "DAC"
+        "CO$_2$-Sequestrierung": "Sequestration"
     scenario_nice_names:
       Industrie-CCS: "Hard-to-Abate+ (HtA+)"
       Orientierungsszenario_Strom: "Hard-to-Abate (HtA)"

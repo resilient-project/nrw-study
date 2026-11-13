@@ -23,11 +23,15 @@ from pypsa.statistics import get_transmission_carriers
 from shapely.geometry import MultiPolygon, Polygon
 
 from scripts._helpers import configure_logging, retry, set_scenario_config
+from scripts._poster import get_poster, save_split, translate_figure
 from scripts.make_summary import assign_locations
 
 SEMICIRCLE_CORRECTION_FACTOR = 2 if parse(pypsa.__version__) <= Version("0.33.2") else 1
 
 FIGURE_SIZE = (4.5, 7)  # (width, height) in inches
+FONT_SCALE = 1.0  # scales explicit font sizes (poster variant)
+LABEL_SCALE = 1.0  # scales NUTS3 district labels (poster variant)
+SIZE_LEGEND_X = 0.56  # x anchor of the semicircle size legend
 
 # Bounding box for NRW (DEA): [lon_min, lon_max, lat_min, lat_max]
 NRW_BOUNDS = [5.75, 9.55, 50.2, 52.65]
@@ -303,7 +307,7 @@ def plot_co2_map(
             [f"{s} {carrier_unit}" for s in legend_bus_size],
             patch_kw={"color": "#666"},
             legend_kw={
-                "bbox_to_anchor": (0.56, -0.015),
+                "bbox_to_anchor": (SIZE_LEGEND_X, -0.015),
                 **legend_kw,
                 "loc": "lower center",
             },
@@ -358,6 +362,17 @@ if __name__ == "__main__":
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 
+    poster = get_poster(snakemake)
+    if poster:
+        poster_fig = poster.get("carbon_dioxide_network_nrw", {})
+        FIGURE_SIZE = tuple(poster_fig.get("figsize", FIGURE_SIZE))
+        FONT_SCALE = poster_fig.get("font_scale", FONT_SCALE)
+        LABEL_SCALE = poster_fig.get("label_scale", LABEL_SCALE)
+        SIZE_LEGEND_X = poster_fig.get("size_legend_x", SIZE_LEGEND_X)
+        plt.rcParams["font.size"] = plt.rcParams["font.size"] * FONT_SCALE
+        # fixed axes position, so legend anchors (axes fraction) are predictable
+        plt.rcParams["figure.autolayout"] = False
+
     n = pypsa.Network(snakemake.input.network)
 
     regions = gpd.read_file(snakemake.input.regions).set_index("name")
@@ -405,7 +420,7 @@ if __name__ == "__main__":
         # Mercator x-coords at NRW latitudes: ~70 km per degree longitude.
         # Rural Kreis (~60 km wide) → ~7 pt; small Kreisfreie Stadt (~15 km) → ~4 pt.
         bbox_width = geom.bounds[2] - geom.bounds[0]
-        fontsize = max(4.0, min(7.0, bbox_width / 9_000))
+        fontsize = max(4.0, min(7.0, bbox_width / 9_000)) * LABEL_SCALE
 
         wrapped = "\n".join(textwrap.wrap(name, width=12, break_long_words=False))
         ax.text(
@@ -420,11 +435,16 @@ if __name__ == "__main__":
     for lon, lat, label in NEIGHBOUR_LABELS:
         ax.text(
             lon, lat, label,
-            transform=geo_crs, fontsize=8.5, ha="center", va="center",
+            transform=geo_crs, fontsize=8.5 * FONT_SCALE, ha="center", va="center",
             color="#555555", style="italic", fontweight="bold",
             alpha=0.6, zorder=5, clip_on=True,
         )
 
-    fig.savefig(snakemake.output.map, bbox_inches="tight")
-    fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
+    translate_figure(fig, poster)
+    if poster.get("carbon_dioxide_network_nrw", {}).get("hide_legend", False):
+        # poster: legend is shared with the Europe map, draw the map only
+        save_split(fig, ax, snakemake.output)
+    else:
+        fig.savefig(snakemake.output.map, bbox_inches="tight")
+        fig.savefig(snakemake.output.png, bbox_inches="tight", dpi=150)
     plt.close(fig)
