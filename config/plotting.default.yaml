@@ -53,6 +53,12 @@ plotting:
         label_scale: 1.0
         size_legend_x: 0.42
         hide_legend: true
+      co2_flow_map_nrw:
+        figsize: [4.5, 7]
+        font_scale: 1.3
+        label_scale: 1.0
+        size_legend_x: 0.42
+        hide_legend: true
       # shorter English labels so the map legends fit side by side
       translations:
         "Emissionen Industrie": "Industry"

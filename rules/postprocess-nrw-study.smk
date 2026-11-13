@@ -1242,3 +1242,27 @@ rule plot_carbon_dioxide_network_nrw_poster:
         mem_mb=10000,
     script:
         scripts("plot_carbon_dioxide_network_nrw.py")
+
+
+rule plot_co2_flow_map_nrw_poster:
+    params:
+        plotting=config_provider("plotting"),
+        poster=config_provider("plotting", "nrw-study", "poster"),
+    input:
+        network=RESULTS
+        + "networks/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.nc",
+        regions=resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts3_shapes=resources("nuts3_shapes.geojson"),
+    output:
+        map=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}_poster.pdf",
+        png=RESULTS
+        + "maps/static/base_s_{clusters}_{opts}_{sector_opts}-co2_flow_nrw_{planning_horizons}_poster.png",
+    log:
+        RESULTS
+        + "logs/plot_co2_flow_map_nrw_poster/base_s_{clusters}_{opts}_{sector_opts}_{planning_horizons}.log",
+    threads: 2
+    resources:
+        mem_mb=10000,
+    script:
+        scripts("plot_co2_flow_map_nrw.py")
