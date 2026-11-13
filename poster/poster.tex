@@ -266,9 +266,9 @@
         left=0.3em,right=0.3em,top=0.3em,bottom=0.3em,nobeforeafter]{%
         \includegraphics[width=11.8cm]{co2_delaunay_2035.pdf}}};}]{Model setup}
 
+\noindent We use the open-source, sector-coupled model PyPSA-Eur \cite{horschPyPSAEurOpenOptimisation2018,neumannPotentialRoleHydrogen2023,hofmannH2CO2Network2025}, covering all energy sectors in around 80 regions: NRW by county (NUTS3), the rest of Germany by state, and 19 neighbouring countries.
+
 \begin{itemize}
-  \item Open-source, sector-coupled model PyPSA-Eur \cite{horschPyPSAEurOpenOptimisation2018,neumannPotentialRoleHydrogen2023,hofmannH2CO2Network2025}, all energy sectors.
-  \item Around 80 regions: NRW by county (NUTS3), rest of Germany by state, 19 neighbouring countries.
   \item Myopic 2035--2040--2045, 1460 time steps per year; planned power grid, \ce{H2} pipelines optimised.
 \end{itemize}
 \noindent
@@ -306,7 +306,7 @@
 \noindent The fixed PCI-PMI network (1.a) has about 4\,400--4\,600\,km of pipelines in Germany, but its onshore DN400 pipes run below 15\,\% of capacity in every year. With endogenous expansion (1.b), the network is 2\,300--2\,700\,km long and better utilised. DN700-equivalent pipes are enough for transport between regions, and offshore collector lines run at constantly high utilisation (Fig.~\ref{fig:pipelines}).
 
 \begin{center}
-    \includegraphics[width=0.9\linewidth]{co2_pipeline_utilisation_dashboard_de_poster.pdf}
+    \includegraphics[width=\linewidth,trim={7.2bp 0 6.8bp 0},clip]{co2_pipeline_utilisation_dashboard_de_poster.pdf}
     \captionof{figure}{Germany (incl.\ NRW): annual utilisation duration curves per pipeline (top) and pipeline lengths by type (bottom).}
     \label{fig:pipelines}
 \end{center}
@@ -340,7 +340,7 @@
 \noindent An optimised pipeline network lowers annual European system costs by 19--26\,bn\,\euro{} compared with the fixed PCI-PMI network (1.b vs.\ 1.a), mainly through lower \ce{CO2} infrastructure costs and less DAC. Onshore storage (2.b) saves a further $\sim$8\,bn\,\euro/a compared with 2.a in 2045 and more than halves the pipeline investment (Fig.~\ref{fig:costs}).
 
 \begin{center}
-    \includegraphics[width=0.82\linewidth]{costs_overview_stacked_poster.pdf}
+    \includegraphics[width=\linewidth,trim={11.5bp 0 6.8bp 0},clip]{costs_overview_stacked_poster.pdf}
     \captionof{figure}{Cost difference to scenario 1.a (top) and total annualised system costs (bottom) in bn\,\euro/a.}
     \label{fig:costs}
 \end{center}
