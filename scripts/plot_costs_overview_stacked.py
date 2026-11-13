@@ -241,6 +241,7 @@ if __name__ == "__main__":
         frameon=False,
         handlelength=handlelength,
         handleheight=handleheight,
+        labelspacing=plotting.get("legend_labelspacing", 0.5),
     )
     legend.get_title().set_fontweight("bold")
     legend._legend_box.align = "left"

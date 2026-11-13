@@ -30,13 +30,14 @@ plotting:
       costs_overview_stacked:
         font:
           size: 12
-        figsize: (8, 6)
+        figsize: (8, 4.35)
         legend_left: 0.42
+        legend_labelspacing: 0.25
       co2_pipeline_utilisation_dashboard:
         font:
           size: 12
         xticklabel_size: 12
-        figsize: (7, 4.8)
+        figsize: (7, 4.2)
       carbon_dioxide_network:
         figsize: [4.5, 7]
         font_scale: 1.3
